@@ -7,7 +7,7 @@ Leanify is a lightweight lossless file minifier. It removes unnecessary informat
 Features
 ========
 
-* Support recursive minifying. (Eg. a PNG inside an APK inside a ZIP)
+* Support recursive minifying. (e.g. a PNG inside an APK inside a ZIP)
 * Everything is done in memory, no temporary files.
 * Support traverse directory recursively.
 * Identify file format by its data instead of name.
@@ -19,10 +19,16 @@ I'm not respossible for any consequence of using Leanify.
 
 **PLEASE BACKUP THE FILE BEFORE USING LEANIFY!**
 
+Downloads
+=========
+
+https://github.com/JayXon/Leanify/releases/
+
+
 File Formats
 =======
 
-###Supported
+###Supported:
 
 * **GFT file** (.gft, image container format found in Tencent QQ)
 
@@ -79,7 +85,7 @@ File Formats
   Remove comment in End of central directory record.
   
 
-###WIP
+###WIP:
 
 * **JPEG image** (.jpeg, .jpg)
 
