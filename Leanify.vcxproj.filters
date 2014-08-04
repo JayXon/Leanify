@@ -1,0 +1,168 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\formats">
+      <UniqueIdentifier>{0515174f-ead6-4c34-bc6d-28caa6328b14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\formats\zopflipng">
+      <UniqueIdentifier>{f1b9091a-b86f-4412-9cbe-9fd2c017db97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\formats\zopflipng\lodepng">
+      <UniqueIdentifier>{d8af6712-5337-48d5-ad50-b247491708e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\formats\zopfli">
+      <UniqueIdentifier>{fd445d3c-46b8-4e6e-9873-22d5ad8f9d09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\formats">
+      <UniqueIdentifier>{052bcb98-874f-4e68-814e-4db31fa3f8e7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="fileio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\bmp.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\gft.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\jpeg.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\lua.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\png.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\rdb.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\xml.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zip.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopflipng\zopflipng_lib.cc">
+      <Filter>Source Files\formats\zopflipng</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopflipng\lodepng\lodepng.cpp">
+      <Filter>Source Files\formats\zopflipng\lodepng</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopflipng\lodepng\lodepng_util.cpp">
+      <Filter>Source Files\formats\zopflipng\lodepng</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\blocksplitter.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\cache.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\deflate.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\gzip_container.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\hash.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\katajainen.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\lz77.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\squeeze.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\tree.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\util.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\zlib_container.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\zopfli\zopfli_lib.c">
+      <Filter>Source Files\formats\zopfli</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\tinyxml2\tinyxml2.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\gz.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\miniz\miniz.c">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\ico.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="leanify.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="fileio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\bmp.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\format.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\gft.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\jpeg.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\png.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\rdb.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\xml.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\lua.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\gz.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\ico.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="leanify.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\zip.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
