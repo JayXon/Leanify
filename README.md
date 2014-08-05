@@ -36,7 +36,7 @@ File Formats
   
 * **gzip file** (.gz)
 
-  Leanify file inside and recompress its deflate stream.
+  Leanify file inside and recompress deflate stream.
   
   Remove all optional section: FEXTRA, FNAME, FCOMMENT, FHCRC.
   
@@ -46,7 +46,7 @@ File Formats
   
 * **Lua object file** (.lua, .luac)
 
-  Remove all debug information.
+  Remove all debugging information:
   
   * Source name
   * Line defined and last line defined
@@ -74,7 +74,7 @@ File Formats
   
 * **ZIP archieve** (.apk, .crx, .docx, .jar, .odt, .ods, .odp, .pptx, .xlsx, .xpi, .zip)
 
-  Leanify files inside.
+  Leanify files inside and recompress deflate stream.
   
   Remove extra field in Local file header.
   
