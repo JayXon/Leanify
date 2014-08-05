@@ -72,7 +72,7 @@ File Formats
 
   Remove all comments, unnecessary spaces, tabs, enters.
   
-* **ZIP archieve** (.apk, .crx, .docx, .jar, .odt, .ods, .odp, .pptx, .xlsx, .xpi, .zip)
+* **ZIP archive** (.apk, .crx, .docx, .jar, .odt, .ods, .odp, .pptx, .xlsx, .xpi, .zip)
 
   Leanify files inside and recompress deflate stream.
   
