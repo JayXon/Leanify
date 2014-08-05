@@ -9,3 +9,6 @@ default: all
 
 all:
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRCS)
+
+clean:
+	rm -f leanify
