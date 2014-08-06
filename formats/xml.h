@@ -15,22 +15,7 @@
 class Xml : Format
 {
 public:
-    Xml(void *p, size_t s = 0) : Format(p, s), doc(true, tinyxml2::COLLAPSE_WHITESPACE)
-    {
-        unsigned char *q = (unsigned char *)p;
-        while (isspace(*q))
-        {
-            q++;
-        }
-        if (*q == '<')
-        {
-            is_valid = (doc.Parse(fp, size) == 0);
-        }
-        else
-        {
-            is_valid = false;
-        }
-    }
+    Xml(void *p, size_t s = 0);
 
     bool IsValid() const
     {
