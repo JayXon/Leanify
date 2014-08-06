@@ -66,7 +66,7 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -95,6 +95,44 @@
     <ClCompile Include="formats\jpeg.cpp" />
     <ClCompile Include="formats\lua.cpp" />
     <ClCompile Include="formats\miniz\miniz.c" />
+    <ClCompile Include="formats\mozjpeg\jaricom.c" />
+    <ClCompile Include="formats\mozjpeg\jcapimin.c" />
+    <ClCompile Include="formats\mozjpeg\jcarith.c" />
+    <ClCompile Include="formats\mozjpeg\jchuff.c" />
+    <ClCompile Include="formats\mozjpeg\jcmarker.c" />
+    <ClCompile Include="formats\mozjpeg\jcmaster.c" />
+    <ClCompile Include="formats\mozjpeg\jcomapi.c" />
+    <ClCompile Include="formats\mozjpeg\jcparam.c" />
+    <ClCompile Include="formats\mozjpeg\jcphuff.c" />
+    <ClCompile Include="formats\mozjpeg\jctrans.c" />
+    <ClCompile Include="formats\mozjpeg\jdapimin.c" />
+    <ClCompile Include="formats\mozjpeg\jdarith.c" />
+    <ClCompile Include="formats\mozjpeg\jdatadst.c" />
+    <ClCompile Include="formats\mozjpeg\jdatasrc.c" />
+    <ClCompile Include="formats\mozjpeg\jdcoefct.c" />
+    <ClCompile Include="formats\mozjpeg\jdcolor.c" />
+    <ClCompile Include="formats\mozjpeg\jddctmgr.c" />
+    <ClCompile Include="formats\mozjpeg\jdhuff.c" />
+    <ClCompile Include="formats\mozjpeg\jdinput.c" />
+    <ClCompile Include="formats\mozjpeg\jdmainct.c" />
+    <ClCompile Include="formats\mozjpeg\jdmarker.c" />
+    <ClCompile Include="formats\mozjpeg\jdmaster.c" />
+    <ClCompile Include="formats\mozjpeg\jdmerge.c" />
+    <ClCompile Include="formats\mozjpeg\jdphuff.c" />
+    <ClCompile Include="formats\mozjpeg\jdpostct.c" />
+    <ClCompile Include="formats\mozjpeg\jdsample.c" />
+    <ClCompile Include="formats\mozjpeg\jdtrans.c" />
+    <ClCompile Include="formats\mozjpeg\jerror.c" />
+    <ClCompile Include="formats\mozjpeg\jidctflt.c" />
+    <ClCompile Include="formats\mozjpeg\jidctfst.c" />
+    <ClCompile Include="formats\mozjpeg\jidctint.c" />
+    <ClCompile Include="formats\mozjpeg\jidctred.c" />
+    <ClCompile Include="formats\mozjpeg\jmemmgr.c" />
+    <ClCompile Include="formats\mozjpeg\jmemnobs.c" />
+    <ClCompile Include="formats\mozjpeg\jquant1.c" />
+    <ClCompile Include="formats\mozjpeg\jquant2.c" />
+    <ClCompile Include="formats\mozjpeg\jsimd_none.c" />
+    <ClCompile Include="formats\mozjpeg\jutils.c" />
     <ClCompile Include="formats\png.cpp" />
     <ClCompile Include="formats\rdb.cpp" />
     <ClCompile Include="formats\tinyxml2\tinyxml2.cpp" />

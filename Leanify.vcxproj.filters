@@ -28,6 +28,9 @@
     <Filter Include="Header Files\formats">
       <UniqueIdentifier>{052bcb98-874f-4e68-814e-4db31fa3f8e7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\formats\mozjpeg">
+      <UniqueIdentifier>{29e470fe-f7bd-40f4-baa8-31effed6a3f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fileio.cpp">
@@ -119,6 +122,120 @@
     </ClCompile>
     <ClCompile Include="leanify.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jctrans.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdtrans.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdapimin.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcapimin.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdatadst.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdatasrc.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jerror.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcomapi.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jutils.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcmarker.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jmemmgr.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcarith.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jaricom.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcmaster.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcparam.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcphuff.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jchuff.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdmarker.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdinput.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdhuff.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdphuff.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdarith.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdcoefct.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdmaster.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jquant1.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jddctmgr.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jidctint.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jidctred.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jsimd_none.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jidctflt.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jidctfst.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdsample.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdcolor.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jquant2.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdmerge.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdmainct.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdpostct.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jmemnobs.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,14 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Png(file_pointer).Leanify(size_leanified);
     }
+    else if (!memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)))
+    {
+        if (is_verbose)
+        {
+            std::cout << "JPEG detected." << std::endl;
+        }
+        return Jpeg(file_pointer, file_size).Leanify(size_leanified);
+    }
     else if (!memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)))
     {
         if (is_verbose)
@@ -28,14 +36,6 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Zip(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)))
-    {
-        if (is_verbose)
-        {
-            std::cout << "RDB detected." << std::endl;
-        }
-        return Rdb(file_pointer).Leanify(size_leanified);
-    }
     else if (!memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)))
     {
         if (is_verbose)
@@ -43,6 +43,14 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
             std::cout << "GZ detected." << std::endl;
         }
         return Gz(file_pointer, file_size).Leanify(size_leanified);
+    }
+    else if (!memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)))
+    {
+        if (is_verbose)
+        {
+            std::cout << "ICO detected." << std::endl;
+        }
+        return Ico(file_pointer).Leanify(size_leanified);
     }
     else if (!memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)))
     {
@@ -52,13 +60,13 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Gft(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)))
+    else if (!memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)))
     {
         if (is_verbose)
         {
-            std::cout << "ICO detected." << std::endl;
+            std::cout << "RDB detected." << std::endl;
         }
-        return Ico(file_pointer).Leanify(size_leanified);
+        return Rdb(file_pointer).Leanify(size_leanified);
     }
     else
     {

@@ -7,6 +7,7 @@
 #include "formats/gft.h"
 #include "formats/gz.h"
 #include "formats/ico.h"
+#include "formats/jpeg.h"
 #include "formats/lua.h"
 #include "formats/png.h"
 #include "formats/rdb.h"

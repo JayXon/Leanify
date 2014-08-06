@@ -1,10 +1,14 @@
 #ifndef JPEG_H
 #define JPEG_H
 
+#include <cstdio>
+
+#ifdef _WIN32
+#define XMD_H // prevents mozjpeg to redefine INT32
+#endif
+#include "mozjpeg/jpeglib.h"
 
 #include "format.h"
-
-// The support for this format is not yet implemented!
 
 class Jpeg : Format
 {

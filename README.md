@@ -43,7 +43,13 @@ File Formats
 * **Icon file** (.ico) 
 
   Leanify PNG inside.
-  
+
+* **JPEG image** (.jpeg, .jpg)
+
+  Remove all Application Marker (e.g. Exif) and comments.
+
+  Optimize with mozjpeg.
+
 * **Lua object file** (.lua, .luac)
 
   Remove all debugging information:
@@ -86,8 +92,6 @@ File Formats
   
 
 ###WIP:
-
-* **JPEG image** (.jpeg, .jpg)
 
 * **BMP image** (.bmp)
 

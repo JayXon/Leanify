@@ -15,5 +15,5 @@ size_t Bmp::Leanify(size_t size_leanified /*= 0*/)
         fp -= size_leanified;
     }
 
-    return 0;
+    return size;
 }
