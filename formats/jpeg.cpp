@@ -16,7 +16,15 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     /* Initialize the JPEG compression object with default error handling. */
     dstinfo.err = jpeg_std_error(&jdsterr);
     jpeg_create_compress(&dstinfo);
-    dstinfo.use_moz_defaults = TRUE;
+
+    if (is_recompress)
+    {
+        dstinfo.use_moz_defaults = TRUE;
+    }
+    if (is_verbose)
+    {
+        dstinfo.err->trace_level++;
+    }
 
     /* Specify data source for decompression */
     jpeg_mem_src(&srcinfo, (unsigned char *)fp, size);

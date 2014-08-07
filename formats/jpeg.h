@@ -10,6 +10,10 @@
 
 #include "format.h"
 
+
+extern bool is_recompress;
+extern bool is_verbose;
+
 class Jpeg : Format
 {
 public:
