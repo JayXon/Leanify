@@ -1,7 +1,7 @@
 Leanify [![Build Status](https://travis-ci.org/JayXon/Leanify.svg)](https://travis-ci.org/JayXon/Leanify)
 =======
 
-Leanify is a lightweight lossless file minifier. It removes unnecessary information (debug information, comments, metadata, etc.) and recompress deflate stream to reduce file size.
+Leanify is a lightweight lossless file minifier. It removes unnecessary data (debug information, comments, metadata, etc.) and recompress deflate stream to reduce file size. It will not reduce image quality at all.
 
 
 Features
@@ -12,12 +12,14 @@ Features
 * Support traverse directory recursively.
 * Identify file format by its data instead of name.
 
+
 Disclaimer
 ==========
 
 I'm not respossible for any consequence of using Leanify.
 
 **PLEASE BACKUP THE FILE BEFORE USING LEANIFY!**
+
 
 Downloads
 =========
@@ -26,13 +28,13 @@ https://github.com/JayXon/Leanify/releases/
 
 
 File Formats
-=======
+============
 
 ###Supported:
 
 * **GFT file** (.gft, image container format found in Tencent QQ)
 
-  Leanify image inside.
+  Leanify the image inside.
   
 * **gzip file** (.gz)
 
@@ -59,7 +61,8 @@ File Formats
   * Source line position list
   * Local list
   * Upvalue list
-  
+
+
 * **PNG image** (.png, .apng)
 
   Remove all ancillary chunks except for:
@@ -72,7 +75,7 @@ File Formats
 
 * **RDB archive** (.rdb, archive format found in Tencent QQ)
 
-  Leanify files inside.
+  Leanify all files inside.
   
 * **XML document** (.xml, .xsl, .xslt)
 
@@ -80,7 +83,7 @@ File Formats
   
 * **ZIP archive** (.apk, .crx, .docx, .jar, .odt, .ods, .odp, .pptx, .xlsx, .xpi, .zip)
 
-  Leanify files inside and recompress deflate stream.
+  Leanify all files inside and recompress deflate stream.
   
   Remove extra field in Local file header.
   
@@ -91,16 +94,20 @@ File Formats
   Remove comment in End of central directory record.
   
 
-###WIP:
+###TODO:
 
 * **BMP image** (.bmp)
 
+* **PE file** (.exe, .dll)
+
+* **Flash file** (.swf)
+
 
 Usage
---------------
+=====
 
 ```
-Usage: Leanify [options] path
+Usage: Leanify [options] path1 path2 path3 ...
   -i iteration  More iterations means slower but better result. Default: 15.
   -f            Fast mode, no recompression.
   -q            Quiet mode, no output.
