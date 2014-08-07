@@ -16,18 +16,8 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     {
         vector_local_header_offset.push_back(p_write - fp);
 
-        int filename_length = *(uint16_t *)(p_read + 26);
+        uint16_t filename_length = *(uint16_t *)(p_read + 26);
 
-        // output filename
-        char *name = new char[filename_length + 1]();
-        memcpy(name, p_read + 30, filename_length);
-        for (int i = 0; i < level; i++)
-        {
-            std::cout << "-> ";
-        }
-        std::cout << name << std::endl;
-        delete[] name;
-        
         size_t header_size = 30 + filename_length;
         // move header
         if (p_read - p_write)
@@ -49,6 +39,23 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         uint32_t original_compressed_size = *compressed_size;
 
         uint16_t flag = *(uint16_t *)(p_write + 6);
+        uint16_t compression_method = *(uint16_t *)(p_write + 8);
+
+        // do not output filename if it is a directory
+        if (original_compressed_size || compression_method || flag & 8)
+        {
+            // output filename
+            char *name = new char[filename_length + 1]();
+            memcpy(name, p_write + 30, filename_length);
+            for (int i = 0; i < level; i++)
+            {
+                std::cout << "-> ";
+            }
+            std::cout << name << std::endl;
+            delete[] name;
+        }
+
+
         // From Wikipedia:
         // If bit 3 (0x08) of the general-purpose flags field is set,
         // then the CRC-32 and file sizes are not known when the header is written.
@@ -81,11 +88,11 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         }
 
         // if compression method is not deflate or fast mode
-        // then only leanify embedded file if the method is store
+        // then only Leanify embedded file if the method is store
         // otherwise just memmove the compressed part
-        if (*(uint16_t *)(p_write + 8) != 8 || !is_recompress)
+        if (compression_method != 8 || !is_recompress)
         {
-            if (*(uint16_t *)(p_write + 8) == 0)
+            if (compression_method == 0)
             {
                 // method is store
                 if (original_compressed_size)
