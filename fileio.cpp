@@ -64,7 +64,12 @@ void TraverseDirectory(const char Dir[], int Callback(const char file_path[], co
 #ifdef _WIN32
 bool IsDirectory(const wchar_t path[])
 {
-    return (GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    DWORD fa = GetFileAttributes(path);
+    if (fa == INVALID_FILE_ATTRIBUTES)
+    {
+        return false;
+    }
+    return (fa & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 #else
 bool IsDirectory(const char path[])
