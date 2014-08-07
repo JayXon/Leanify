@@ -17,10 +17,8 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     dstinfo.err = jpeg_std_error(&jdsterr);
     jpeg_create_compress(&dstinfo);
 
-    if (is_recompress)
-    {
-        dstinfo.use_moz_defaults = TRUE;
-    }
+    dstinfo.use_moz_defaults = is_recompress;
+
     if (is_verbose)
     {
         dstinfo.err->trace_level++;
@@ -37,6 +35,8 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 
     /* Initialize destination compression parameters from source values */
     jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
+
+    dstinfo.optimize_coding = TRUE;
 
     unsigned char *outbuffer = NULL;
     unsigned long outsize = 0;
