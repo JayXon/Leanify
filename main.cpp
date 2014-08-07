@@ -106,59 +106,88 @@ int main(int argc, char const *argv[])
     int i;
     for (i = 1; i < argc && argv[i][0] == L'-'; i++)
     {
-        switch (argv[i][1])
+        bool need_plus1 = false;
+        for (int j = 1; argv[i][j]; j++)
         {
-        case 'f':
-        case 'F':
-            is_recompress = false;
-            break;
-        case 'i':
-        case 'I':
-            if (i < argc - 1)
+            switch (argv[i][j])
             {
+            case 'f':
+            case 'F':
+                is_recompress = false;
+                break;
+            case 'i':
+            case 'I':
+                if (i < argc - 1)
+                {
 #ifdef _WIN32
-                iterations = _wtoi(argv[++i]);
+                    iterations = wcstol(argv[i + 1], nullptr, 10);
 #else
-                iterations = atoi(argv[++i]);
+                    iterations = strtol(argv[i + 1], nullptr, 10);
 #endif // _WIN32
+                    // strtol will return 0 on fail
+                    if (iterations == 0)
+                    {
+                        std::cout << "There should be a positive number after -i option." << std::endl;
+                        PrintInfo();
+                        return 1;
+                    }
+                    need_plus1 = true;
+                }
+                break;
+            case 'q':
+            case 'Q':
+                std::wcout.setstate(std::ios::failbit);
+                std::cout.setstate(std::ios::failbit);
+                std::cerr.setstate(std::ios::failbit);
+                break;
+            case 'v':
+            case 'V':
+                is_verbose = true;
+                break;
+            default:
+                PrintInfo();
+                return 1;
             }
-            break;
-        case 'q':
-        case 'Q':
-            std::wcout.setstate(std::ios::failbit);
-            std::cout.setstate(std::ios::failbit);
-            std::cerr.setstate(std::ios::failbit);
-            break;
-        case 'v':
-        case 'V':
-            is_verbose = true;
-            break;
-        default:
-            PrintInfo();
-            return 1;
+        }
+        if (need_plus1)
+        {
+            i++;
         }
     }
 
-#ifdef _WIN32
-    wchar_t *file_path = argv[i];
-#else
-    const char *file_path = argv[i];
-#endif // _WIN32
+    if (i == argc)
+    {
+        std::cout << "No file path provided." << std::endl;
+        PrintInfo();
+        return 1;
+    }
 
 
     std::cout << std::fixed;
     std::cout.precision(2);
 
-    if (IsDirectory(file_path))
+    // support multiple input file
+    do 
     {
-        // directory
-        TraverseDirectory(file_path, ProcessFile);
-    }
-    else
-    {
-        // file
-        ProcessFile(file_path);
-    }
+#ifdef _WIN32
+        wchar_t *file_path = argv[i];
+#else
+        const char *file_path = argv[i];
+#endif // _WIN32
+
+        if (IsDirectory(file_path))
+        {
+            // directory
+            TraverseDirectory(file_path, ProcessFile);
+        }
+        else
+        {
+            // file
+            ProcessFile(file_path);
+        }
+
+    } while (++i < argc);
+
 
     PauseIfNotTerminal();
 
