@@ -32,6 +32,10 @@ File Formats
 
 ###Supported:
 
+* **Flash file** (.swf)
+
+  Recompress it with LZMA.
+
 * **GFT file** (.gft, image container format found in Tencent QQ)
 
   Leanify the image inside.
@@ -99,8 +103,6 @@ File Formats
 * **BMP image** (.bmp)
 
 * **PE file** (.exe, .dll)
-
-* **Flash file** (.swf)
 
 
 Usage

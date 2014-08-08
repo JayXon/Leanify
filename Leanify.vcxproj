@@ -94,6 +94,13 @@
     <ClCompile Include="formats\ico.cpp" />
     <ClCompile Include="formats\jpeg.cpp" />
     <ClCompile Include="formats\lua.cpp" />
+    <ClCompile Include="formats\LZMA\Alloc.c" />
+    <ClCompile Include="formats\LZMA\LzFind.c" />
+    <ClCompile Include="formats\LZMA\LzFindMt.c" />
+    <ClCompile Include="formats\LZMA\LzmaDec.c" />
+    <ClCompile Include="formats\LZMA\LzmaEnc.c" />
+    <ClCompile Include="formats\LZMA\LzmaLib.c" />
+    <ClCompile Include="formats\LZMA\Threads.c" />
     <ClCompile Include="formats\miniz\miniz.c" />
     <ClCompile Include="formats\mozjpeg\jaricom.c" />
     <ClCompile Include="formats\mozjpeg\jcapimin.c" />
@@ -135,6 +142,7 @@
     <ClCompile Include="formats\mozjpeg\jutils.c" />
     <ClCompile Include="formats\png.cpp" />
     <ClCompile Include="formats\rdb.cpp" />
+    <ClCompile Include="formats\swf.cpp" />
     <ClCompile Include="formats\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="formats\xml.cpp" />
     <ClCompile Include="formats\zip.cpp" />
@@ -167,6 +175,7 @@
     <ClInclude Include="formats\lua.h" />
     <ClInclude Include="formats\png.h" />
     <ClInclude Include="formats\rdb.h" />
+    <ClInclude Include="formats\swf.h" />
     <ClInclude Include="formats\xml.h" />
     <ClInclude Include="formats\zip.h" />
     <ClInclude Include="leanify.h" />

@@ -68,6 +68,16 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Rdb(file_pointer).Leanify(size_leanified);
     }
+    else if (!memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) ||
+             !memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) ||
+             !memcmp(file_pointer, Swf::header_magic_lzma, sizeof(Swf::header_magic_lzma)))
+    {
+        if (is_verbose)
+        {
+            std::cout << "SWF detected." << std::endl;
+        }
+        return Swf(file_pointer, file_size).Leanify(size_leanified);
+    }
     else
     {
         // xml file does not have header magic to tell if it is a xml file.

@@ -31,6 +31,9 @@
     <Filter Include="Source Files\formats\mozjpeg">
       <UniqueIdentifier>{29e470fe-f7bd-40f4-baa8-31effed6a3f9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\formats\LZMA">
+      <UniqueIdentifier>{4d3051da-2db0-41bc-92d9-2f4af769f9a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="fileio.cpp">
@@ -237,6 +240,30 @@
     <ClCompile Include="formats\mozjpeg\jmemnobs.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
+    <ClCompile Include="formats\swf.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\Alloc.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\LzFind.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\LzmaDec.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\LzmaEnc.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\LzmaLib.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\LzFindMt.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\LZMA\Threads.c">
+      <Filter>Source Files\formats\LZMA</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -279,6 +306,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="formats\zip.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\swf.h">
       <Filter>Header Files\formats</Filter>
     </ClInclude>
   </ItemGroup>
