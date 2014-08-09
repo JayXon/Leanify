@@ -6,7 +6,7 @@ const unsigned char Swf::header_magic_lzma[] = { 'Z', 'W', 'S' };
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 {
-    if (!is_recompress)
+    if (!is_recompress && *fp != 'F')
     {
         Move(size_leanified);
         return size;
@@ -58,6 +58,63 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     else if (is_verbose)
     {
         std::cout << "SWF is not compressed." << std::endl;
+    }
+
+    unsigned char *p = in_buffer + 13;      // skip FrameSize(9B) + FrameRate(2B) + FrameCount(2B) = 13B
+    size_t tag_size_leanified = 0;
+    do
+    {
+        uint16_t tag_type = *(uint16_t *)p >> 6;
+        uint32_t tag_length = *p & 0x3F;
+        size_t tag_header_length = 2;
+        if (tag_length == 0x3F)
+        {
+            tag_length = *(uint32_t *)(p + 2);
+            tag_header_length += 4;
+        }
+
+        if (tag_size_leanified)
+        {
+            memmove(p - tag_size_leanified, p, tag_header_length);
+        }
+
+        p += tag_header_length;
+
+        switch (tag_type)
+        {
+        case 69:
+            // FileAttributes
+            *p &= ~(1 << 4);    // set HasMetadata bit to 0
+            break;
+        case 77:
+            // Metadata
+            tag_size_leanified += tag_length + tag_header_length;
+            p += tag_length;
+            continue;
+        }
+        if (tag_size_leanified)
+        {
+            memmove(p - tag_size_leanified, p, tag_length);
+        }
+        p += tag_length;
+    } while (p < in_buffer + in_len);
+
+    in_len -= tag_size_leanified;
+
+    if (!is_recompress)
+    {
+        // write header
+        fp -= size_leanified;
+
+        // decompressed size (including header)
+        *(uint32_t *)(fp + 4) = size = in_len + 8;
+
+        if (size_leanified)
+        {
+            memmove(fp, fp + size_leanified, 4);
+            memmove(fp + 8, fp + 8 + size_leanified, in_len);
+        }
+        return size;
     }
 
     // recompress

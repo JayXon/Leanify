@@ -35,6 +35,8 @@ File Formats
 * **Flash file** (.swf)
 
   Recompress it with LZMA.
+  
+  Remove Metadata Tag.
 
 * **GFT file** (.gft, image container format found in Tencent QQ)
 
