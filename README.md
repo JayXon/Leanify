@@ -34,6 +34,8 @@ File Formats
 
 * **Flash file** (.swf)
 
+  Leanify embedded images.
+
   Recompress it with LZMA.
   
   Remove Metadata Tag.
@@ -87,7 +89,7 @@ File Formats
 
   Remove all comments, unnecessary spaces, tabs, enters.
   
-* **ZIP archive** (.apk, .crx, .docx, .jar, .odt, .ods, .odp, .pptx, .xlsx, .xpi, .zip)
+* **ZIP archive** (.apk, .cbz, .docx, .epub, .jar, .odt, .ods, .odp, .pptx, .xlsx, .xpi, .zip)
 
   Leanify all files inside and recompress deflate stream.
   
