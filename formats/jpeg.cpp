@@ -2,6 +2,17 @@
 
 
 const unsigned char Jpeg::header_magic[] = { 0xFF, 0xD8 };
+jmp_buf Jpeg::setjmp_buffer = {};
+
+void my_error_exit(j_common_ptr cinfo)
+{
+    /* Always display the message */
+    (*cinfo->err->output_message) (cinfo);
+
+    longjmp(Jpeg::setjmp_buffer, 1);
+}
+
+
 
 size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 {
@@ -12,9 +23,24 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 
     /* Initialize the JPEG decompression object with default error handling. */
     srcinfo.err = jpeg_std_error(&jsrcerr);
+    jsrcerr.error_exit = my_error_exit;
+    if (setjmp(setjmp_buffer))
+    {
+        jpeg_destroy_compress(&dstinfo);
+        jpeg_destroy_decompress(&srcinfo);
+        if (size_leanified)
+        {
+            fp -= size_leanified;
+            memmove(fp, fp + size_leanified, size);
+        }
+        return size;
+    }
+
     jpeg_create_decompress(&srcinfo);
     /* Initialize the JPEG compression object with default error handling. */
     dstinfo.err = jpeg_std_error(&jdsterr);
+    jdsterr.error_exit = my_error_exit;
+
     jpeg_create_compress(&dstinfo);
 
     dstinfo.use_moz_defaults = is_recompress;

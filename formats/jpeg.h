@@ -2,6 +2,7 @@
 #define JPEG_H
 
 #include <cstdio>
+#include <csetjmp>  // for mozjpeg error handling
 
 #ifdef _WIN32
 #define XMD_H // prevents mozjpeg to redefine INT32
@@ -23,6 +24,7 @@ public:
 
     static const unsigned char header_magic[2];
 
+    static jmp_buf setjmp_buffer;
 };
 
 
