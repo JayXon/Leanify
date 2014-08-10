@@ -23,7 +23,9 @@ public:
     }
 
 protected:
+    // pointer to the file content
     char *fp;
+    // size of the file
     size_t size;
 };
 

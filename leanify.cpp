@@ -100,3 +100,38 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
     // for unsupported format, just memmove it.
     return Format(file_pointer, file_size).Leanify(size_leanified);
 }
+
+
+size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified /*= 0*/)
+{
+    if (is_recompress)
+    {
+        size_t s = 0;
+        unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
+        if (!buffer)
+        {
+            std::cout << "Decompress Zlib failed." << std::endl;
+        }
+        else
+        {
+            ZopfliOptions zopfli_options;
+            ZopfliInitOptions(&zopfli_options);
+            zopfli_options.numiterations = iterations;
+
+            size_t new_size = 0;
+            unsigned char *out_buffer = NULL;
+            ZopfliZlibCompress(&zopfli_options, buffer, s, &out_buffer, &new_size);
+            mz_free(buffer);
+            if (new_size < src_len)
+            {
+                memcpy(src - size_leanified, out_buffer, new_size);
+                delete[] out_buffer;
+                return new_size;
+            }
+            delete[] out_buffer;
+        }
+    }
+
+    memmove(src - size_leanified, src, src_len);
+    return src_len;
+}

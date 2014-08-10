@@ -73,7 +73,7 @@ void PauseIfNotTerminal()
 void PrintInfo()
 {
     std::cout << "Leanify\t" << VERSION << std::endl << std::endl;
-    std::cout << "Usage: Leanify [options] path" << std::endl;
+    std::cout << "Usage: Leanify [options] paths" << std::endl;
     std::cout << "  -i iteration\tMore iterations means slower but better result. Default: 15." << std::endl;
     std::cout << "  -f\t\tFast mode, no recompression." << std::endl;
     std::cout << "  -q\t\tQuiet mode, no output." << std::endl;

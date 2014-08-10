@@ -8,8 +8,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 {
     if (!is_recompress && *fp != 'F')
     {
-        Move(size_leanified);
-        return size;
+        return Move(size_leanified);
     }
 
     unsigned char *in_buffer = (unsigned char *)fp + 8;
@@ -29,8 +28,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "SWF file corrupted!" << std::endl;
             mz_free(in_buffer);
-            Move(size_leanified);
-            return size;
+            return Move(size_leanified);
         }
     }
     else if (*fp == 'Z')
@@ -50,8 +48,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "SWF file corrupted!" << std::endl;
             delete[] dst_buffer;
-            Move(size_leanified);
-            return size;
+            return Move(size_leanified);
         }
         in_buffer = dst_buffer;
     }
@@ -60,6 +57,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         std::cout << "SWF is not compressed." << std::endl;
     }
 
+    // parsing SWF tags
     unsigned char *p = in_buffer + 13;      // skip FrameSize(9B) + FrameRate(2B) + FrameCount(2B) = 13B
     size_t tag_size_leanified = 0;
     do
@@ -87,6 +85,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         {
             // move header
             size_t header_size = 7 + (p[3] == 3);
+            if (is_verbose)
+            {
+                std::cout << "DefineBitsLossless tag found." << std::endl;
+            }
             if (tag_size_leanified)
             {
                 memmove(p - tag_size_leanified, p, header_size);
@@ -101,6 +103,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         }
         case 21:    // DefineBitsJPEG2
         {
+            if (is_verbose)
+            {
+                std::cout << "DefineBitsJPEG2 tag found." << std::endl;
+            }
             // copy id
             *(uint16_t *)(p - tag_size_leanified) = *(uint16_t *)p;
 
@@ -121,6 +127,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             uint32_t img_size = *(uint32_t *)(p + 2);
             size_t header_size = tag_type == 90 ? 8 : 6;
 
+            if (is_verbose)
+            {
+                std::cout << "DefineBitsJPEG" << header_size / 2 << " tag found." << std::endl;
+            }
             // Leanify embedded image
             size_t new_img_size = LeanifyFile(p + header_size, img_size, tag_size_leanified);
             *(uint32_t *)(p + 2 - tag_size_leanified) = new_img_size;
@@ -138,6 +148,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             *p &= ~(1 << 4);    // set HasMetadata bit to 0
             break;
         case 77:    // Metadata
+            if (is_verbose)
+            {
+                std::cout << "Metadata removed." << std::endl;
+            }
             tag_size_leanified += tag_length + tag_header_length;
             p += tag_length;
             continue;
@@ -167,7 +181,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         return size;
     }
 
-    // recompress
+    // compress with LZMA
     size_t s = in_len, props = LZMA_PROPS_SIZE;
     unsigned char *dst = new unsigned char[in_len + LZMA_PROPS_SIZE];
     // have to set writeEndMark to true
@@ -221,44 +235,17 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     return size;
 }
 
-void Swf::Move(size_t size_leanified)
+size_t Swf::Move(size_t size_leanified)
 {
     if (size_leanified)
     {
         fp -= size_leanified;
         memmove(fp, fp + size_leanified, size);
     }
+    return size;
 }
 
-size_t Swf::ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified)
-{
-    size_t new_size = 0;
-    if (is_recompress)
-    {
-        size_t s = 0;
-        unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
 
-        unsigned char *out_buffer = NULL;
-        ZopfliZlibCompress(&zopfli_options, buffer, s, &out_buffer, &new_size);
-        mz_free(buffer);
-        if (new_size < src_len)
-        {
-            memcpy(src - size_leanified, out_buffer, new_size);
-        }
-        else
-        {
-            new_size = src_len;
-            memmove(src - size_leanified, src, src_len);
-        }
-        delete[] out_buffer;
-    }
-    else
-    {
-        new_size = src_len;
-        memmove(src - size_leanified, src, src_len);
-    }
-    return new_size;
-}
 
 void Swf::UpdateTagLength(unsigned char *tag_content, size_t header_length, size_t new_length)
 {

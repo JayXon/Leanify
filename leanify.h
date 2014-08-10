@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include "formats/zopfli/zlib_container.h"
+
 #include "formats/format.h"
 #include "formats/gft.h"
 #include "formats/gz.h"
@@ -17,6 +19,8 @@
 
 
 size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified = 0);
+
+size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified = 0);
 
 
 #endif

@@ -149,13 +149,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 
 
             // recompress
-            ZopfliOptions options;
-            ZopfliInitOptions(&options);
-            options.numiterations = iterations;
-
             unsigned char bp = 0, *out = NULL;
             size_t outsize = 0;
-            ZopfliDeflate(&options, 2, 1, buffer, new_uncompressed_size, &bp, &out, &outsize);
+            ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncompressed_size, &bp, &out, &outsize);
 
 
             if (outsize < original_compressed_size)
