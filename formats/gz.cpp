@@ -87,10 +87,10 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (outsize < original_size)
     {
-        *(uint32_t *)p_write = crc32(0, buffer, uncompressed_size);
-        *(uint32_t *)(p_write + 4) = uncompressed_size;
         memcpy(p_write, out, outsize);
         p_write += outsize;
+        *(uint32_t *)p_write = crc32(0, buffer, uncompressed_size);
+        *(uint32_t *)(p_write + 4) = uncompressed_size;
     }
     else
     {
