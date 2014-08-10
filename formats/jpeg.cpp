@@ -1,7 +1,7 @@
 #include "jpeg.h"
 
 
-const unsigned char Jpeg::header_magic[] = { 0xFF, 0xD8 };
+const unsigned char Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
 jmp_buf Jpeg::setjmp_buffer = {};
 
 void my_error_exit(j_common_ptr cinfo)
