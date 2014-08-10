@@ -216,9 +216,6 @@
     <ClCompile Include="formats\mozjpeg\jidctflt.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jidctfst.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
-    </ClCompile>
     <ClCompile Include="formats\mozjpeg\jdsample.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
@@ -226,9 +223,6 @@
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="formats\mozjpeg\jquant2.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdmerge.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="formats\mozjpeg\jdmainct.c">
