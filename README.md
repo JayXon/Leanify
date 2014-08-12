@@ -44,7 +44,7 @@ File Formats
 
   Leanify the image inside.
   
-* **gzip file** (.gz)
+* **gzip file** (.gz, .tgz)
 
   Leanify file inside and recompress deflate stream.
   
@@ -70,7 +70,6 @@ File Formats
   * Local list
   * Upvalue list
 
-
 * **PNG image** (.png, .apng)
 
   Remove all ancillary chunks except for:
@@ -82,6 +81,10 @@ File Formats
   Optimize with ZopfliPNG.
 
 * **RDB archive** (.rdb, archive format found in Tencent QQ)
+
+  Leanify all files inside.
+
+* **tar archive** (.tar)
 
   Leanify all files inside.
   

@@ -11,7 +11,7 @@
 #include "fileio.h"
 
 
-#define VERSION "0.4.1"
+#define VERSION "0.4.2"
 
 
 bool is_recompress;

@@ -80,6 +80,22 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
     }
     else
     {
+        // tar file does not have header magic
+        // check file size
+        if (file_size > 512 && file_size % 512 == 0)
+        {
+            Tar t(file_pointer, file_size);
+            // checking first record checksum
+            if (t.IsValid())
+            {
+                if (is_verbose)
+                {
+                    std::cout << "tar detected." << std::endl;
+                }
+                return t.Leanify(size_leanified);
+            }
+        }
+
         // xml file does not have header magic to tell if it is a xml file.
         // have to try to parse and see if there is any errors.
         Xml x(file_pointer, file_size);

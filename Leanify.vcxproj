@@ -141,6 +141,7 @@
     <ClCompile Include="formats\png.cpp" />
     <ClCompile Include="formats\rdb.cpp" />
     <ClCompile Include="formats\swf.cpp" />
+    <ClCompile Include="formats\tar.cpp" />
     <ClCompile Include="formats\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="formats\xml.cpp" />
     <ClCompile Include="formats\zip.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="formats\png.h" />
     <ClInclude Include="formats\rdb.h" />
     <ClInclude Include="formats\swf.h" />
+    <ClInclude Include="formats\tar.h" />
     <ClInclude Include="formats\xml.h" />
     <ClInclude Include="formats\zip.h" />
     <ClInclude Include="leanify.h" />

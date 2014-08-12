@@ -1,3 +1,8 @@
+# 0.4.2 (not release yet)
+
++ Add support for tar.
+
+
 # 0.4.1 (2014-08-10)
 
 + Add support for JPEG.

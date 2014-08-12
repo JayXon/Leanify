@@ -13,6 +13,7 @@
 #include "formats/lua.h"
 #include "formats/png.h"
 #include "formats/swf.h"
+#include "formats/tar.h"
 #include "formats/rdb.h"
 #include "formats/xml.h"
 #include "formats/zip.h"
