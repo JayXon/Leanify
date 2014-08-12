@@ -7,11 +7,10 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
     fp -= size_leanified;
     char *p_write = fp;
     level++;
-    int checksum = 0;
 
     do
     {
-        checksum = CalcChecksum((unsigned char *)p_read);
+        int checksum = CalcChecksum((unsigned char *)p_read);
         // 256 means the record is all 0
         if (checksum == 256)
         {
@@ -22,14 +21,14 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
             memmove(p_write, p_read, 512);
         }
         p_read += 512;
-        if (checksum != GetOctalNum(p_write + 148))
+        if (checksum != strtol(p_write + 148, nullptr, 8))
         {
             std::cout << "Checksum does not match!" << std::endl;
             p_write += 512;
             continue;
         }
         char type = *(p_write + 156);
-        size_t original_size = GetOctalNum(p_write + 124);
+        size_t original_size = strtol(p_write + 124, nullptr, 8);
         // align to 512
         size_t size_aligned = ((original_size - 1) & ~0x1FF) + 0x200;
         if (original_size)
@@ -110,10 +109,3 @@ int Tar::CalcChecksum(unsigned char *header) const
 }
 
 
-
-size_t Tar::GetOctalNum(char *p) const
-{
-    int n;
-    sscanf(p, "%o", &n);
-    return n;
-}

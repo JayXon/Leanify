@@ -24,13 +24,11 @@ public:
 
     bool IsValid() const
     {
-        return CalcChecksum((unsigned char *)fp) == GetOctalNum(fp + 148);
+        return CalcChecksum((unsigned char *)fp) == strtol(fp + 148, nullptr, 8);
     }
 
 private:
     int CalcChecksum(unsigned char *header) const;
-
-    size_t GetOctalNum(char *p) const;
 
 };
 
