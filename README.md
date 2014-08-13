@@ -4,8 +4,7 @@ Leanify [![Build Status](https://travis-ci.org/JayXon/Leanify.svg)](https://trav
 Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessary data (debug information, comments, metadata, etc.) and recompress the file to reduce file size. It will not reduce image quality at all.
 
 
-Features
-========
+##Features
 
 * Support recursive minifying. (e.g. a [PNG] inside an [APK] inside a [ZIP])
 * Support a wide variety of file formats.
@@ -16,21 +15,17 @@ Features
 * Identify file format by its data instead of name.
 
 
-Disclaimer
-==========
+##Disclaimer
 
 I'm not respossible for any consequence of using Leanify.
 
 **PLEASE BACKUP THE FILE BEFORE USING LEANIFY!**
 
 
-File Formats
-============
-
-##Supported:
+##File Formats
 
 
-###APK file (.apk)
+####APK file (.apk)
 
 It is based on [ZIP].
   
@@ -38,55 +33,55 @@ Note that modifying files inside `APK` will break digital signature.
 To install it, you'll have to sign it again.
 
 
-###Comic book archive (.cbt, .cbz)
+####Comic book archive (.cbt, .cbz)
 
 `cbt` is based on [tar]. `cbz` is based on [ZIP].
 
 
-###Microsoft Office document 2007-2013 (.docx, .xlsx, .pptx)
+####Microsoft Office document 2007-2013 (.docx, .xlsx, .pptx)
 
 It is based on [XML] and [ZIP].
 
 Office document 1997-2003 (.doc, .xls, .ppt) is not supported.
 
 
-###EPUB file (.epub)
+####EPUB file (.epub)
 
 It is based on [ZIP].
 
 
-###GFT file (.gft)
+####GFT file (.gft)
 
 It's an image container format found in Tencent QQ.
 
 Leanify the image inside.
 
 
-###gzip file (.gz, .tgz, .svgz)
+####gzip file (.gz, .tgz, .svgz)
 
 Leanify file inside and recompress deflate stream.
   
 Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
 
 
-###Icon file (.ico)
+####Icon file (.ico)
 
 Leanify [PNG] inside if any.
 
 
-###Java archive (.jar)
+####Java archive (.jar)
 
 It is based on [ZIP].
 
 
-###JPEG image (.jpeg, .jpg, .jpe, .jif, .jfif, .jfi, .thm)
+####JPEG image (.jpeg, .jpg, .jpe, .jif, .jfif, .jfi, .thm)
 
 Remove all Application Marker (e.g. `Exif`) and comments.
 
 Optimize with `mozjpeg`.
 
 
-###Lua object file (.lua, .luac)
+####Lua object file (.lua, .luac)
 
 Remove all debugging information:
 
@@ -97,12 +92,12 @@ Remove all debugging information:
 * Upvalue list
 
 
-###OpenDocument (.odt, .ods, .odp, .odb, .odg, .odf)
+####OpenDocument (.odt, .ods, .odp, .odb, .odg, .odf)
 
 It is based on [XML] and [ZIP].
 
 
-###PNG image (.png, .apng)
+####PNG image (.png, .apng)
 
 Remove all ancillary chunks except for:
   
@@ -113,14 +108,14 @@ Remove all ancillary chunks except for:
 Optimize with `ZopfliPNG`.
 
 
-###RDB archive (.rdb)
+####RDB archive (.rdb)
 
 It is an archive format found in Tencent QQ.
 
 Leanify all files inside.
 
 
-###Flash file (.swf)
+####Flash file (.swf)
 
 Leanify embedded images.
 
@@ -129,22 +124,22 @@ Recompress it with `LZMA`.
 Remove Metadata Tag.
 
 
-###SVG image (.svg)
+####SVG image (.svg)
  
 It is based on [XML].
 
 
-###tar archive (.tar)
+####tar archive (.tar)
 
 Leanify all files inside.
 
 
-###XML document (.xml, .xsl, .xslt)
+####XML document (.xml, .xsl, .xslt)
 
 Remove all comments, unnecessary spaces, tabs, enters.
 
 
-###XPInstall (.xpi)
+####XPInstall (.xpi)
 
 It is based on [ZIP].
 
@@ -152,12 +147,12 @@ Note that modifying files inside `xpi` will break digital signature if exist.
 To install it, you'll have to either delete the META-INF folder inside `xpi` or sign it again.
 
 
-###XPS document (.xps, .oxps)
+####XPS document (.xps, .oxps)
 
 It is based on [XML] and [ZIP].
 
 
-###ZIP archive (.zip)
+####ZIP archive (.zip)
 
 Leanify all files inside and recompress deflate stream.
   
@@ -171,30 +166,47 @@ Remove comment in `End of central directory record`.
 
 
 
-##TODO:
+##To do list
 
 
-###BMP image (.bmp, .dib)
+####BMP image (.bmp, .dib)
 
 
-###PE file (.exe, .dll, .sys, .ocx, .scr)
+####PE file (.exe, .dll, .sys, .ocx, .scr)
 
 Remove `.reloc` in `exe` file.
 
 
-###Microsoft Compound File Binary
+####Microsoft Compound File Binary
 
 
 
-Downloads
-=========
+##Downloads
 
 https://github.com/JayXon/Leanify/releases/
 
 
+##Compiling
 
-Usage
-=====
+####Windows
+
+* Visual Studio
+
+  Use Leanify.vcxproj
+
+* gcc
+
+  run build_gcc.bat
+
+
+####Mac, Linux
+
+```
+make
+```
+
+
+##Usage
 
 ```
 Usage: Leanify [options] path1 path2 path3 ...
@@ -206,8 +218,8 @@ Usage: Leanify [options] path1 path2 path3 ...
 
 
 
-License
-=======
+##License
+
 Leanify is released under the [MIT License](LICENSE).
 
 
