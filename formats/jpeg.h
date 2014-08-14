@@ -12,7 +12,7 @@
 #include "format.h"
 
 
-extern bool is_recompress;
+extern bool is_fast;
 extern bool is_verbose;
 
 class Jpeg : Format

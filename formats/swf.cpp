@@ -6,7 +6,7 @@ const unsigned char Swf::header_magic_lzma[] = { 'Z', 'W', 'S' };
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 {
-    if (!is_recompress && *fp != 'F')
+    if (is_fast && *fp != 'F')
     {
         return Move(size_leanified);
     }
@@ -165,7 +165,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 
     in_len -= tag_size_leanified;
 
-    if (!is_recompress)
+    if (is_fast)
     {
         // write header
         fp -= size_leanified;

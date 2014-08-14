@@ -13,7 +13,7 @@
 #include "format.h"
 #include "../leanify.h"
 
-extern bool is_recompress;
+extern bool is_fast;
 extern int iterations;
 
 class Gz : Format

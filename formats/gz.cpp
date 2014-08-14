@@ -51,7 +51,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         p_read += 2;
     }
 
-    if (!is_recompress)
+    if (is_fast)
     {
         memmove(p_write, p_read, fp + size - p_read);
         return size - (p_read - p_write);

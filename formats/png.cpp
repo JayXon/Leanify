@@ -95,7 +95,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     fp -= size_leanified;
     uint32_t png_size = p_write - fp;
 
-    if (is_recompress)
+    if (!is_fast)
     {
         ZopfliPNGOptions zopflipng_options;
         zopflipng_options.lossy_transparent = true;

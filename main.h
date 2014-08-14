@@ -14,7 +14,7 @@
 #define VERSION "0.4.2"
 
 
-bool is_recompress;
+bool is_fast;
 bool is_verbose;
 
 // iteration of zopfli

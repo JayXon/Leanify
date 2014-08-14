@@ -90,7 +90,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         // if compression method is not deflate or fast mode
         // then only Leanify embedded file if the method is store
         // otherwise just memmove the compressed part
-        if (compression_method != 8 || !is_recompress)
+        if (compression_method != 8 || is_fast)
         {
             if (compression_method == 0)
             {

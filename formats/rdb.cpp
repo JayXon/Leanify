@@ -9,7 +9,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
 {
     level++;
     char *p_read;
-    size_t new_size_leanified = 0;
+    size_t rdb_size_leanified = 0;
 
     // header
     p_read = fp;
@@ -45,7 +45,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
 
         uint64_t file_size = *(uint64_t *)(p_index + 8);
 
-        *(uint64_t *)p_index -= new_size_leanified;
+        *(uint64_t *)p_index -= rdb_size_leanified;
 
         // skip directories
         if (!file_size)
@@ -62,17 +62,17 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         std::wcout << file_name << std::endl;
 
         // Leanify inner file
-        size_t new_size = LeanifyFile(p_read, (size_t)file_size, new_size_leanified + size_leanified);
+        size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified);
         if (new_size != file_size)
         {
             *(uint64_t *)(p_index + 8) = new_size;
-            new_size_leanified += (size_t)file_size - new_size;
+            rdb_size_leanified += (size_t)file_size - new_size;
         }
 
         p_read += file_size;
 
         p_index += 16;
     }
-
-    return p_read - fp - size_leanified - new_size_leanified;
+    size = p_read - fp - size_leanified - rdb_size_leanified;
+    return size;
 }

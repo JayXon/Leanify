@@ -98,7 +98,7 @@ int main(int argc, char const *argv[])
 
         return 1;
     }
-    is_recompress = true;
+    is_fast = false;
     is_verbose = false;
     iterations = 15;
     level = 0;
@@ -113,7 +113,7 @@ int main(int argc, char const *argv[])
             {
             case 'f':
             case 'F':
-                is_recompress = false;
+                is_fast = true;
                 break;
             case 'i':
             case 'I':
@@ -139,9 +139,13 @@ int main(int argc, char const *argv[])
                 std::wcout.setstate(std::ios::failbit);
                 std::cout.setstate(std::ios::failbit);
                 std::cerr.setstate(std::ios::failbit);
+                is_verbose = false;
                 break;
             case 'v':
             case 'V':
+                std::wcout.clear();
+                std::cout.clear();
+                std::cerr.clear();
                 is_verbose = true;
                 break;
             default:
@@ -169,21 +173,15 @@ int main(int argc, char const *argv[])
     // support multiple input file
     do 
     {
-#ifdef _WIN32
-        wchar_t *file_path = argv[i];
-#else
-        const char *file_path = argv[i];
-#endif // _WIN32
-
-        if (IsDirectory(file_path))
+        if (IsDirectory(argv[i]))
         {
             // directory
-            TraverseDirectory(file_path, ProcessFile);
+            TraverseDirectory(argv[i], ProcessFile);
         }
         else
         {
             // file
-            ProcessFile(file_path);
+            ProcessFile(argv[i]);
         }
 
     } while (++i < argc);

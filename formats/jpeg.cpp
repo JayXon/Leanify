@@ -43,7 +43,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 
     jpeg_create_compress(&dstinfo);
 
-    dstinfo.use_moz_defaults = is_recompress;
+    dstinfo.use_moz_defaults = !is_fast;
 
     if (is_verbose)
     {

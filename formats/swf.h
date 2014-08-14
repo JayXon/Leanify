@@ -14,7 +14,7 @@
 #include "../leanify.h"
 
 extern bool is_verbose;
-extern bool is_recompress;
+extern bool is_fast;
 extern int iterations;
 
 class Swf : Format

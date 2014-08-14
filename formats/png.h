@@ -22,7 +22,7 @@
 #endif
 
 
-extern bool is_recompress;
+extern bool is_fast;
 extern bool is_verbose;
 extern int iterations;
 

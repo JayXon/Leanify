@@ -10,7 +10,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "PNG detected." << std::endl;
         }
-        return Png(file_pointer).Leanify(size_leanified);
+        return Png(file_pointer, file_size).Leanify(size_leanified);
     }
     else if (!memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)))
     {
@@ -26,7 +26,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "Lua detected." << std::endl;
         }
-        return Lua(file_pointer).Leanify(size_leanified);
+        return Lua(file_pointer, file_size).Leanify(size_leanified);
     }
     else if (!memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)))
     {
@@ -50,7 +50,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "ICO detected." << std::endl;
         }
-        return Ico(file_pointer).Leanify(size_leanified);
+        return Ico(file_pointer, file_size).Leanify(size_leanified);
     }
     else if (!memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)))
     {
@@ -66,7 +66,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "RDB detected." << std::endl;
         }
-        return Rdb(file_pointer).Leanify(size_leanified);
+        return Rdb(file_pointer, file_size).Leanify(size_leanified);
     }
     else if (!memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) ||
              !memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) ||
@@ -81,7 +81,8 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
     else
     {
         // tar file does not have header magic
-        // check file size
+        // ustar is optional
+        // check file size first
         if (file_size > 512 && file_size % 512 == 0)
         {
             Tar t(file_pointer, file_size);
@@ -120,7 +121,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
 
 size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified /*= 0*/)
 {
-    if (is_recompress)
+    if (!is_fast)
     {
         size_t s = 0;
         unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
