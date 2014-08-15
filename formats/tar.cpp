@@ -48,7 +48,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
                 if (new_size < original_size)
                 {
                     // write new size
-                    sprintf(p_write + 124, "%011o", new_size);
+                    sprintf(p_write + 124, "%011o", (unsigned int)new_size);
 
                     // update checksum
                     sprintf(p_write + 148, "%06o", CalcChecksum((unsigned char *)p_write));

@@ -251,10 +251,10 @@ void Swf::UpdateTagLength(unsigned char *tag_content, size_t header_length, size
 {
     if (header_length == 6)
     {
-        *(uint32_t *)(tag_content - 4 ) = new_length;
+        *(uint32_t *)(tag_content - 4) = new_length;
     }
     else
     {
-        *(tag_content - 2) += new_length & 0x3F - *(tag_content - 2) & 0x3F;
+        *(tag_content - 2) += (new_length & 0x3F) - (*(tag_content - 2) & 0x3F);
     }
 }
