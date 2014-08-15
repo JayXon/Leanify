@@ -7,7 +7,7 @@ ZOPFLI_SRC      := ./formats/zopfli/hash.c ./formats/zopfli/squeeze.c ./formats/
 ZOPFLIPNG_SRC   := ./formats/zopflipng/lodepng/lodepng.cpp ./formats/zopflipng/lodepng/lodepng_util.cpp ./formats/zopflipng/zopflipng_lib.cc
 OBJS            := blocksplitter.o cache.o deflate.o gzip_container.o hash.o jaricom.o jcapimin.o jcarith.o jchuff.o jcmarker.o jcmaster.o jcomapi.o jcparam.o jcphuff.o jctrans.o jdapimin.o jdarith.o jdatadst.o jdatasrc.o jdcoefct.o jdcolor.o jddctmgr.o jdhuff.o jdinput.o jdmainct.o jdmarker.o jdmaster.o jdphuff.o jdpostct.o jdsample.o jdtrans.o jerror.o jidctflt.o jidctint.o jidctred.o jmemmgr.o jmemnobs.o jquant1.o jquant2.o jsimd_none.o jutils.o katajainen.o lodepng.o lodepng_util.o lz77.o miniz.o squeeze.o tinyxml2.o tree.o util.o zlib_container.o zopfli_lib.o zopflipng_lib.o Alloc.o LzFind.o LzmaDec.o LzmaEnc.o LzmaLib.o
 
-CFLAGS      := -Wall -O3
+CFLAGS      := -Wall -O3 -msse2 -mfpmath=sse
 
 .PHONY:     leanify clean
 
@@ -29,7 +29,7 @@ mozjpeg:    $(MOZJPEG_SRC)
 	touch $@
 
 zopfli:     $(ZOPFLI_SRC)
-	$(CC) -Wall -O2 -c $?
+	$(CC) $(CFLAGS:O3=O2) -c $?
 	touch $@
 
 zopflipng:  $(ZOPFLIPNG_SRC)
