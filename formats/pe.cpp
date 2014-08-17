@@ -34,13 +34,13 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         // Data Directories
         // PE32:    Magic number: 0x10B     Offset: 0x60
         // PE32+:   Magic number: 0x20B     Offset: 0x70
-        char *data_directories = optional_header + (*(uint16_t *)optional_header == 0x10B ? 0x60 : 0x70);
+        ImageDataDirectory *data_directories = (ImageDataDirectory *)(optional_header + (*(uint16_t *)optional_header == 0x10B ? 0x60 : 0x70));
 
         // Base Relocation Table VirtualAddress
-        uint32_t reloc_virtual_address = *(uint32_t *)(data_directories + 0x28);
-        *(uint32_t *)(data_directories + 0x28) = 0;
+        uint32_t reloc_virtual_address = data_directories[5].VirtualAddress;
+        data_directories[5].VirtualAddress = 0;
         // Base Relocation Table Size
-        *(uint32_t *)(data_directories + 0x2C) = 0;
+        data_directories[5].Size = 0;
 
         // Section Table
         ImageSectionHeader *section_table = (ImageSectionHeader *)(optional_header + pimage_file_header->SizeOfOptionalHeader);
@@ -63,23 +63,45 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 break;
             }
         }
+        uint32_t section_alignment = *(uint32_t *)(optional_header + 0x20);
+        // multiple of SectionAlignment
+        uint32_t reloc_virtual_size = (reloc_raw_size & ~(section_alignment - 1)) + section_alignment;
 
         // decrease SizeOfImage
-        *(uint32_t *)(optional_header + 0x38) -= reloc_raw_size;
-        // make it multiple of SectionAlignment
-        *(uint32_t *)(optional_header + 0x38) &= ~(*(uint32_t *)(optional_header + 0x20) - 1);
+        *(uint32_t *)(optional_header + 0x38) -= reloc_virtual_size;
 
         // set ASLR in DllCharacteristics to false
         // it seems this isn't necessary
         // *(uint16_t *)(optional_header + 0x46) &= ~0x0040;
 
+        
+
+        // move other section address forward if it is behind reloc
         for (int i = 0; i < pimage_file_header->NumberOfSections; i++)
         {
+            if (section_table[i].VirtualAddress > reloc_virtual_address)
+            {
+                // move rsrc
+                if (section_table[i].VirtualAddress == data_directories[2].VirtualAddress)
+                {
+                    MoveRSRC(fp + section_table[i].PointerToRawData, (ImageResourceDirectory *)(fp + section_table[i].PointerToRawData), reloc_virtual_size);
+                }
+                section_table[i].VirtualAddress -= reloc_virtual_size;
+            }
             if (section_table[i].PointerToRawData > reloc_raw_offset)
             {
                 section_table[i].PointerToRawData -= reloc_raw_size;
             }
         }
+        // do it with Data Directories too
+        for (int i = 0; i < 16; i++)
+        {
+            if (data_directories[i].VirtualAddress > reloc_virtual_address)
+            {
+                data_directories[i].VirtualAddress -= reloc_virtual_size;
+            }
+        }
+
         // move everything before reloc
         if (size_leanified)
         {
@@ -101,6 +123,24 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
     return size;
 
+}
+
+
+// decrease RVA inside rsrc section
+void Pe::MoveRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size)
+{
+    ImageResourceDirectoryEntry *entry = (ImageResourceDirectoryEntry *)((char *)res_dir + sizeof(ImageResourceDirectory));
+    for (int i = 0; i < res_dir->NumberOfNamedEntries + res_dir->NumberOfIdEntries; i++)
+    {
+        if (entry[i].DataIsDirectory)
+        {
+            MoveRSRC(rsrc, (ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), move_size);
+        }
+        else
+        {
+            *(uint32_t *)(rsrc + entry[i].OffsetToData) -= move_size;
+        }
+    }
 }
 
 
