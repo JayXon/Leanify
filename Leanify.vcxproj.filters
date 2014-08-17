@@ -261,6 +261,9 @@
     <ClCompile Include="formats\tar.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
+    <ClCompile Include="formats\pe.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -309,6 +312,9 @@
       <Filter>Header Files\formats</Filter>
     </ClInclude>
     <ClInclude Include="formats\tar.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\pe.h">
       <Filter>Header Files\formats</Filter>
     </ClInclude>
   </ItemGroup>

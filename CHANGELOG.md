@@ -2,6 +2,8 @@
 
 + Add support for tar.
 
++ Add support for PE.
+
 
 # 0.4.1 (2014-08-10)
 

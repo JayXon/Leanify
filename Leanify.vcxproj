@@ -138,6 +138,7 @@
     <ClCompile Include="formats\mozjpeg\jquant2.c" />
     <ClCompile Include="formats\mozjpeg\jsimd_none.c" />
     <ClCompile Include="formats\mozjpeg\jutils.c" />
+    <ClCompile Include="formats\pe.cpp" />
     <ClCompile Include="formats\png.cpp" />
     <ClCompile Include="formats\rdb.cpp" />
     <ClCompile Include="formats\swf.cpp" />
@@ -172,6 +173,7 @@
     <ClInclude Include="formats\ico.h" />
     <ClInclude Include="formats\jpeg.h" />
     <ClInclude Include="formats\lua.h" />
+    <ClInclude Include="formats\pe.h" />
     <ClInclude Include="formats\png.h" />
     <ClInclude Include="formats\rdb.h" />
     <ClInclude Include="formats\swf.h" />

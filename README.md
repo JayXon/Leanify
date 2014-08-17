@@ -97,6 +97,11 @@ Remove all debugging information:
 It is based on [XML] and [ZIP].
 
 
+####PE file (.exe, .dll, .sys, .ocx, .scr, .cpl)
+
+Remove `Base Relocation Table` in executable file.
+
+
 ####PNG image (.png, .apng)
 
 Remove all ancillary chunks except for:
@@ -170,11 +175,6 @@ Remove comment in `End of central directory record`.
 
 
 ####BMP image (.bmp, .dib)
-
-
-####PE file (.exe, .dll, .sys, .ocx, .scr)
-
-Remove `.reloc` in `exe` file.
 
 
 ####Microsoft Compound File Binary

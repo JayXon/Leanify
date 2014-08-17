@@ -36,6 +36,14 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Zip(file_pointer, file_size).Leanify(size_leanified);
     }
+    else if (!memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)))
+    {
+        if (is_verbose)
+        {
+            std::cout << "PE detected." << std::endl;
+        }
+        return Pe(file_pointer, file_size).Leanify(size_leanified);
+    }
     else if (!memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)))
     {
         if (is_verbose)

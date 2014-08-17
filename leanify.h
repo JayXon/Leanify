@@ -11,6 +11,7 @@
 #include "formats/ico.h"
 #include "formats/jpeg.h"
 #include "formats/lua.h"
+#include "formats/pe.h"
 #include "formats/png.h"
 #include "formats/swf.h"
 #include "formats/tar.h"
