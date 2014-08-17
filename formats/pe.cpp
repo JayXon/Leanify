@@ -66,6 +66,12 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
         // decrease SizeOfImage
         *(uint32_t *)(optional_header + 0x38) -= reloc_raw_size;
+        // make it multiple of SectionAlignment
+        *(uint32_t *)(optional_header + 0x38) &= ~(*(uint32_t *)(optional_header + 0x20) - 1);
+
+        // set ASLR in DllCharacteristics to false
+        // it seems this isn't necessary
+        // *(uint16_t *)(optional_header + 0x46) &= ~0x0040;
 
         for (int i = 0; i < pimage_file_header->NumberOfSections; i++)
         {
