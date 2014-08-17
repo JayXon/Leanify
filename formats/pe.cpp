@@ -30,6 +30,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         pimage_file_header->Characteristics |= 0x0001;
 
         char *optional_header = (char *)pimage_file_header + sizeof(ImageFileHeader);
+        uint32_t section_alignment = *(uint32_t *)(optional_header + 0x20);
 
         // Data Directories
         // PE32:    Magic number: 0x10B     Offset: 0x60
@@ -38,9 +39,14 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
         // Base Relocation Table VirtualAddress
         uint32_t reloc_virtual_address = data_directories[5].VirtualAddress;
-        data_directories[5].VirtualAddress = 0;
-        // Base Relocation Table Size
-        data_directories[5].Size = 0;
+        // test if it is a valid address
+        // some PE will use this space for other purpose
+        if (reloc_virtual_address % section_alignment == 0 && data_directories[5].Size < size)
+        {
+            data_directories[5].VirtualAddress = 0;
+            // Base Relocation Table Size
+            data_directories[5].Size = 0;
+        }
 
         // Section Table
         ImageSectionHeader *section_table = (ImageSectionHeader *)(optional_header + pimage_file_header->SizeOfOptionalHeader);
@@ -63,42 +69,44 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 break;
             }
         }
-        uint32_t section_alignment = *(uint32_t *)(optional_header + 0x20);
-        // multiple of SectionAlignment
-        uint32_t reloc_virtual_size = (reloc_raw_size & ~(section_alignment - 1)) + section_alignment;
-
-        // decrease SizeOfImage
-        *(uint32_t *)(optional_header + 0x38) -= reloc_virtual_size;
-
-        // set ASLR in DllCharacteristics to false
-        // it seems this isn't necessary
-        // *(uint16_t *)(optional_header + 0x46) &= ~0x0040;
-
-        
-
-        // move other section address forward if it is behind reloc
-        for (int i = 0; i < pimage_file_header->NumberOfSections; i++)
+        if (reloc_raw_size)
         {
-            if (section_table[i].VirtualAddress > reloc_virtual_address)
+            // multiple of SectionAlignment
+            uint32_t reloc_virtual_size = ((reloc_raw_size - 1) & ~(section_alignment - 1)) + section_alignment;
+
+            // decrease SizeOfImage
+            *(uint32_t *)(optional_header + 0x38) -= reloc_virtual_size;
+
+            // set ASLR in DllCharacteristics to false
+            // it seems this isn't necessary
+            // *(uint16_t *)(optional_header + 0x46) &= ~0x0040;
+
+
+
+            // move other section address forward if it is behind reloc
+            for (int i = 0; i < pimage_file_header->NumberOfSections; i++)
             {
-                // move rsrc
-                if (section_table[i].VirtualAddress == data_directories[2].VirtualAddress)
+                if (section_table[i].VirtualAddress > reloc_virtual_address)
                 {
-                    MoveRSRC(fp + section_table[i].PointerToRawData, (ImageResourceDirectory *)(fp + section_table[i].PointerToRawData), reloc_virtual_size);
+                    // move rsrc
+                    if (section_table[i].VirtualAddress == data_directories[2].VirtualAddress)
+                    {
+                        MoveRSRC(fp + section_table[i].PointerToRawData, (ImageResourceDirectory *)(fp + section_table[i].PointerToRawData), reloc_virtual_size);
+                    }
+                    section_table[i].VirtualAddress -= reloc_virtual_size;
                 }
-                section_table[i].VirtualAddress -= reloc_virtual_size;
+                if (section_table[i].PointerToRawData > reloc_raw_offset)
+                {
+                    section_table[i].PointerToRawData -= reloc_raw_size;
+                }
             }
-            if (section_table[i].PointerToRawData > reloc_raw_offset)
+            // do it with Data Directories too
+            for (int i = 0; i < 16; i++)
             {
-                section_table[i].PointerToRawData -= reloc_raw_size;
-            }
-        }
-        // do it with Data Directories too
-        for (int i = 0; i < 16; i++)
-        {
-            if (data_directories[i].VirtualAddress > reloc_virtual_address)
-            {
-                data_directories[i].VirtualAddress -= reloc_virtual_size;
+                if (data_directories[i].VirtualAddress > reloc_virtual_address)
+                {
+                    data_directories[i].VirtualAddress -= reloc_virtual_size;
+                }
             }
         }
 
