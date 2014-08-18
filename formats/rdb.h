@@ -5,6 +5,12 @@
 #include <cstring>
 #include <cstdint>
 
+#ifdef _WIN32
+#include <Windows.h>    // WideCharToMultiByte
+#else
+#include <iconv.h>      // convert UTF16 to UTF8 on non Windows
+#endif
+
 #include "format.h"
 #include "../leanify.h"
 

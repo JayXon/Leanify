@@ -34,14 +34,16 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
     for (uint32_t i = 0; i < file_num; i++)
     {
         // index
-        // note that on linux wchar_t is 4 bytes instead of 2
-        // so this won't work correctly
-        // will change to char16_t later
         wchar_t *file_name = (wchar_t *)p_index;
 
-
-        p_index += (wcslen(file_name) + 1) * 2;
-
+        // note that on Linux wchar_t is 4 bytes instead of 2
+        // so I can't use wcslen
+        // p_index += (wcslen(file_name) + 1) * 2;
+        while (*(uint16_t *)p_index)
+        {
+            p_index += 2;
+        }
+        p_index += 2;
 
         uint64_t file_size = *(uint64_t *)(p_index + 8);
 
@@ -59,7 +61,22 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "-> ";
         }
-        std::wcout << file_name << std::endl;
+
+        // these two lines will make executable 100k larger on win, unacceptable
+        // std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conversion;
+        // std::string mbs = conversion.to_bytes(file_name);
+        char mbs[256] = { 0 };
+#ifdef _WIN32
+        WideCharToMultiByte(CP_ACP, 0, file_name, -1, mbs, sizeof(mbs), nullptr, nullptr);
+#else
+        size_t srclen = p_index - (char *)file_name;
+        size_t dstlen = 256;
+        char *dst = mbs;
+        iconv_t conv = iconv_open("UTF-8", "UTF-16");
+        iconv(conv, (char **)&file_name, &srclen, &dst, &dstlen);
+        iconv_close(conv);
+#endif // _WIN32
+        std::cout << mbs << std::endl;
 
         // Leanify inner file
         size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified);

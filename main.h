@@ -4,8 +4,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <cstdio>
-#include <cmath>
 
 #include "leanify.h"
 #include "fileio.h"

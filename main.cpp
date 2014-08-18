@@ -18,9 +18,11 @@ void PrintSize(size_t size)
 
 
 #ifdef _WIN32
-int ProcessFile(const wchar_t file_path[])
+int ProcessFile(const wchar_t *file_path)
 {
-    std::wcout << L"Processing: " << file_path << std::endl;
+    char mbs[256] = { 0 };
+    WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs), nullptr, nullptr);
+    std::cout << "Processing: " << mbs << std::endl;
 #else
 // written like this in order to be callback funtion of ftw()
 int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typeflag = FTW_F)
@@ -136,14 +138,12 @@ int main(int argc, char const *argv[])
                 break;
             case 'q':
             case 'Q':
-                std::wcout.setstate(std::ios::failbit);
                 std::cout.setstate(std::ios::failbit);
                 std::cerr.setstate(std::ios::failbit);
                 is_verbose = false;
                 break;
             case 'v':
             case 'V':
-                std::wcout.clear();
                 std::cout.clear();
                 std::cerr.clear();
                 is_verbose = true;
