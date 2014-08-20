@@ -95,7 +95,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
-    uint32_t header_size_aligned = ((total_header_size - 1) & ~(optional_header->FileAlignment - 1)) + optional_header->FileAlignment;
+    uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
     // has to be multiple of FileAlignment
     size_t pe_size_leanified = 0;
     if (header_size_aligned < optional_header->SizeOfHeaders)
@@ -116,7 +116,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     if (reloc_raw_size)
     {
         // multiple of SectionAlignment
-        uint32_t reloc_virtual_size = ((reloc_raw_size - 1) & ~(optional_header->SectionAlignment - 1)) + optional_header->SectionAlignment;
+        uint32_t reloc_virtual_size = ((reloc_raw_size - 1) | (optional_header->SectionAlignment - 1)) + 1;
 
         // decrease SizeOfImage
         optional_header->SizeOfImage -= reloc_virtual_size;
