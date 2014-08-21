@@ -62,9 +62,13 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
     // Base Relocation Table VirtualAddress
     uint32_t reloc_virtual_address = data_directories[5].VirtualAddress;
+    uint32_t rsrc_virtual_address = data_directories[2].VirtualAddress;
 
     uint32_t reloc_raw_offset = 0;
     uint32_t reloc_raw_size = 0;
+    uint32_t rsrc_raw_offset = 0;
+    uint32_t rsrc_raw_size = 0;
+    uint32_t rsrc_virtual_size = 0;
 
     // 0x2000: IMAGE_FILE_DLL
     // only remove reloc section if it's not dll
@@ -72,10 +76,15 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     {
         // set IMAGE_FILE_RELOCS_STRIPPED
         image_file_header->Characteristics |= 0x0001;
+    }
 
-        for (int i = 0; i < image_file_header->NumberOfSections; i++)
+    // looking for reloc and rsrc in Section Table
+    for (int i = 0; i < image_file_header->NumberOfSections; i++)
+    {
+        if (section_table[i].VirtualAddress == reloc_virtual_address)
         {
-            if (section_table[i].VirtualAddress == reloc_virtual_address)
+            // if IMAGE_FILE_RELOCS_STRIPPED is set
+            if (image_file_header->Characteristics & 0x0001)
             {
                 reloc_raw_offset = section_table[i].PointerToRawData;
                 reloc_raw_size = section_table[i].SizeOfRawData;
@@ -90,17 +99,24 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 memmove(&section_table[i], &section_table[i + 1], sizeof(ImageSectionHeader) * (image_file_header->NumberOfSections - i));
 
                 total_header_size -= sizeof(ImageSectionHeader);
-                break;
+                i--;
             }
+        }
+        else if (section_table[i].VirtualAddress == rsrc_virtual_address)
+        {
+            rsrc_raw_offset = section_table[i].PointerToRawData;
+            rsrc_raw_size = section_table[i].SizeOfRawData;
+            rsrc_virtual_size = section_table[i].VirtualSize;
         }
     }
 
     uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
     // has to be multiple of FileAlignment
     size_t pe_size_leanified = 0;
+    size_t header_size_leanified = 0;
     if (header_size_aligned < optional_header->SizeOfHeaders)
     {
-        pe_size_leanified = optional_header->SizeOfHeaders - header_size_aligned;
+        header_size_leanified = pe_size_leanified = optional_header->SizeOfHeaders - header_size_aligned;
         optional_header->SizeOfHeaders = header_size_aligned;
     }
     
@@ -112,84 +128,201 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         memset(fp - size_leanified + total_header_size, 0, header_size_aligned - total_header_size);
     }
 
+    // multiple of SectionAlignment
+    uint32_t reloc_virtual_size = ((reloc_raw_size - 1) | (optional_header->SectionAlignment - 1)) + 1;
 
-    if (reloc_raw_size)
+    // set ASLR in DllCharacteristics to false
+    // it seems this isn't necessary
+    // *(uint16_t *)(optional_header + 0x46) &= ~0x0040;
+
+    uint32_t reloc_end = reloc_raw_offset + reloc_raw_size;
+    size_t rsrc_size_leanified = 0;
+    if (rsrc_raw_size)
     {
-        // multiple of SectionAlignment
-        uint32_t reloc_virtual_size = ((reloc_raw_size - 1) | (optional_header->SectionAlignment - 1)) + 1;
-
-        // decrease SizeOfImage
-        optional_header->SizeOfImage -= reloc_virtual_size;
-
-        // set ASLR in DllCharacteristics to false
-        // it seems this isn't necessary
-        // *(uint16_t *)(optional_header + 0x46) &= ~0x0040;
-
-
-        // move other section address forward if it is behind reloc
-        for (int i = 0; i < image_file_header->NumberOfSections; i++)
+        // decrease RVA inside rsrc section
+        if (rsrc_virtual_address > reloc_virtual_address)
         {
-            if (section_table[i].VirtualAddress > reloc_virtual_address)
-            {
-                // move rsrc
-                if (section_table[i].VirtualAddress == data_directories[2].VirtualAddress)
-                {
-                    MoveRSRC(fp + section_table[i].PointerToRawData, (ImageResourceDirectory *)(fp + section_table[i].PointerToRawData), reloc_virtual_size);
-                }
-                section_table[i].VirtualAddress -= reloc_virtual_size;
-            }
-            if (section_table[i].PointerToRawData > reloc_raw_offset)
-            {
-                section_table[i].PointerToRawData -= reloc_raw_size;
-            }
-            section_table[i].PointerToRawData -= pe_size_leanified;
+            TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset), reloc_virtual_size);
+            rsrc_virtual_address -= reloc_virtual_size;
+        }
+        else
+        {
+            // only save all the data addresses to vector
+            TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset));
         }
 
-        reloc_raw_offset -= pe_size_leanified;
+        // sort it according to it's data offset
+        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const uint32_t *a, const uint32_t *b){ return *a < *b; });
+        uint32_t last_end = rsrc_data[0][0];
 
-        // do it with Data Directories too
-        for (int i = 0; i < 16; i++)
+        // detect non standard resource, maybe produced by some packer
+        if (last_end < rsrc_virtual_address || last_end > rsrc_virtual_address + rsrc_virtual_size)
         {
-            if (data_directories[i].VirtualAddress > reloc_virtual_address)
+            if (is_verbose)
             {
-                data_directories[i].VirtualAddress -= reloc_virtual_size;
+                std::cout << "Non standard resource detected." << std::endl;
+            }
+            if (reloc_raw_size)
+            {
+                // move everything before reloc
+                memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, reloc_raw_offset - header_size_aligned);
+
+                // move everything after reloc
+                memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, size - reloc_raw_offset);
+                pe_size_leanified += reloc_raw_size;
+            }
+            else
+            {
+                memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, size - header_size_aligned - pe_size_leanified);
             }
         }
+        else
+        {
+
+            if (reloc_raw_size && reloc_raw_offset < rsrc_raw_offset)
+            {
+                // move everything before reloc
+                memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, reloc_raw_offset - header_size_aligned - pe_size_leanified);
+
+                // move things between reloc and first data of rsrc
+                memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, rsrc_raw_offset - reloc_end + rsrc_data[0][0] - rsrc_virtual_address);
+                pe_size_leanified += reloc_raw_size;
+
+            }
+            else
+            {
+                // move everything before first data of rsrc
+                memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, rsrc_raw_offset - pe_size_leanified - header_size_aligned + rsrc_data[0][0] - rsrc_virtual_address);
+            }
+
+            // p[0] is RVA, p[1] is size
+            for (auto &p : rsrc_data)
+            {
+                p -= pe_size_leanified / 4;
+                size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified);
+                p[0] = last_end;
+                rsrc_size_leanified += p[1] - new_size;
+                p[1] = new_size;
+                // it seems some of the resource has to be aligned to 8 in order to work
+                last_end += (new_size + 7) & ~7;
+            }
+
+            uint32_t rsrc_new_end = rsrc_raw_offset + *rsrc_data.back() - rsrc_virtual_address + *(rsrc_data.back() + 1);
+            uint32_t rsrc_new_end_aligned = ((rsrc_new_end - 1) | (optional_header->FileAlignment - 1)) + 1;
+            uint32_t rsrc_end = rsrc_raw_offset + rsrc_raw_size;
+            if (rsrc_new_end_aligned <= rsrc_end)
+            {
+                // fill the rest of rsrc with 0
+                memset(fp - size_leanified + rsrc_new_end - pe_size_leanified, 0, rsrc_new_end_aligned - rsrc_new_end);
+                rsrc_virtual_size = rsrc_new_end - rsrc_raw_offset;
+                rsrc_size_leanified = rsrc_raw_size - (rsrc_new_end_aligned - rsrc_raw_offset);
+                pe_size_leanified += rsrc_size_leanified;
+                rsrc_raw_size = rsrc_new_end_aligned - rsrc_raw_offset;
+            }
+            else
+            {
+                // this is necessary because some SizeOfRawData is not aligned
+                rsrc_new_end_aligned = rsrc_raw_offset + rsrc_raw_size;
+                rsrc_size_leanified = 0;
+            }
+            if (reloc_raw_size && reloc_raw_offset > rsrc_raw_offset)
+            {
+                memmove(fp - size_leanified + rsrc_end - pe_size_leanified, fp + rsrc_end, reloc_raw_offset - rsrc_end);
+                memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, size - reloc_end);
+                pe_size_leanified += reloc_raw_size;
+            }
+            else
+            {
+                memmove(fp - size_leanified + rsrc_end - pe_size_leanified, fp + rsrc_end, size - rsrc_end);
+            }
+        }
+
+    }
+    else if (reloc_raw_size)
+    {
+
+        // move everything before reloc
+        memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, reloc_raw_offset - header_size_aligned);
+
+        // move everything after reloc
+        memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, size - reloc_raw_offset);
+        pe_size_leanified += reloc_raw_size;
+    }
+    else
+    {
+        memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, size - header_size_aligned - pe_size_leanified);
+    }
+
+
+    // decrease SizeOfImage
+    int rsrc_decrease_size = ((data_directories[2].Size - 1) | (optional_header->SectionAlignment - 1)) - ((rsrc_virtual_size - 1) | (optional_header->SectionAlignment - 1));
+    if (rsrc_decrease_size < 0)
+    {
+        rsrc_decrease_size = 0;
+    }
+    optional_header->SizeOfImage -= reloc_virtual_size + rsrc_decrease_size;
+
+    // update Section Table
+    for (int i = 0; i < image_file_header->NumberOfSections; i++)
+    {
+        if (section_table[i].VirtualAddress > reloc_virtual_address)
+        {
+            section_table[i].VirtualAddress -= reloc_virtual_size;
+        }
+        if (section_table[i].VirtualAddress == rsrc_virtual_address)
+        {
+            section_table[i].SizeOfRawData = rsrc_raw_size;
+            section_table[i].VirtualSize = rsrc_virtual_size;
+        }
+        if (section_table[i].PointerToRawData > reloc_raw_offset)
+        {
+            section_table[i].PointerToRawData -= reloc_raw_size;
+        }
+        if (section_table[i].PointerToRawData > rsrc_raw_offset)
+        {
+            section_table[i].PointerToRawData -= rsrc_size_leanified;
+        }
+        section_table[i].PointerToRawData -= header_size_leanified;
+    }
+
+    // this can work on both PE32 and PE32+
+    int num_data_dir = *(uint32_t *)((char *)data_directories - 4);
+    // update Data Directories too
+    for (int i = 0; i < num_data_dir; i++)
+    {
+        if (data_directories[i].VirtualAddress > reloc_virtual_address)
+        {
+            data_directories[i].VirtualAddress -= reloc_virtual_size;
+        }
+    }
+
+    if (rsrc_decrease_size)
+    {
+        data_directories[2].Size = rsrc_virtual_size;
     }
 
     fp -= size_leanified;
     size -= pe_size_leanified;
-    if (reloc_raw_size)
-    {
-        // move everything before reloc
-        memmove(fp + header_size_aligned, fp + size_leanified + header_size_aligned + pe_size_leanified, reloc_raw_offset - header_size_aligned);
-
-        // move everything after reloc
-        size -= reloc_raw_size;
-        memmove(fp + reloc_raw_offset, fp + size_leanified + reloc_raw_offset + reloc_raw_size, size - reloc_raw_offset);
-    }
-    else
-    {
-        memmove(fp + header_size_aligned, fp + size_leanified + header_size_aligned + pe_size_leanified, size - header_size_aligned);
-    }
 
     return size;
 }
 
 
 // decrease RVA inside rsrc section
-void Pe::MoveRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size)
+void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size /*= 0*/)
 {
     ImageResourceDirectoryEntry *entry = (ImageResourceDirectoryEntry *)((char *)res_dir + sizeof(ImageResourceDirectory));
     for (int i = 0; i < res_dir->NumberOfNamedEntries + res_dir->NumberOfIdEntries; i++)
     {
         if (entry[i].DataIsDirectory)
         {
-            MoveRSRC(rsrc, (ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), move_size);
+            TraverseRSRC(rsrc, (ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), move_size);
         }
         else
         {
             *(uint32_t *)(rsrc + entry[i].OffsetToData) -= move_size;
+            // remember the address to Leanify resource file later
+            rsrc_data.push_back((uint32_t *)(rsrc + entry[i].OffsetToData));
         }
     }
 }

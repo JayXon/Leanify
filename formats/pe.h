@@ -6,12 +6,16 @@
 #include <cstring>
 #include <cstdint>
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 #include "format.h"
+#include "../leanify.h"
 
 // PE format specification
 // http://msdn.microsoft.com/en-us/gg463119.aspx
 
+extern bool is_verbose;
 
 class Pe : Format
 {
@@ -82,7 +86,7 @@ private:
         union {
             uint32_t    PhysicalAddress;
             uint32_t    VirtualSize;
-        } Misc;
+        };
         uint32_t    VirtualAddress;
         uint32_t    SizeOfRawData;
         uint32_t    PointerToRawData;
@@ -122,7 +126,9 @@ private:
     };
 
     // decrease RVA inside rsrc section
-    void MoveRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size);
+    void TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size = 0);
+
+    std::vector<uint32_t *> rsrc_data;
 };
 
 #endif
