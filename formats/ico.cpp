@@ -1,7 +1,7 @@
 #include "ico.h"
 
 
-const unsigned char Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00, };
+const unsigned char Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
 
 
 size_t Ico::Leanify(size_t size_leanified /*= 0*/)
@@ -9,7 +9,15 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
     // number of images inside ico file
     uint16_t n = *(uint16_t *)(fp + 4);
     char *p_index = fp - size_leanified + 6;
-    
+
+    // invalid Icon file
+    if (6 + n * 16U >= size || *(uint32_t *)(p_index + 8) + *(uint32_t *)(p_index + 12) > size)
+    {
+        fp -= size_leanified;
+        memmove(fp, fp + size_leanified, size);
+        return size;
+    }
+
     // move header
     if (size_leanified)
     {
