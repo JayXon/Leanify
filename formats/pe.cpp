@@ -296,7 +296,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
-    if (rsrc_decrease_size)
+    // the size in Data Directory can not larger than VirtualSize in Section Table
+    // but for some of the packed file, it will be much smaller
+    // so only update size in Data Directory if exe is not packed by these kind of packer
+    if (data_directories[2].Size > rsrc_virtual_size)
     {
         data_directories[2].Size = rsrc_virtual_size;
     }
