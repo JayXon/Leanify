@@ -1,4 +1,4 @@
-Leanify [![Build Status](https://img.shields.io/travis/JayXon/Leanify.svg?style=flat-square)](https://travis-ci.org/JayXon/Leanify)
+Leanify [![Build Status](https://img.shields.io/travis/JayXon/Leanify.svg?style=flat)](https://travis-ci.org/JayXon/Leanify) [![Latest Release](https://img.shields.io/github/release/JayXon/Leanify.svg?style=flat)](https://github.com/JayXon/Leanify/releases)
 =======
 
 Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessary data (debug information, comments, metadata, etc.) and recompress the file to reduce file size. It will not reduce image quality at all.
@@ -66,7 +66,7 @@ Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
 
 ####Icon file (.ico)
 
-Leanify [PNG] inside if any.
+Leanify [PNG] inside, if any.
 
 
 ####Java archive (.jar)
@@ -99,7 +99,13 @@ It is based on [XML] and [ZIP].
 
 ####PE file (.exe, .dll, .sys, .ocx, .scr, .cpl)
 
-Remove `Base Relocation Table` in executable file.
+Leanify embedded resource.
+
+Remove `Relocation Table` in executable file.
+
+Remove undocumented `Rich Header`.
+
+Overlap `PE Header` and `DOS Header`.
 
 
 ####PNG image (.png, .apng)
