@@ -15,7 +15,7 @@ leanify:    lzma miniz.o mozjpeg tinyxml2.o zopfli zopflipng
 	$(CXX) $(CFLAGS) --std=c++0x -Wno-multichar -s $(OBJS) $(LEANIFY_SRC) -o $@
 
 miniz.o:    $(MINIZ_SRC)
-	$(CC) $(CFLAGS) -Wstrict-aliasing -c $?
+	$(CC) $(CFLAGS) -Wno-strict-aliasing -c $?
 
 tinyxml2.o: $(TINYXML_SRC)
 	$(CXX) $(CFLAGS) -c $?
@@ -25,7 +25,7 @@ lzma:       $(LZMA_SRC)
 	touch $@
 
 mozjpeg:    $(MOZJPEG_SRC)
-	$(CC) $(CFLAGS) -Wattributes -c $?
+	$(CC) $(CFLAGS) -Wno-attributes -c $?
 	touch $@
 
 zopfli:     $(ZOPFLI_SRC)
