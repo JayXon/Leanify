@@ -228,9 +228,12 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             // if rsrc_correct_end_aligned != rsrc_end then there are extra data in rsrc section
             if (rsrc_new_end_aligned <= rsrc_end && rsrc_correct_end_aligned == rsrc_end)
             {
-                memmove(fp - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified, fp + rsrc_new_end + rsrc_size_leanified, rsrc_new_end_aligned - rsrc_new_end - rsrc_size_leanified);
+                if (rsrc_new_end_aligned > rsrc_new_end + rsrc_size_leanified)
+                {
+                    memmove(fp - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified, fp + rsrc_new_end + rsrc_size_leanified, rsrc_new_end_aligned - rsrc_new_end - rsrc_size_leanified);
+                }
                 rsrc_virtual_size = rsrc_new_end - rsrc_raw_offset;
-                rsrc_size_leanified = rsrc_raw_size - (rsrc_new_end_aligned - rsrc_raw_offset);
+                rsrc_size_leanified = rsrc_end - rsrc_new_end_aligned;
                 pe_size_leanified += rsrc_size_leanified;
                 rsrc_raw_size = rsrc_new_end_aligned - rsrc_raw_offset;
             }
