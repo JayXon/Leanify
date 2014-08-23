@@ -78,6 +78,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         image_file_header->Characteristics |= 0x0001;
     }
 
+    // Some PE have wrong SizeOfHeaders, e.g. files packed by UPX
+    // I have to find the smallest PointerToRawData in all sections
+    // If that is smaller than SizeOfHeaders, then that's the correct SizeOfHeaders
+    uint32_t correct_size_of_headers = optional_header->SizeOfHeaders;
+
     // looking for reloc and rsrc in Section Table
     for (int i = 0; i < image_file_header->NumberOfSections; i++)
     {
@@ -108,18 +113,23 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             rsrc_raw_size = section_table[i].SizeOfRawData;
             rsrc_virtual_size = section_table[i].VirtualSize;
         }
+        if (section_table[i].PointerToRawData < correct_size_of_headers)
+        {
+            correct_size_of_headers = section_table[i].PointerToRawData;
+        }
     }
 
     uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
     // has to be multiple of FileAlignment
     size_t pe_size_leanified = 0;
     size_t header_size_leanified = 0;
-    if (header_size_aligned < optional_header->SizeOfHeaders)
+
+    if (header_size_aligned < correct_size_of_headers)
     {
-        header_size_leanified = pe_size_leanified = optional_header->SizeOfHeaders - header_size_aligned;
+        header_size_leanified = pe_size_leanified = correct_size_of_headers - header_size_aligned;
         optional_header->SizeOfHeaders = header_size_aligned;
     }
-    
+
     // fill the rest of the headers with 0
     // only if PE Header offset has changed
     if (pe_header_offset >= 0x40)
@@ -210,10 +220,13 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             uint32_t rsrc_new_end = rsrc_raw_offset + *rsrc_data.back() - rsrc_virtual_address + *(rsrc_data.back() + 1);
             uint32_t rsrc_new_end_aligned = ((rsrc_new_end - 1) | (optional_header->FileAlignment - 1)) + 1;
             uint32_t rsrc_end = rsrc_raw_offset + rsrc_raw_size;
+
+            // fill the rest of rsrc with 0
+            memset(fp - size_leanified + rsrc_new_end - pe_size_leanified, 0, rsrc_size_leanified);
+
             if (rsrc_new_end_aligned <= rsrc_end)
             {
-                // fill the rest of rsrc with 0
-                memset(fp - size_leanified + rsrc_new_end - pe_size_leanified, 0, rsrc_new_end_aligned - rsrc_new_end);
+                memmove(fp - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified, fp + rsrc_new_end + rsrc_size_leanified, rsrc_new_end_aligned - rsrc_new_end - rsrc_size_leanified);
                 rsrc_virtual_size = rsrc_new_end - rsrc_raw_offset;
                 rsrc_size_leanified = rsrc_raw_size - (rsrc_new_end_aligned - rsrc_raw_offset);
                 pe_size_leanified += rsrc_size_leanified;
