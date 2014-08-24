@@ -209,12 +209,14 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             for (auto &p : rsrc_data)
             {
                 p -= pe_size_leanified / 4;
-                size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified);
+                size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified + size_leanified);
                 p[0] = last_end;
                 rsrc_size_leanified += p[1] - new_size;
                 p[1] = new_size;
                 // it seems some of the resource has to be aligned to 8 in order to work
                 last_end += (new_size + 7) & ~7;
+                // fill the gap with 0
+                memset(fp - size_leanified + rsrc_raw_offset + p[0] + new_size - rsrc_virtual_address - pe_size_leanified, 0, last_end - p[0] - new_size);
             }
 
             uint32_t rsrc_new_end = rsrc_raw_offset + *rsrc_data.back() - rsrc_virtual_address + *(rsrc_data.back() + 1);
