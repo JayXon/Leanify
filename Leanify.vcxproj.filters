@@ -264,6 +264,9 @@
     <ClCompile Include="formats\pe.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -316,6 +319,9 @@
     </ClInclude>
     <ClInclude Include="formats\pe.h">
       <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

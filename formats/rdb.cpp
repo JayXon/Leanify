@@ -66,16 +66,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         // std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conversion;
         // std::string mbs = conversion.to_bytes(file_name);
         char mbs[256] = { 0 };
-#ifdef _WIN32
-        WideCharToMultiByte(CP_ACP, 0, file_name, -1, mbs, sizeof(mbs), nullptr, nullptr);
-#else
-        size_t srclen = p_index - (char *)file_name;
-        size_t dstlen = 256;
-        char *dst = mbs;
-        iconv_t conv = iconv_open("UTF-8", "UTF-16");
-        iconv(conv, (char **)&file_name, &srclen, &dst, &dstlen);
-        iconv_close(conv);
-#endif // _WIN32
+        UTF16toMBS(file_name, p_index - (char *)file_name, mbs, sizeof(mbs));
         std::cout << mbs << std::endl;
 
         // Leanify inner file

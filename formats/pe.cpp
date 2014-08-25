@@ -351,7 +351,11 @@ void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string n
         std::string new_name = name;
         if (entry[i].NameIsString)
         {
-            new_name += rsrc + entry[i].NameOffset;
+            // the name string has a 2 byte size preceding the UNICODE string
+            uint16_t len = *(uint16_t *)(rsrc + entry[i].NameOffset);
+            char mbs[256] = { 0 };
+            UTF16toMBS((wchar_t *)(rsrc + entry[i].NameOffset + 2), len * 2, mbs, sizeof(mbs));
+            new_name += mbs;
         }
         else
         {

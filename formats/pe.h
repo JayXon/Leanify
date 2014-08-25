@@ -13,6 +13,8 @@
 
 #include "format.h"
 #include "../leanify.h"
+#include "../utils.h"
+
 
 // PE format specification
 // http://msdn.microsoft.com/en-us/gg463119.aspx

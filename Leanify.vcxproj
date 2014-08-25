@@ -237,6 +237,7 @@
     <ClCompile Include="formats\zopfli\zopfli_lib.c" />
     <ClCompile Include="leanify.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h" />
@@ -256,6 +257,7 @@
     <ClInclude Include="formats\zip.h" />
     <ClInclude Include="leanify.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
