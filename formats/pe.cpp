@@ -152,7 +152,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         // decrease RVA inside rsrc section
         if (rsrc_virtual_address > reloc_virtual_address)
         {
-            TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset), reloc_virtual_size);
+            TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset), "", reloc_virtual_size);
             rsrc_virtual_address -= reloc_virtual_size;
         }
         else
@@ -162,8 +162,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
 
         // sort it according to it's data offset
-        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const uint32_t *a, const uint32_t *b){ return *a < *b; });
-        uint32_t last_end = rsrc_data[0][0];
+        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const std::pair<uint32_t *, std::string> &a, const std::pair<uint32_t *, std::string> &b){ return *a.first < *b.first; });
+        uint32_t last_end = rsrc_data[0].first[0];
 
         // detect non standard resource, maybe produced by some packer
         if (last_end < rsrc_virtual_address || last_end > rsrc_virtual_address + rsrc_virtual_size)
@@ -195,20 +195,30 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, reloc_raw_offset - header_size_aligned - pe_size_leanified);
 
                 // move things between reloc and first data of rsrc
-                memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, rsrc_raw_offset - reloc_end + rsrc_data[0][0] - rsrc_virtual_address);
+                memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, rsrc_raw_offset - reloc_end + rsrc_data[0].first[0] - rsrc_virtual_address);
                 pe_size_leanified += reloc_raw_size;
 
             }
             else
             {
                 // move everything before first data of rsrc
-                memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, rsrc_raw_offset - pe_size_leanified - header_size_aligned + rsrc_data[0][0] - rsrc_virtual_address);
+                memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, rsrc_raw_offset - pe_size_leanified - header_size_aligned + rsrc_data[0].first[0] - rsrc_virtual_address);
             }
-
+            level++;
+            // res.first is address of IMAGE_RESOURCE_DATA_ENTRY
+            // res.second is the name of the resource
             // p[0] is RVA, p[1] is size
-            for (auto &p : rsrc_data)
+            for (auto &res : rsrc_data)
             {
-                p -= pe_size_leanified / 4;
+                // print resource name
+                for (int i = 0; i < level; i++)
+                {
+                    std::cout << "-> ";
+                }
+                std::cout << res.second << std::endl;
+
+                res.first -= pe_size_leanified / 4;
+                auto p = res.first;
                 size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified + size_leanified);
                 p[0] = last_end;
                 rsrc_size_leanified += p[1] - new_size;
@@ -218,8 +228,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 // fill the gap with 0
                 memset(fp - size_leanified + rsrc_raw_offset + p[0] + new_size - rsrc_virtual_address - pe_size_leanified, 0, last_end - p[0] - new_size);
             }
-
-            uint32_t rsrc_new_end = rsrc_raw_offset + *rsrc_data.back() - rsrc_virtual_address + *(rsrc_data.back() + 1);
+            level--;
+            uint32_t rsrc_new_end = rsrc_raw_offset + *rsrc_data.back().first - rsrc_virtual_address + *(rsrc_data.back().first + 1);
             uint32_t rsrc_new_end_aligned = ((rsrc_new_end - 1) | (optional_header->FileAlignment - 1)) + 1;
             uint32_t rsrc_correct_end_aligned = ((rsrc_new_end + rsrc_size_leanified - 1) | (optional_header->FileAlignment - 1)) + 1;
             uint32_t rsrc_end = rsrc_raw_offset + rsrc_raw_size;
@@ -333,20 +343,30 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
 
 // decrease RVA inside rsrc section
-void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size /*= 0*/)
+void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string name /*= ""*/, const uint32_t move_size /*= 0*/)
 {
     ImageResourceDirectoryEntry *entry = (ImageResourceDirectoryEntry *)((char *)res_dir + sizeof(ImageResourceDirectory));
     for (int i = 0; i < res_dir->NumberOfNamedEntries + res_dir->NumberOfIdEntries; i++)
     {
+        std::string new_name = name;
+        if (entry[i].NameIsString)
+        {
+            new_name += rsrc + entry[i].NameOffset;
+        }
+        else
+        {
+            new_name += std::to_string(entry[i].Name);
+        }
+
         if (entry[i].DataIsDirectory)
         {
-            TraverseRSRC(rsrc, (ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), move_size);
+            TraverseRSRC(rsrc, (ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), new_name + "/", move_size);
         }
         else
         {
             *(uint32_t *)(rsrc + entry[i].OffsetToData) -= move_size;
             // remember the address to Leanify resource file later
-            rsrc_data.push_back((uint32_t *)(rsrc + entry[i].OffsetToData));
+            rsrc_data.push_back(make_pair((uint32_t *)(rsrc + entry[i].OffsetToData), new_name));
         }
     }
 }

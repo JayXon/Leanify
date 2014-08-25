@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <string>
+#include <utility>
 
 #include "format.h"
 #include "../leanify.h"
@@ -16,6 +18,7 @@
 // http://msdn.microsoft.com/en-us/gg463119.aspx
 
 extern bool is_verbose;
+extern int  level;
 
 class Pe : Format
 {
@@ -126,9 +129,9 @@ private:
     };
 
     // decrease RVA inside rsrc section
-    void TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, uint32_t move_size = 0);
+    void TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string name = "", const uint32_t move_size = 0);
 
-    std::vector<uint32_t *> rsrc_data;
+    std::vector<std::pair<uint32_t *, std::string> > rsrc_data;
 };
 
 #endif
