@@ -7,6 +7,9 @@ ZOPFLI_SRC      := formats/zopfli/hash.c formats/zopfli/squeeze.c formats/zopfli
 ZOPFLIPNG_SRC   := formats/zopflipng/lodepng/lodepng.cpp formats/zopflipng/lodepng/lodepng_util.cpp formats/zopflipng/zopflipng_lib.cc
 
 CFLAGS      := -Wall -O3 -msse2 -mfpmath=sse -flto
+ifeq ($(CC),clang)
+    CFLAGS  := $(filter-out -flto,$(CFLAGS))
+endif
 
 .PHONY:     leanify clean
 
@@ -20,7 +23,7 @@ tinyxml2.o: $(TINYXML_SRC)
 	$(CXX) $(CFLAGS) -c $?
 
 lzma.a:     $(LZMA_SRC)
-	$(CC) $(CFLAGS) -D _7ZIP_ST -Wno-unused-but-set-variable -c $?
+	$(CC) $(CFLAGS) -D _7ZIP_ST -Wno-unused-but-set-variable -Wno-self-assign -Wno-unknown-warning-option -c $?
 	ar rcs $@ $(patsubst formats/LZMA/%.c,%.o,$^)
 
 mozjpeg.a:  $(MOZJPEG_SRC)
