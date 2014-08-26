@@ -217,7 +217,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 }
                 std::cout << res.second << std::endl;
 
-                res.first -= pe_size_leanified / 4;
+                res.first = (uint32_t *)((char *)res.first - pe_size_leanified - size_leanified);
                 auto p = res.first;
                 size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified + size_leanified);
                 p[0] = last_end;
