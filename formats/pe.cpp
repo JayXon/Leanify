@@ -113,7 +113,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             rsrc_raw_size = section_table[i].SizeOfRawData;
             rsrc_virtual_size = section_table[i].VirtualSize;
         }
-        if (section_table[i].PointerToRawData < correct_size_of_headers)
+        if (section_table[i].PointerToRawData < correct_size_of_headers && section_table[i].SizeOfRawData)
         {
             correct_size_of_headers = section_table[i].PointerToRawData;
         }
