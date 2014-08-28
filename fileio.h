@@ -3,6 +3,7 @@
 
 
 #include <iostream>
+#include <cstdio>
 
 #ifdef _WIN32
 #ifndef UNICODE
