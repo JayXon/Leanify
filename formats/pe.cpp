@@ -230,12 +230,12 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 res.first = (uint32_t *)((char *)res.first - pe_size_leanified - size_leanified);
                 auto p = res.first;
 
-                // it seems some of the resource has to be aligned to 8 in order to work
+                // it seems some of the resource has to be aligned to 4 bytes in order to work
                 // only align the resource if it is aligned before
-                if ((p[0] & 7) == 0)
+                if ((p[0] & 3) == 0)
                 {
                     // fill the gap with 0
-                    uint32_t gap = (-(int32_t)last_end) & 7;
+                    uint32_t gap = (-(int32_t)last_end) & 3;
                     memset(fp - size_leanified + rsrc_raw_offset + last_end - rsrc_virtual_address - pe_size_leanified, 0, gap);
                     last_end += gap;
                 }
