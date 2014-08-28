@@ -213,6 +213,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 // move everything before first data of rsrc
                 memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, rsrc_raw_offset - pe_size_leanified - header_size_aligned + rsrc_data[0].first[0] - rsrc_virtual_address);
             }
+            uint32_t old_end = *rsrc_data.back().first + *(rsrc_data.back().first + 1);
             level++;
             // res.first is address of IMAGE_RESOURCE_DATA_ENTRY
             // res.second is the name of the resource
@@ -228,19 +229,27 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
                 res.first = (uint32_t *)((char *)res.first - pe_size_leanified - size_leanified);
                 auto p = res.first;
+
+                // it seems some of the resource has to be aligned to 8 in order to work
+                // only align the resource if it is aligned before
+                if ((p[0] & 7) == 0)
+                {
+                    // fill the gap with 0
+                    uint32_t gap = (-(int32_t)last_end) & 7;
+                    memset(fp - size_leanified + rsrc_raw_offset + last_end - rsrc_virtual_address - pe_size_leanified, 0, gap);
+                    last_end += gap;
+                }
+
                 size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified + size_leanified);
                 p[0] = last_end;
-                rsrc_size_leanified += p[1] - new_size;
                 p[1] = new_size;
-                // it seems some of the resource has to be aligned to 8 in order to work
-                last_end += (new_size + 7) & ~7;
-                // fill the gap with 0
-                memset(fp - size_leanified + rsrc_raw_offset + p[0] + new_size - rsrc_virtual_address - pe_size_leanified, 0, last_end - p[0] - new_size);
+                last_end += new_size;
             }
             level--;
-            uint32_t rsrc_new_end = rsrc_raw_offset + *rsrc_data.back().first - rsrc_virtual_address + *(rsrc_data.back().first + 1);
+            rsrc_size_leanified = old_end - last_end;
+            uint32_t rsrc_new_end = rsrc_raw_offset + last_end - rsrc_virtual_address;
             uint32_t rsrc_new_end_aligned = ((rsrc_new_end - 1) | (optional_header->FileAlignment - 1)) + 1;
-            uint32_t rsrc_correct_end_aligned = ((rsrc_new_end + rsrc_size_leanified - 1) | (optional_header->FileAlignment - 1)) + 1;
+            uint32_t rsrc_correct_end_aligned = ((rsrc_raw_offset + old_end - rsrc_virtual_address - 1) | (optional_header->FileAlignment - 1)) + 1;
             uint32_t rsrc_end = rsrc_raw_offset + rsrc_raw_size;
 
             // fill the rest of rsrc with 0
