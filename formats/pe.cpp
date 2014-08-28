@@ -105,6 +105,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
                 total_header_size -= sizeof(ImageSectionHeader);
                 i--;
+
+                if (is_verbose)
+                {
+                    std::cout << "Relocation Table removed." << std::endl;
+                }
             }
         }
         else if (section_table[i].VirtualAddress == rsrc_virtual_address)
@@ -161,6 +166,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset));
         }
 
+        if (is_verbose)
+        {
+            std::cout << rsrc_data.size() << " embedded resources found." << std::endl;
+        }
         // sort it according to it's data offset
         std::sort(rsrc_data.begin(), rsrc_data.end(), [](const std::pair<uint32_t *, std::string> &a, const std::pair<uint32_t *, std::string> &b){ return *a.first < *b.first; });
         uint32_t last_end = rsrc_data[0].first[0];
@@ -293,6 +302,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     }
     optional_header->SizeOfImage -= reloc_virtual_size + rsrc_decrease_size;
 
+
+    if (is_verbose)
+    {
+        std::cout << "Update Section Table." << std::endl;
+    }
     // update Section Table
     for (int i = 0; i < image_file_header->NumberOfSections; i++)
     {
