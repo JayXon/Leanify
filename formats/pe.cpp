@@ -4,6 +4,16 @@
 
 const unsigned char Pe::header_magic[] = { 'M', 'Z' };
 
+
+const std::string Pe::resource_types[] = {
+    // 0 - 9
+    "", "CURSOR", "BITMAP", "ICON", "MENU", "DIALOG", "STRING", "FONTDIR", "FONT", "ACCELERATOR",
+    // 10 - 19
+    "RCDATA", "MESSAGETABLE", "GROUP_CURSOR", "", "GROUP_ICON", "", "VERSION", "DLGINCLUDE", "", "PLUGPLAY",
+    // 20 - 24
+    "VXD", "ANICURSOR", "ANIICON", "HTML", "MANIFEST" };
+
+
 size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 {
 
@@ -379,6 +389,11 @@ void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string n
             char mbs[256] = { 0 };
             UTF16toMBS((wchar_t *)(rsrc + entry[i].NameOffset + 2), len * 2, mbs, sizeof(mbs));
             new_name += mbs;
+        }
+        else if (new_name.size() == 0 && entry[i].Name < sizeof(resource_types) / sizeof(std::string) && resource_types[entry[i].Name].size())
+        {
+            // use Predefined Resource Types string instead of an ID
+            new_name = resource_types[entry[i].Name];
         }
         else
         {

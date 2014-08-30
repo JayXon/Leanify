@@ -134,6 +134,8 @@ private:
     void TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string name = "", const uint32_t move_size = 0);
 
     std::vector<std::pair<uint32_t *, std::string> > rsrc_data;
+
+    static const std::string resource_types[];
 };
 
 #endif
