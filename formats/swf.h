@@ -30,8 +30,6 @@ public:
 
 private:
 
-    size_t Move(size_t size_leanified);
-
     void UpdateTagLength(unsigned char *tag_content, size_t header_length, size_t new_length);
 };
 

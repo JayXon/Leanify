@@ -22,12 +22,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     if (pe_header_offset > size || *(uint32_t *)(fp + pe_header_offset) != 0x00004550)
     {
         std::cout << "Not a valid PE file." << std::endl;
-        if (size_leanified)
-        {
-            fp -= size_leanified;
-            memmove(fp, fp + size_leanified, size);
-        }
-        return size;
+        return Format::Leanify(size_leanified);
     }
 
     ImageFileHeader *image_file_header = (ImageFileHeader *)(fp + pe_header_offset + 4);

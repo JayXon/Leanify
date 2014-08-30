@@ -8,7 +8,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 {
     if (is_fast && *fp != 'F')
     {
-        return Move(size_leanified);
+        return Format::Leanify(size_leanified);
     }
 
     unsigned char *in_buffer = (unsigned char *)fp + 8;
@@ -28,7 +28,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "SWF file corrupted!" << std::endl;
             mz_free(in_buffer);
-            return Move(size_leanified);
+            return Format::Leanify(size_leanified);
         }
     }
     else if (*fp == 'Z')
@@ -48,7 +48,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "SWF file corrupted!" << std::endl;
             delete[] dst_buffer;
-            return Move(size_leanified);
+            return Format::Leanify(size_leanified);
         }
         in_buffer = dst_buffer;
     }
@@ -232,16 +232,6 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 
     delete[] dst;
 
-    return size;
-}
-
-size_t Swf::Move(size_t size_leanified)
-{
-    if (size_leanified)
-    {
-        fp -= size_leanified;
-        memmove(fp, fp + size_leanified, size);
-    }
     return size;
 }
 

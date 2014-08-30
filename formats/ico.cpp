@@ -13,9 +13,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
     // invalid Icon file
     if (6 + n * 16U >= size || *(uint32_t *)(p_index + 8) + *(uint32_t *)(p_index + 12) > size)
     {
-        fp -= size_leanified;
-        memmove(fp, fp + size_leanified, size);
-        return size;
+        return Format::Leanify(size_leanified);
     }
 
     // move header

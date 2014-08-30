@@ -28,12 +28,8 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     {
         jpeg_destroy_compress(&dstinfo);
         jpeg_destroy_decompress(&srcinfo);
-        if (size_leanified)
-        {
-            fp -= size_leanified;
-            memmove(fp, fp + size_leanified, size);
-        }
-        return size;
+
+        return Format::Leanify(size_leanified);
     }
 
     jpeg_create_decompress(&srcinfo);
