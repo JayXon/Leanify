@@ -1,6 +1,10 @@
 #include "leanify.h"
 
 
+// Leanify the file
+// and move the file ahead size_leanified bytes
+// the new location of the file will be file_pointer - size_leanified
+// it's designed this way to avoid extra memmove or memcpy
 // return new size
 size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/)
 {
@@ -135,7 +139,7 @@ size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified 
         unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
         if (!buffer)
         {
-            std::cout << "Decompress Zlib failed." << std::endl;
+            std::cout << "Decompress Zlib data failed." << std::endl;
         }
         else
         {

@@ -15,13 +15,14 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
     p_read = fp;
     fp -= size_leanified;
 
-
+    // total number of files including directory
     uint32_t file_num = *(uint32_t *)(p_read + 0x10);
 
     uint64_t index_offset = *(uint64_t *)(p_read + 0x14);
-    // content offset = index offset + index size
+
     uint64_t content_offset = index_offset + *(uint64_t *)(p_read + 0x1C);
 
+    // move header and indexes
     if (size_leanified)
     {
         memmove(fp, p_read, (size_t)content_offset);
@@ -62,9 +63,6 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
             std::cout << "-> ";
         }
 
-        // these two lines will make executable 100k larger on win, unacceptable
-        // std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conversion;
-        // std::string mbs = conversion.to_bytes(file_name);
         char mbs[256] = { 0 };
         UTF16toMBS(file_name, p_index - (char *)file_name, mbs, sizeof(mbs));
         std::cout << mbs << std::endl;
@@ -73,6 +71,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified);
         if (new_size != file_size)
         {
+            // update the size in index
             *(uint64_t *)(p_index + 8) = new_size;
             rdb_size_leanified += (size_t)file_size - new_size;
         }

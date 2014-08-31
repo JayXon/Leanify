@@ -129,11 +129,12 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
-    uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
     // has to be multiple of FileAlignment
+    uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
     size_t pe_size_leanified = 0;
     size_t header_size_leanified = 0;
 
+    // if header size is reduced after aligned
     if (header_size_aligned < correct_size_of_headers)
     {
         header_size_leanified = pe_size_leanified = correct_size_of_headers - header_size_aligned;
@@ -292,7 +293,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
 
     }
-    else if (reloc_raw_size)
+    else if (reloc_raw_size)    // no rsrc but have reloc to remove
     {
 
         // move everything before reloc
@@ -302,7 +303,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         memmove(fp - size_leanified + reloc_raw_offset - pe_size_leanified, fp + reloc_end, size - reloc_raw_offset);
         pe_size_leanified += reloc_raw_size;
     }
-    else
+    else    // no rsrc and no reloc
     {
         memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, size - header_size_aligned - pe_size_leanified);
     }

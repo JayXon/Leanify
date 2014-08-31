@@ -120,9 +120,9 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             return png_size;
         }
 
-        // only use the result png if it is smaller
-        // sometimes the original png is already highly optimized
-        // then maybe zopfli will produce bigger file
+        // only use the result PNG if it is smaller
+        // sometimes the original PNG is already highly optimized
+        // then maybe ZopfliPNG will produce bigger file
         if (resultpng.size() < png_size)
         {
             memcpy(fp, resultpng.data(), resultpng.size());
