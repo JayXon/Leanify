@@ -72,7 +72,6 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     uint32_t reloc_raw_offset = 0;
     uint32_t reloc_raw_size = 0;
     uint32_t rsrc_raw_offset = 0;
-    uint32_t rsrc_raw_size = 0;
     uint32_t rsrc_virtual_size = 0;
 
     // 0x2000: IMAGE_FILE_DLL
@@ -122,6 +121,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             rsrc_raw_offset = section_table[i].PointerToRawData;
             rsrc_raw_size = section_table[i].SizeOfRawData;
             rsrc_virtual_size = section_table[i].VirtualSize;
+            rsrc = fp + rsrc_raw_offset;
         }
         if (section_table[i].PointerToRawData < correct_size_of_headers && section_table[i].SizeOfRawData)
         {
@@ -163,13 +163,13 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         // decrease RVA inside rsrc section
         if (rsrc_virtual_address > reloc_virtual_address)
         {
-            TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset), "", reloc_virtual_size);
+            TraverseRSRC((ImageResourceDirectory *)(fp + rsrc_raw_offset), "", reloc_virtual_size);
             rsrc_virtual_address -= reloc_virtual_size;
         }
         else
         {
             // only save all the data addresses to vector
-            TraverseRSRC(fp + rsrc_raw_offset, (ImageResourceDirectory *)(fp + rsrc_raw_offset));
+            TraverseRSRC((ImageResourceDirectory *)(fp + rsrc_raw_offset));
         }
 
         if (is_verbose)
@@ -372,7 +372,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
 
 // decrease RVA inside rsrc section
-void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string name /*= ""*/, const uint32_t move_size /*= 0*/)
+void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/, const uint32_t move_size /*= 0*/)
 {
     ImageResourceDirectoryEntry *entry = (ImageResourceDirectoryEntry *)((char *)res_dir + sizeof(ImageResourceDirectory));
     for (int i = 0; i < res_dir->NumberOfNamedEntries + res_dir->NumberOfIdEntries; i++)
@@ -395,10 +395,14 @@ void Pe::TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string n
         {
             new_name += std::to_string(entry[i].Name);
         }
-
+        if (entry[i].OffsetToDirectory > rsrc_raw_size)
+        {
+            std::cout << "Invalid resource address!" << std::endl;
+            return;
+        }
         if (entry[i].DataIsDirectory)
         {
-            TraverseRSRC(rsrc, (ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), new_name + "/", move_size);
+            TraverseRSRC((ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), new_name + "/", move_size);
         }
         else
         {

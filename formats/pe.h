@@ -27,7 +27,7 @@ class Pe : Format
 
 public:
 
-    Pe(void *p, size_t s = 0) : Format(p, s) {}
+    Pe(void *p, size_t s = 0) : Format(p, s), rsrc_raw_size(0) {}
 
 
     size_t Leanify(size_t size_leanified = 0);
@@ -131,7 +131,10 @@ private:
     };
 
     // decrease RVA inside rsrc section
-    void TraverseRSRC(char *rsrc, ImageResourceDirectory *res_dir, std::string name = "", const uint32_t move_size = 0);
+    void TraverseRSRC(ImageResourceDirectory *res_dir, std::string name = "", const uint32_t move_size = 0);
+
+    char *rsrc;
+    uint32_t rsrc_raw_size;
 
     std::vector<std::pair<uint32_t *, std::string> > rsrc_data;
 
