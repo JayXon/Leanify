@@ -203,6 +203,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
         else
         {
+            // should do this before memmove
+            uint32_t old_end = rsrc_data.back().first[0] + rsrc_data.back().first[1];
 
             if (reloc_raw_size && reloc_raw_offset < rsrc_raw_offset)
             {
@@ -219,7 +221,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 // move everything before first data of rsrc
                 memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, rsrc_raw_offset - pe_size_leanified - header_size_aligned + rsrc_data[0].first[0] - rsrc_virtual_address);
             }
-            uint32_t old_end = *rsrc_data.back().first + *(rsrc_data.back().first + 1);
+
             level++;
             // res.first is address of IMAGE_RESOURCE_DATA_ENTRY
             // res.second is the name of the resource
