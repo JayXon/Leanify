@@ -43,6 +43,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     }
     else
     {
+        if (is_verbose)
+        {
+            std::cout << "PE Header already overlaps DOS Header." << std::endl;
+        }
         // this file probably already packed with some extreme packer
         total_header_size += pe_header_offset - new_pe_header_offset;
         if (size_leanified)
