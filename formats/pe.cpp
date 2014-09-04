@@ -348,7 +348,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         {
             section_table[i].PointerToRawData -= rsrc_size_leanified;
         }
-        section_table[i].PointerToRawData -= header_size_leanified;
+        if (section_table[i].PointerToRawData > header_size_aligned)
+        {
+            section_table[i].PointerToRawData -= header_size_leanified;
+        }
     }
 
     // this can work on both PE32 and PE32+
