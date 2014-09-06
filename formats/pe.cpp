@@ -25,7 +25,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         return Format::Leanify(size_leanified);
     }
 
-    ImageFileHeader *image_file_header = (ImageFileHeader *)(fp + pe_header_offset + 4);
+    ImageFileHeader *image_file_header = reinterpret_cast<ImageFileHeader *>(fp + pe_header_offset + 4);
     size_t total_header_size = 0x28 + image_file_header->SizeOfOptionalHeader + sizeof(ImageSectionHeader) * image_file_header->NumberOfSections;
 
     const uint32_t new_pe_header_offset = 0x10;
@@ -37,7 +37,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         memcpy(fp - size_leanified, header_magic, sizeof(header_magic));
         memset(fp - size_leanified + sizeof(header_magic), 0, new_pe_header_offset - sizeof(header_magic));
         memmove(fp - size_leanified + new_pe_header_offset, fp + pe_header_offset, total_header_size - new_pe_header_offset);
-        image_file_header = (ImageFileHeader *)(fp - size_leanified + 0x14);
+        image_file_header = reinterpret_cast<ImageFileHeader *>(fp - size_leanified + 0x14);
         // set new PE Header offset
         *(uint32_t *)(fp - size_leanified + 0x3C) = new_pe_header_offset;
     }
@@ -53,19 +53,19 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         {
             // move entire SizeOfHeaders to make sure nothing was missed
             memmove(fp - size_leanified, fp, *(uint32_t *)(fp + pe_header_offset + 0x54));
-            image_file_header = (ImageFileHeader *)(fp - size_leanified + pe_header_offset + 4);
+            image_file_header = reinterpret_cast<ImageFileHeader *>(fp - size_leanified + pe_header_offset + 4);
         }
     }
 
-    ImageOptionalHeader *optional_header = (ImageOptionalHeader *)((char *)image_file_header + sizeof(ImageFileHeader));
+    ImageOptionalHeader *optional_header = reinterpret_cast<ImageOptionalHeader *>((char *)image_file_header + sizeof(ImageFileHeader));
 
     // Data Directories
     // PE32:    Magic number: 0x10B     Offset: 0x60
     // PE32+:   Magic number: 0x20B     Offset: 0x70
-    ImageDataDirectory *data_directories = (ImageDataDirectory *)((char *)optional_header + (optional_header->Magic == 0x10B ? 0x60 : 0x70));
+    ImageDataDirectory *data_directories = reinterpret_cast<ImageDataDirectory *>((char *)optional_header + (optional_header->Magic == 0x10B ? 0x60 : 0x70));
 
     // Section Table
-    ImageSectionHeader *section_table = (ImageSectionHeader *)((char *)optional_header + image_file_header->SizeOfOptionalHeader);
+    ImageSectionHeader *section_table = reinterpret_cast<ImageSectionHeader *>((char *)optional_header + image_file_header->SizeOfOptionalHeader);
 
 
 
@@ -167,13 +167,13 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         // decrease RVA inside rsrc section
         if (rsrc_virtual_address > reloc_virtual_address)
         {
-            TraverseRSRC((ImageResourceDirectory *)(fp + rsrc_raw_offset), "", reloc_virtual_size);
+            TraverseRSRC(reinterpret_cast<ImageResourceDirectory *>(fp + rsrc_raw_offset), "", reloc_virtual_size);
             rsrc_virtual_address -= reloc_virtual_size;
         }
         else
         {
             // only save all the data addresses to vector
-            TraverseRSRC((ImageResourceDirectory *)(fp + rsrc_raw_offset));
+            TraverseRSRC(reinterpret_cast<ImageResourceDirectory *>(fp + rsrc_raw_offset));
         }
 
         if (is_verbose)
@@ -411,7 +411,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
         }
         if (entry[i].DataIsDirectory)
         {
-            TraverseRSRC((ImageResourceDirectory *)(rsrc + entry[i].OffsetToDirectory), new_name + "/", move_size);
+            TraverseRSRC(reinterpret_cast<ImageResourceDirectory *>(rsrc + entry[i].OffsetToDirectory), new_name + "/", move_size);
         }
         else
         {
