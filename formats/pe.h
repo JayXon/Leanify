@@ -27,7 +27,7 @@ class Pe : Format
 
 public:
 
-    Pe(void *p, size_t s = 0) : Format(p, s), rsrc_raw_size(0) {}
+    Pe(void *p, size_t s = 0) : Format(p, s), rsrc_raw_size(0), rsrc(nullptr) {}
 
 
     size_t Leanify(size_t size_leanified = 0);
