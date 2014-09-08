@@ -149,7 +149,6 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     // only if PE Header offset has changed
     if (pe_header_offset >= 0x40)
     {
-        pe_header_offset = new_pe_header_offset;
         memset(fp - size_leanified + total_header_size, 0, header_size_aligned - total_header_size);
     }
 
@@ -282,8 +281,6 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             else
             {
                 memmove(fp - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified, fp + rsrc_new_end + rsrc_size_leanified, rsrc_end - rsrc_new_end - rsrc_size_leanified);
-                // this is necessary because some SizeOfRawData is not aligned
-                rsrc_new_end_aligned = rsrc_raw_offset + rsrc_raw_size;
                 rsrc_size_leanified = 0;
             }
             if (reloc_raw_size && reloc_raw_offset > rsrc_raw_offset)
