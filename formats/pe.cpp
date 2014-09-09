@@ -21,7 +21,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     // check PE signature: PE00
     if (pe_header_offset > size || *(uint32_t *)(fp + pe_header_offset) != 0x00004550)
     {
-        std::cout << "Not a valid PE file." << std::endl;
+        std::cerr << "Not a valid PE file." << std::endl;
         return Format::Leanify(size_leanified);
     }
 
@@ -403,7 +403,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
         }
         if (entry[i].OffsetToDirectory > rsrc_raw_size)
         {
-            std::cout << "Invalid resource address!" << std::endl;
+            std::cerr << "Invalid resource address!" << std::endl;
             return;
         }
         if (entry[i].DataIsDirectory)

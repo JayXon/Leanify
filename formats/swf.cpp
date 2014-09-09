@@ -26,7 +26,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         in_buffer = (unsigned char *)tinfl_decompress_mem_to_heap(in_buffer, size - 8, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
         if (!in_buffer || s != in_len)
         {
-            std::cout << "SWF file corrupted!" << std::endl;
+            std::cerr << "SWF file corrupted!" << std::endl;
             mz_free(in_buffer);
             return Format::Leanify(size_leanified);
         }
@@ -46,7 +46,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         if (LzmaUncompress(dst_buffer, &s, in_buffer + LZMA_PROPS_SIZE, &len, in_buffer, LZMA_PROPS_SIZE) ||
             s != in_len || len != size - 18 - LZMA_PROPS_SIZE)
         {
-            std::cout << "SWF file corrupted!" << std::endl;
+            std::cerr << "SWF file corrupted!" << std::endl;
             delete[] dst_buffer;
             return Format::Leanify(size_leanified);
         }
@@ -187,7 +187,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     // have to set writeEndMark to true
     if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, iterations < 9 ? iterations : 9, 1 << 24, -1, -1, -1, 128, -1))
     {
-        std::cout << "LZMA compression failed." << std::endl;
+        std::cerr << "LZMA compression failed." << std::endl;
         s = SIZE_MAX;
     }
 

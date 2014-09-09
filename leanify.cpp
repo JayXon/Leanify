@@ -139,7 +139,7 @@ size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified 
         unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
         if (!buffer)
         {
-            std::cout << "Decompress Zlib data failed." << std::endl;
+            std::cerr << "Decompress Zlib data failed." << std::endl;
         }
         else
         {

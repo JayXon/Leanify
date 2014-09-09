@@ -76,7 +76,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 dd = std::search(dd + 1, fp + size + size_leanified, dd_sign, dd_sign + 4);
                 if (dd == fp + size + size_leanified)
                 {
-                    std::cout << "data descriptor signature not found!" << std::endl;
+                    std::cerr << "data descriptor signature not found!" << std::endl;
                     // abort
                     // zip does not have 4-byte signature preceded
                     return size;
@@ -133,7 +133,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 s != *uncompressed_size ||
                 *crc != crc32(0, buffer, *uncompressed_size))
             {
-                std::cout << "ZIP file corrupted!" << std::endl;
+                std::cerr << "ZIP file corrupted!" << std::endl;
                 mz_free(buffer);
                 memmove(p_write, p_read, original_compressed_size);
                 p_read += original_compressed_size;
@@ -229,7 +229,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     const unsigned char eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
     if (memcmp(p_read, eocd_header_magic, sizeof(eocd_header_magic)))
     {
-        std::cout << "ZIP file corrupted!" << std::endl;
+        std::cerr << "EOCD not found!" << std::endl;
 
     }
     if (p_read - p_write)

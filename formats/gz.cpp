@@ -68,7 +68,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         s != uncompressed_size ||
         crc != crc32(0, buffer, uncompressed_size))
     {
-        std::cout << "GZ corrupted!" << std::endl;
+        std::cerr << "GZ corrupted!" << std::endl;
         mz_free(buffer);
         memmove(p_write, p_read, original_size + 8);
         return size - (p_read - p_write);

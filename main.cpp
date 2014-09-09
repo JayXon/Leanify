@@ -74,12 +74,12 @@ void PauseIfNotTerminal()
 
 void PrintInfo()
 {
-    std::cout << "Leanify\t" << VERSION << std::endl << std::endl;
-    std::cout << "Usage: Leanify [options] paths" << std::endl;
-    std::cout << "  -i iteration\tMore iterations means slower but better result. Default: 15." << std::endl;
-    std::cout << "  -f\t\tFast mode, no recompression." << std::endl;
-    std::cout << "  -q\t\tQuiet mode, no output." << std::endl;
-    std::cout << "  -v\t\tVerbose output." << std::endl;
+    std::cerr << "Leanify\t" << VERSION << std::endl << std::endl;
+    std::cerr << "Usage: Leanify [options] paths" << std::endl;
+    std::cerr << "  -i iteration\tMore iterations means slower but better result. Default: 15." << std::endl;
+    std::cerr << "  -f\t\tFast mode, no recompression." << std::endl;
+    std::cerr << "  -q\t\tQuiet mode, no output." << std::endl;
+    std::cerr << "  -v\t\tVerbose output." << std::endl;
     PauseIfNotTerminal();
 }
 
@@ -93,13 +93,7 @@ int main()
 int main(int argc, char const *argv[])
 {
 #endif // _WIN32
-    if (argc < 2)
-    {
 
-        PrintInfo();
-
-        return 1;
-    }
     is_fast = false;
     is_verbose = false;
     iterations = 15;
@@ -129,7 +123,7 @@ int main(int argc, char const *argv[])
                     // strtol will return 0 on fail
                     if (iterations == 0)
                     {
-                        std::cout << "There should be a positive number after -i option." << std::endl;
+                        std::cerr << "There should be a positive number after -i option." << std::endl;
                         PrintInfo();
                         return 1;
                     }
@@ -139,13 +133,11 @@ int main(int argc, char const *argv[])
             case 'q':
             case 'Q':
                 std::cout.setstate(std::ios::failbit);
-                std::cerr.setstate(std::ios::failbit);
                 is_verbose = false;
                 break;
             case 'v':
             case 'V':
                 std::cout.clear();
-                std::cerr.clear();
                 is_verbose = true;
                 break;
             default:
@@ -161,7 +153,7 @@ int main(int argc, char const *argv[])
 
     if (i == argc)
     {
-        std::cout << "No file path provided." << std::endl;
+        std::cerr << "No file path provided." << std::endl;
         PrintInfo();
         return 1;
     }

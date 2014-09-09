@@ -23,7 +23,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         p_read += 512;
         if (checksum != strtol(p_write + 148, nullptr, 8))
         {
-            std::cout << "Checksum does not match!" << std::endl;
+            std::cerr << "Checksum does not match!" << std::endl;
             p_write += 512;
             continue;
         }
