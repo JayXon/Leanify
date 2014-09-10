@@ -141,6 +141,7 @@ int main(int argc, char const *argv[])
                 is_verbose = true;
                 break;
             default:
+                std::cerr << "Unknown option: " << (char)argv[i][j] << std::endl;
                 PrintInfo();
                 return 1;
             }
