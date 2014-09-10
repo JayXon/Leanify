@@ -51,6 +51,7 @@ public:
 
 private:
 #ifdef _WIN32
+    void PrintErrorMessage(char *msg);
     HANDLE hFile, hMap;
 #else
     int fd;

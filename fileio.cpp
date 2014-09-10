@@ -91,7 +91,7 @@ File::File(const wchar_t *filepath)
     hFile = CreateFile(filepath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_WRITE_THROUGH, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        std::cerr << "Open file error! Error code: " << GetLastError() << std::endl;
+        PrintErrorMessage("Open file error!");
         size = 0;
         return;
     }
@@ -99,7 +99,7 @@ File::File(const wchar_t *filepath)
     hMap = CreateFileMapping(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
     if (hMap == INVALID_HANDLE_VALUE)
     {
-        std::cerr << "Map file error! Error code: " << GetLastError() << std::endl;
+        PrintErrorMessage("Map file error!");
         return;
     }
     fp = MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
@@ -112,7 +112,7 @@ void File::UnMapFile(size_t new_size)
     {
         if (!FlushViewOfFile(fp, 0))
         {
-            std::cerr << "Write file error!" << std::endl;
+            PrintErrorMessage("Write file error!");
             return;
         }
     }
@@ -124,6 +124,17 @@ void File::UnMapFile(size_t new_size)
         SetEndOfFile(hFile);
     }
     CloseHandle(hFile);
+}
+void File::PrintErrorMessage(char *msg)
+{
+    char *error_msg = NULL;
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, GetLastError(), 0, (char *)&error_msg, 0, NULL);
+    std::cerr << msg << std::endl;
+    if (error_msg)
+    {
+        std::cerr << error_msg << std::endl;
+        LocalFree(error_msg);
+    }
 }
 #else
 File::File(const char *filepath)
@@ -171,4 +182,6 @@ void File::UnMapFile(size_t new_size)
 
     close(fd);
 }
+
+
 #endif // _WIN32
