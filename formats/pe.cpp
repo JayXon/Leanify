@@ -383,24 +383,25 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
     ImageResourceDirectoryEntry *entry = (ImageResourceDirectoryEntry *)((char *)res_dir + sizeof(ImageResourceDirectory));
     for (int i = 0; i < res_dir->NumberOfNamedEntries + res_dir->NumberOfIdEntries; i++)
     {
-        std::string new_name = name;
+        std::string new_name;
         if (entry[i].NameIsString)
         {
             // the name string has a 2 byte size preceding the UNICODE string
             uint16_t len = *(uint16_t *)(rsrc + entry[i].NameOffset);
             char mbs[256] = { 0 };
             UTF16toMBS((wchar_t *)(rsrc + entry[i].NameOffset + 2), len * 2, mbs, sizeof(mbs));
-            new_name += mbs;
+            new_name = name + mbs;
         }
-        else if (new_name.size() == 0 && entry[i].Name < sizeof(resource_types) / sizeof(std::string) && resource_types[entry[i].Name].size())
+        else if (name.empty() && entry[i].Name < sizeof(resource_types) / sizeof(std::string) && resource_types[entry[i].Name].size())
         {
             // use Predefined Resource Types string instead of an ID
             new_name = resource_types[entry[i].Name];
         }
         else
         {
-            new_name += std::to_string(entry[i].Name);
+            new_name = name + std::to_string(entry[i].Name);
         }
+
         if (entry[i].OffsetToDirectory > rsrc_raw_size)
         {
             std::cerr << "Invalid resource address!" << std::endl;
