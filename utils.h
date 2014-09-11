@@ -9,6 +9,6 @@
 #endif
 
 
-void UTF16toMBS(wchar_t *u, size_t srclen, char *mbs, size_t dstlen);
+void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen);
 
 #endif

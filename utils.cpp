@@ -4,7 +4,7 @@
 
 // convert UNICODE string aka UTF16 string
 // to multi byte string aka UTF8 string
-void UTF16toMBS(wchar_t *u, size_t srclen, char *mbs, size_t dstlen)
+void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen)
 {
 #ifdef _WIN32
     WideCharToMultiByte(CP_ACP, 0, u, srclen / 2, mbs, dstlen, nullptr, nullptr);

@@ -125,7 +125,7 @@ void File::UnMapFile(size_t new_size)
     }
     CloseHandle(hFile);
 }
-void File::PrintErrorMessage(char *msg)
+void File::PrintErrorMessage(const char *msg)
 {
     char *error_msg = NULL;
     FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, GetLastError(), 0, (char *)&error_msg, 0, NULL);
