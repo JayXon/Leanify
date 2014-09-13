@@ -10,7 +10,10 @@ void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen)
     WideCharToMultiByte(CP_ACP, 0, u, srclen / 2, mbs, dstlen, nullptr, nullptr);
 #else
     iconv_t conv = iconv_open("UTF-8", "UTF-16");
-    iconv(conv, (char **)&u, &srclen, &mbs, &dstlen);
+    if (iconv(conv, (char **)&u, &srclen, &mbs, &dstlen) == (size_t)-1)
+    {
+        perror("iconv");
+    }
     iconv_close(conv);
 #endif // _WIN32
 }
