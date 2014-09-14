@@ -19,7 +19,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
     uint32_t pe_header_offset = *(uint32_t *)(fp + 0x3C);
     // check PE signature: PE00
-    if (pe_header_offset > size || *(uint32_t *)(fp + pe_header_offset) != 0x00004550)
+    if (pe_header_offset + 4 + sizeof(ImageFileHeader) > size || *(uint32_t *)(fp + pe_header_offset) != 0x00004550)
     {
         std::cerr << "Not a valid PE file." << std::endl;
         return Format::Leanify(size_leanified);
