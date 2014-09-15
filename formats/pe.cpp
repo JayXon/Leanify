@@ -18,15 +18,19 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 {
 
     uint32_t pe_header_offset = *(uint32_t *)(fp + 0x3C);
+    ImageFileHeader *image_file_header = reinterpret_cast<ImageFileHeader *>(fp + pe_header_offset + 4);
+    size_t total_header_size = pe_header_offset + 4 + sizeof(ImageFileHeader);
+
+    // check ImageFileHeader is not out of file range
     // check PE signature: PE00
-    if (pe_header_offset + 4 + sizeof(ImageFileHeader) > size || *(uint32_t *)(fp + pe_header_offset) != 0x00004550)
+    // check Section Table is not out of file range
+    if (total_header_size > size ||
+        *(uint32_t *)(fp + pe_header_offset) != 0x00004550 ||
+        (total_header_size += image_file_header->SizeOfOptionalHeader + sizeof(ImageSectionHeader) * image_file_header->NumberOfSections) > size)
     {
         std::cerr << "Not a valid PE file." << std::endl;
         return Format::Leanify(size_leanified);
     }
-
-    ImageFileHeader *image_file_header = reinterpret_cast<ImageFileHeader *>(fp + pe_header_offset + 4);
-    size_t total_header_size = 0x28 + image_file_header->SizeOfOptionalHeader + sizeof(ImageSectionHeader) * image_file_header->NumberOfSections;
 
     const uint32_t new_pe_header_offset = 0x10;
 
@@ -34,6 +38,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     // then we can overlap it to save some space
     if (pe_header_offset >= 0x40)
     {
+        total_header_size -= pe_header_offset - new_pe_header_offset;
         memcpy(fp - size_leanified, header_magic, sizeof(header_magic));
         memset(fp - size_leanified + sizeof(header_magic), 0, new_pe_header_offset - sizeof(header_magic));
         memmove(fp - size_leanified + new_pe_header_offset, fp + pe_header_offset, total_header_size - new_pe_header_offset);
@@ -43,12 +48,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     }
     else
     {
+        // this file probably already packed with some extreme packer
         if (is_verbose)
         {
             std::cout << "PE Header already overlaps DOS Header." << std::endl;
         }
-        // this file probably already packed with some extreme packer
-        total_header_size += pe_header_offset - new_pe_header_offset;
         if (size_leanified)
         {
             // move entire SizeOfHeaders to make sure nothing was missed
