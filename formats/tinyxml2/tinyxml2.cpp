@@ -45,22 +45,6 @@ static const unsigned char TIXML_UTF_LEAD_0 = 0xefU;
 static const unsigned char TIXML_UTF_LEAD_1 = 0xbbU;
 static const unsigned char TIXML_UTF_LEAD_2 = 0xbfU;
 
-
-#define DELETE_NODE( node )	{			\
-        if ( node ) {						\
-            MemPool* pool = node->_memPool;	\
-            node->~XMLNode();				\
-            pool->Free( node );				\
-        }									\
-    }
-#define DELETE_ATTRIBUTE( attrib ) {		\
-        if ( attrib ) {							\
-            MemPool* pool = attrib->_memPool;	\
-            attrib->~XMLAttribute();			\
-            pool->Free( attrib );				\
-        }										\
-    }
-
 namespace tinyxml2
 {
 
@@ -112,7 +96,7 @@ char* StrPair::ParseText( char* p, const char* endTag, int strFlags )
 {
     TIXMLASSERT( endTag && *endTag );
 
-    char* start = p;	// fixme: hides a member
+    char* start = p;
     char  endChar = *endTag;
     size_t length = strlen( endTag );
 
@@ -150,6 +134,8 @@ char* StrPair::ParseName( char* p )
 
 void StrPair::CollapseWhitespace()
 {
+    // Adjusting _start would cause undefined behavior on delete[]
+    TIXMLASSERT( ( _flags & NEEDS_DELETE ) == 0 );
     // Trim leading space.
     _start = XMLUtil::SkipWhiteSpace( _start );
 
@@ -214,13 +200,14 @@ const char* StrPair::GetStr()
                     //   &#20013; or &#x4e2d;
 
                     if ( *(p+1) == '#' ) {
-                        char buf[10] = { 0 };
-                        int len;
+                        const int buflen = 10;
+                        char buf[buflen] = { 0 };
+                        int len = 0;
                         p = const_cast<char*>( XMLUtil::GetCharacterRef( p, buf, &len ) );
-                        for( int i=0; i<len; ++i ) {
-                            *q++ = buf[i];
-                        }
-                        TIXMLASSERT( q <= p );
+                        TIXMLASSERT( 0 <= len && len <= buflen );
+                        TIXMLASSERT( q + len <= p );
+                        memcpy( q, buf, len );
+                        q += len;
                     }
                     else {
                         int i=0;
@@ -615,7 +602,7 @@ void XMLNode::DeleteChildren()
         XMLNode* node = _firstChild;
         Unlink( node );
 
-        DELETE_NODE( node );
+        DeleteNode( node );
     }
     _firstChild = _lastChild = 0;
 }
@@ -643,7 +630,7 @@ void XMLNode::Unlink( XMLNode* child )
 void XMLNode::DeleteChild( XMLNode* node )
 {
     TIXMLASSERT( node->_parent == this );
-    DELETE_NODE( node );
+    DeleteNode( node );
 }
 
 
@@ -770,10 +757,11 @@ const XMLElement* XMLNode::LastChildElement( const char* value ) const
 
 const XMLElement* XMLNode::NextSiblingElement( const char* value ) const
 {
-    for( XMLNode* element=this->_next; element; element = element->_next ) {
-        if (    element->ToElement()
-                && (!value || XMLUtil::StringEqual( value, element->Value() ))) {
-            return element->ToElement();
+    for( XMLNode* node=this->_next; node; node = node->_next ) {
+        const XMLElement* element = node->ToElement();
+        if ( element
+                && (!value || XMLUtil::StringEqual( value, node->Value() ))) {
+            return element;
         }
     }
     return 0;
@@ -782,10 +770,11 @@ const XMLElement* XMLNode::NextSiblingElement( const char* value ) const
 
 const XMLElement* XMLNode::PreviousSiblingElement( const char* value ) const
 {
-    for( XMLNode* element=_prev; element; element = element->_prev ) {
-        if (    element->ToElement()
-                && (!value || XMLUtil::StringEqual( value, element->Value() ))) {
-            return element->ToElement();
+    for( XMLNode* node=_prev; node; node = node->_prev ) {
+        const XMLElement* element = node->ToElement();
+        if ( element
+                && (!value || XMLUtil::StringEqual( value, node->Value() ))) {
+            return element;
         }
     }
     return 0;
@@ -822,7 +811,7 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEnd )
         StrPair endTag;
         p = node->ParseDeep( p, &endTag );
         if ( !p ) {
-            DELETE_NODE( node );
+            DeleteNode( node );
             node = 0;
             if ( !_document->Error() ) {
                 _document->SetError( XML_ERROR_PARSING, 0, 0 );
@@ -830,19 +819,19 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEnd )
             break;
         }
 
+        XMLElement* ele = node->ToElement();
         // We read the end tag. Return it to the parent.
-        if ( node->ToElement() && node->ToElement()->ClosingType() == XMLElement::CLOSING ) {
+        if ( ele && ele->ClosingType() == XMLElement::CLOSING ) {
             if ( parentEnd ) {
                 *parentEnd = static_cast<XMLElement*>(node)->_value;
             }
 			node->_memPool->SetTracked();	// created and then immediately deleted.
-            DELETE_NODE( node );
+            DeleteNode( node );
             return p;
         }
 
         // Handle an end tag returned to this level.
         // And handle a bunch of annoying errors.
-        XMLElement* ele = node->ToElement();
         if ( ele ) {
             if ( endTag.Empty() && ele->ClosingType() == XMLElement::OPEN ) {
                 _document->SetError( XML_ERROR_MISMATCHED_ELEMENT, node->Value(), 0 );
@@ -860,7 +849,7 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEnd )
             }
         }
         if ( p == 0 ) {
-            DELETE_NODE( node );
+            DeleteNode( node );
             node = 0;
         }
         if ( node ) {
@@ -868,6 +857,16 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEnd )
         }
     }
     return 0;
+}
+
+void XMLNode::DeleteNode( XMLNode* node )
+{
+    if ( node == 0 ) {
+        return;
+    }
+    MemPool* pool = node->_memPool;
+    node->~XMLNode();
+    pool->Free( node );
 }
 
 // --------- XMLText ---------- //
@@ -958,7 +957,8 @@ XMLNode* XMLComment::ShallowClone( XMLDocument* doc ) const
 
 bool XMLComment::ShallowEqual( const XMLNode* compare ) const
 {
-    return ( compare->ToComment() && XMLUtil::StringEqual( compare->ToComment()->Value(), Value() ));
+    const XMLComment* comment = compare->ToComment();
+    return ( comment && XMLUtil::StringEqual( comment->Value(), Value() ));
 }
 
 
@@ -1005,7 +1005,8 @@ XMLNode* XMLDeclaration::ShallowClone( XMLDocument* doc ) const
 
 bool XMLDeclaration::ShallowEqual( const XMLNode* compare ) const
 {
-    return ( compare->ToDeclaration() && XMLUtil::StringEqual( compare->ToDeclaration()->Value(), Value() ));
+    const XMLDeclaration* declaration = compare->ToDeclaration();
+    return ( declaration && XMLUtil::StringEqual( declaration->Value(), Value() ));
 }
 
 
@@ -1052,7 +1053,8 @@ XMLNode* XMLUnknown::ShallowClone( XMLDocument* doc ) const
 
 bool XMLUnknown::ShallowEqual( const XMLNode* compare ) const
 {
-    return ( compare->ToUnknown() && XMLUtil::StringEqual( compare->ToUnknown()->Value(), Value() ));
+    const XMLUnknown* unknown = compare->ToUnknown();
+    return ( unknown && XMLUtil::StringEqual( unknown->Value(), Value() ));
 }
 
 
@@ -1208,7 +1210,7 @@ XMLElement::~XMLElement()
 {
     while( _rootAttribute ) {
         XMLAttribute* next = _rootAttribute->_next;
-        DELETE_ATTRIBUTE( _rootAttribute );
+        DeleteAttribute( _rootAttribute );
         _rootAttribute = next;
     }
 }
@@ -1216,8 +1218,7 @@ XMLElement::~XMLElement()
 
 XMLAttribute* XMLElement::FindAttribute( const char* name )
 {
-    XMLAttribute* a = 0;
-    for( a=_rootAttribute; a; a = a->_next ) {
+    for( XMLAttribute* a = _rootAttribute; a; a = a->_next ) {
         if ( XMLUtil::StringEqual( a->Name(), name ) ) {
             return a;
         }
@@ -1228,8 +1229,7 @@ XMLAttribute* XMLElement::FindAttribute( const char* name )
 
 const XMLAttribute* XMLElement::FindAttribute( const char* name ) const
 {
-    XMLAttribute* a = 0;
-    for( a=_rootAttribute; a; a = a->_next ) {
+    for( XMLAttribute* a = _rootAttribute; a; a = a->_next ) {
         if ( XMLUtil::StringEqual( a->Name(), name ) ) {
             return a;
         }
@@ -1415,7 +1415,7 @@ void XMLElement::DeleteAttribute( const char* name )
             else {
                 _rootAttribute = a->_next;
             }
-            DELETE_ATTRIBUTE( a );
+            DeleteAttribute( a );
             break;
         }
         prev = a;
@@ -1444,7 +1444,7 @@ char* XMLElement::ParseAttributes( char* p )
 
             p = attrib->ParseDeep( p, _document->ProcessEntities() );
             if ( !p || Attribute( attrib->Name() ) ) {
-                DELETE_ATTRIBUTE( attrib );
+                DeleteAttribute( attrib );
                 _document->SetError( XML_ERROR_PARSING_ATTRIBUTE, start, p );
                 return 0;
             }
@@ -1479,6 +1479,15 @@ char* XMLElement::ParseAttributes( char* p )
     return p;
 }
 
+void XMLElement::DeleteAttribute( XMLAttribute* attribute )
+{
+    if ( attribute == 0 ) {
+        return;
+    }
+    MemPool* pool = attribute->_memPool;
+    attribute->~XMLAttribute();
+    pool->Free( attribute );
+}
 
 //
 //	<ele></ele>
@@ -1568,6 +1577,32 @@ bool XMLElement::Accept( XMLVisitor* visitor ) const
 
 
 // --------- XMLDocument ----------- //
+
+// Warning: List must match 'enum XMLError'
+const char* XMLDocument::_errorNames[XML_ERROR_COUNT] = {
+    "XML_SUCCESS",
+    "XML_NO_ATTRIBUTE",
+    "XML_WRONG_ATTRIBUTE_TYPE",
+    "XML_ERROR_FILE_NOT_FOUND",
+    "XML_ERROR_FILE_COULD_NOT_BE_OPENED",
+    "XML_ERROR_FILE_READ_ERROR",
+    "XML_ERROR_ELEMENT_MISMATCH",
+    "XML_ERROR_PARSING_ELEMENT",
+    "XML_ERROR_PARSING_ATTRIBUTE",
+    "XML_ERROR_IDENTIFYING_TAG",
+    "XML_ERROR_PARSING_TEXT",
+    "XML_ERROR_PARSING_CDATA",
+    "XML_ERROR_PARSING_COMMENT",
+    "XML_ERROR_PARSING_DECLARATION",
+    "XML_ERROR_PARSING_UNKNOWN",
+    "XML_ERROR_EMPTY_DOCUMENT",
+    "XML_ERROR_MISMATCHED_ELEMENT",
+    "XML_ERROR_PARSING",
+    "XML_CAN_NOT_CONVERT_TEXT",
+    "XML_NO_TEXT_NODE"
+};
+
+
 XMLDocument::XMLDocument( bool processEntities, Whitespace whitespace ) :
     XMLNode( 0 ),
     _writeBOM( false ),
@@ -1662,19 +1697,25 @@ XMLUnknown* XMLDocument::NewUnknown( const char* str )
     return unk;
 }
 
+static FILE* callfopen( const char* filepath, const char* mode )
+{
+#if defined(_MSC_VER) && (_MSC_VER >= 1400 ) && (!defined WINCE)
+    FILE* fp = 0;
+    errno_t err = fopen_s( &fp, filepath, mode );
+    if ( err ) {
+        return 0;
+    }
+#else
+    FILE* fp = fopen( filepath, mode );
+#endif
+    return fp;
+}
 
 XMLError XMLDocument::LoadFile( const char* filename )
 {
     Clear();
-    FILE* fp = 0;
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1400 )
-    errno_t err = fopen_s(&fp, filename, "rb" );
-    if ( !fp || err) {
-#else
-    fp = fopen( filename, "rb" );
-    if ( !fp) {
-#endif
+    FILE* fp = callfopen( filename, "rb" );
+    if ( !fp ) {
         SetError( XML_ERROR_FILE_NOT_FOUND, filename, 0 );
         return _errorID;
     }
@@ -1689,16 +1730,20 @@ XMLError XMLDocument::LoadFile( FILE* fp )
     Clear();
 
     fseek( fp, 0, SEEK_SET );
-    fgetc( fp );
-    if ( ferror( fp ) != 0 ) {
+    if ( fgetc( fp ) == EOF && ferror( fp ) != 0 ) {
         SetError( XML_ERROR_FILE_READ_ERROR, 0, 0 );
         return _errorID;
     }
 
     fseek( fp, 0, SEEK_END );
-    size_t size = ftell( fp );
+    const long filelength = ftell( fp );
     fseek( fp, 0, SEEK_SET );
+    if ( filelength == -1L ) {
+        SetError( XML_ERROR_FILE_READ_ERROR, 0, 0 );
+        return _errorID;
+    }
 
+    const size_t size = filelength;
     if ( size == 0 ) {
         SetError( XML_ERROR_EMPTY_DOCUMENT, 0, 0 );
         return _errorID;
@@ -1728,14 +1773,8 @@ XMLError XMLDocument::LoadFile( FILE* fp )
 
 XMLError XMLDocument::SaveFile( const char* filename, bool compact )
 {
-    FILE* fp = 0;
-#if defined(_MSC_VER) && (_MSC_VER >= 1400 )
-    errno_t err = fopen_s(&fp, filename, "w" );
-    if ( !fp || err) {
-#else
-    fp = fopen( filename, "w" );
-    if ( !fp) {
-#endif
+    FILE* fp = callfopen( filename, "w" );
+    if ( !fp ) {
         SetError( XML_ERROR_FILE_COULD_NOT_BE_OPENED, filename, 0 );
         return _errorID;
     }
@@ -1799,6 +1838,11 @@ void XMLDocument::SetError( XMLError error, const char* str1, const char* str2 )
     _errorStr2 = str2;
 }
 
+const char* XMLDocument::ErrorName() const
+{
+	TIXMLASSERT(_errorID >= 0 && _errorID < XML_ERROR_COUNT );
+	return _errorNames[_errorID];
+}
 
 void XMLDocument::PrintError() const
 {
@@ -1814,8 +1858,8 @@ void XMLDocument::PrintError() const
             TIXML_SNPRINTF( buf2, LEN, "%s", _errorStr2 );
         }
 
-        printf( "XMLDocument error id=%d str1=%s str2=%s\n",
-                _errorID, buf1, buf2 );
+        printf( "XMLDocument error id=%d '%s' str1=%s str2=%s\n",
+                _errorID, ErrorName(), buf1, buf2 );
     }
 }
 
@@ -1856,7 +1900,17 @@ void XMLPrinter::Print( const char* format, ... )
     }
     else {
 #if defined(_MSC_VER) && (_MSC_VER >= 1400 )
+		#if defined(WINCE)
+		int len = 512;
+		do {
+		    len = len*2;
+		    char* str = new char[len]();
+			len = _vsnprintf(str, len, format, va);
+			delete[] str;
+		}while (len < 0);
+		#else
         int len = _vscprintf( format, va );
+		#endif
 #else
         int len = vsnprintf( 0, 0, format, va );
 #endif
@@ -1865,7 +1919,11 @@ void XMLPrinter::Print( const char* format, ... )
         va_start( va, format );
         char* p = _buffer.PushArr( len ) - 1;	// back up over the null terminator.
 #if defined(_MSC_VER) && (_MSC_VER >= 1400 )
+		#if defined(WINCE)
+		_vsnprintf( p, len+1, format, va );
+		#else
 		vsnprintf_s( p, len+1, _TRUNCATE, format, va );
+		#endif
 #else
 		vsnprintf( p, len+1, format, va );
 #endif
@@ -2089,14 +2147,12 @@ void XMLPrinter::PushComment( const char* comment )
     if ( _elementJustOpened ) {
         SealElement();
     }
-    if ( !_compactMode ) {
-        if ( _textDepth < 0 && !_firstElement) {
-            Print( "\n" );
-            PrintSpace( _depth );
-        }
-        Print( "<!--%s-->", comment );
+    if ( _textDepth < 0 && !_firstElement && !_compactMode) {
+        Print( "\n" );
+        PrintSpace( _depth );
     }
     _firstElement = false;
+    // Print( "<!--%s-->", comment );
 }
 
 
