@@ -137,6 +137,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
+    if (correct_size_of_headers > size)
+    {
+        correct_size_of_headers = size;
+    }
+
     // has to be multiple of FileAlignment
     uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
     size_t pe_size_leanified = 0;
