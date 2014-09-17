@@ -15,8 +15,8 @@
 void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen);
 
 
-int base64decode(const char *in, size_t inLen, unsigned char *out, size_t *outLen);
+int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len);
 
-int base64encode(const void* data_buf, size_t dataLength, char* result, size_t resultSize);
+int Base64Encode(const void *in, size_t in_len, char *out, size_t out_len);
 
 #endif

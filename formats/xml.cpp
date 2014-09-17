@@ -52,6 +52,8 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             std::cout << "FB2 detected." << std::endl;
         }
         level++;
+
+        // iterate through all binary element
         for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
         {
             for (int i = 0; i < level; i++)
@@ -61,29 +63,38 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             std::cout << e->Attribute("id") << std::endl;
 
             const char *base64_data = e->GetText();
+            if (base64_data == nullptr)
+            {
+                std::cout << "No data found." << std::endl;
+                continue;
+            }
             size_t base64_len = strlen(base64_data);
+
+            // 4 base64 character contains information of 3 bytes
             size_t binary_len = 3 * base64_len / 4;
             unsigned char *binary_data = new unsigned char[binary_len];
-            if (base64decode(base64_data, base64_len, binary_data, &binary_len))
+
+            if (Base64Decode(base64_data, base64_len, binary_data, &binary_len))
             {
                 std::cout << "Base64 decode error." << std::endl;
                 delete[] binary_data;
                 continue;
             }
+
+            // Leanify embedded image
             binary_len = LeanifyFile(binary_data, binary_len);
+
+            // allocate a few more bytes for padding
             size_t new_base64_len = 4 * binary_len / 3 + 4;
             char *new_base64_data = new char[new_base64_len];
-            if (base64encode(binary_data, binary_len, new_base64_data, new_base64_len))
+
+            if (Base64Encode(binary_data, binary_len, new_base64_data, new_base64_len))
             {
                 std::cout << "Base64 encode error." << std::endl;
             }
-            else
+            else if (strlen(new_base64_data) < base64_len)
             {
-                new_base64_len = strlen(new_base64_data);
-                if (new_base64_len < base64_len)
-                {
-                    e->SetText(new_base64_data);
-                }
+                e->SetText(new_base64_data);
             }
 
             delete[] binary_data;
