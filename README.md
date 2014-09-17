@@ -57,11 +57,18 @@ It's an image container format found in Tencent QQ.
 Leanify the image inside.
 
 
-####gzip file (.gz, .tgz, .svgz)
+####gzip file (.gz, .tgz)
 
 Leanify file inside and recompress deflate stream.
   
 Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
+
+
+####FictionBook (.fb2, .fb2.zip)
+
+It is based on [XML].
+
+Leanify embedded images.
 
 
 ####Icon file (.ico)
@@ -135,7 +142,7 @@ Recompress it with `LZMA`.
 Remove Metadata Tag.
 
 
-####SVG image (.svg)
+####SVG image (.svg, .svgz)
  
 It is based on [XML].
 
@@ -147,7 +154,7 @@ Leanify all files inside.
 
 ####XML document (.xml, .xsl, .xslt)
 
-Remove all comments, unnecessary spaces, tabs, enters.
+Remove all comments, unnecessary spaces, tabs, line breaks.
 
 
 ####XPInstall (.xpi)
@@ -186,10 +193,26 @@ Remove comment in `End of central directory record`.
 ####Microsoft Compound File Binary
 
 
+####PDF document (.pdf)
+
 
 ##Downloads
 
-https://github.com/JayXon/Leanify/releases/
+[Stable Releases](https://github.com/JayXon/Leanify/releases/)
+
+[Linux 64-bit Nightly Build](https://drone.io/github.com/JayXon/Leanify/files)
+
+
+
+##Usage
+
+```
+Usage: Leanify [options] path1 path2 path3 ...
+  -i iteration  More iterations means slower but better result. Default: 15.
+  -f            Fast mode, no recompression.
+  -q            Quiet mode, no output.
+  -v            Verbose output.
+```
 
 
 ##Compiling
@@ -209,17 +232,6 @@ https://github.com/JayXon/Leanify/releases/
 
 ```
 make
-```
-
-
-##Usage
-
-```
-Usage: Leanify [options] path1 path2 path3 ...
-  -i iteration  More iterations means slower but better result. Default: 15.
-  -f            Fast mode, no recompression.
-  -q            Quiet mode, no output.
-  -v            Verbose output.
 ```
 
 
