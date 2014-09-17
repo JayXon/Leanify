@@ -4,12 +4,17 @@
 
 
 #include <cstring>
+#include <iostream>
 
 #include "tinyxml2/tinyxml2.h"
 
 #include "format.h"
+#include "../leanify.h"
+#include "../utils.h"
 
 
+extern bool is_verbose;
+extern int  level;
 
 
 class Xml : Format

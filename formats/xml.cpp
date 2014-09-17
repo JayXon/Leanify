@@ -44,7 +44,55 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true, tinyxml2::COLLAPSE
 
 size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 {
+    // if the XML is fb2 file
+    if (strcmp(doc.RootElement()->Name(), "FictionBook") == 0)
+    {
+        if (is_verbose)
+        {
+            std::cout << "FB2 detected." << std::endl;
+        }
+        level++;
+        for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
+        {
+            for (int i = 0; i < level; i++)
+            {
+                std::cout << "-> ";
+            }
+            std::cout << e->Attribute("id") << std::endl;
 
+            const char *base64_data = e->GetText();
+            size_t base64_len = strlen(base64_data);
+            size_t binary_len = 3 * base64_len / 4;
+            unsigned char *binary_data = new unsigned char[binary_len];
+            if (base64decode(base64_data, base64_len, binary_data, &binary_len))
+            {
+                std::cout << "Base64 decode error." << std::endl;
+                delete[] binary_data;
+                continue;
+            }
+            binary_len = LeanifyFile(binary_data, binary_len);
+            size_t new_base64_len = 4 * binary_len / 3 + 4;
+            char *new_base64_data = new char[new_base64_len];
+            if (base64encode(binary_data, binary_len, new_base64_data, new_base64_len))
+            {
+                std::cout << "Base64 encode error." << std::endl;
+            }
+            else
+            {
+                new_base64_len = strlen(new_base64_data);
+                if (new_base64_len < base64_len)
+                {
+                    e->SetText(new_base64_data);
+                }
+            }
+
+            delete[] binary_data;
+            delete[] new_base64_data;
+        }
+        level--;
+    }
+
+    // print leanified XML to memory
     tinyxml2::XMLPrinter printer(0, true);
     doc.Print(&printer);
 
