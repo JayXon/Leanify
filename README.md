@@ -7,7 +7,7 @@ Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessar
 ##Features
 
 * Support recursive minifying. (e.g. a [PNG] inside an [APK] inside a [ZIP])
-* Support a wide variety of file formats.
+* Support a wide variety of [file formats](#file-formats).
 * Lightweight, single file, under 1MB, no external dependency.
 * Everything is done in memory, no temporary files.
 * Cross-Platform, support Windows, Mac, Linux.
@@ -50,6 +50,13 @@ Office document 1997-2003 (.doc, .xls, .ppt) is not supported.
 It is based on [ZIP].
 
 
+####FictionBook (.fb2, .fb2.zip)
+
+It is based on [XML].
+
+Leanify embedded images.
+
+
 ####GFT file (.gft)
 
 It's an image container format found in Tencent QQ.
@@ -64,13 +71,6 @@ Leanify file inside and recompress deflate stream.
 Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
 
 
-####FictionBook (.fb2, .fb2.zip)
-
-It is based on [XML].
-
-Leanify embedded images.
-
-
 ####Icon file (.ico)
 
 Leanify [PNG] inside, if any.
@@ -83,7 +83,7 @@ It is based on [ZIP].
 
 ####JPEG image (.jpeg, .jpg, .jpe, .jif, .jfif, .jfi, .thm)
 
-Remove all Application Marker (e.g. `Exif`) and comments.
+Remove all application markers (e.g. `Exif`) and comments.
 
 Optimize with `mozjpeg`.
 

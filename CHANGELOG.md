@@ -1,8 +1,20 @@
 # 0.4.2 (not release yet)
 
-+ Add support for tar.
++ Added support for PE.
 
-+ Add support for PE.
++ Added support for tar.
+
++ Added support for fb2.
+
++ Updated TinyXML2 to 2.2.0
+
++ Enable SSE2 and Link Time Optimization.
+
++ Win: Added 64-bit build.
+
++ Win: More meaningful error message.
+
++ Linux, Mac: Fixed printing UTF16 string.
 
 
 # 0.4.1 (2014-08-10)
