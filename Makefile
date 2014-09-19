@@ -6,15 +6,20 @@ TINYXML_SRC     := formats/tinyxml2/tinyxml2.cpp
 ZOPFLI_SRC      := formats/zopfli/hash.c formats/zopfli/squeeze.c formats/zopfli/gzip_container.c formats/zopfli/katajainen.c formats/zopfli/zopfli_lib.c formats/zopfli/cache.c formats/zopfli/zlib_container.c formats/zopfli/util.c formats/zopfli/tree.c formats/zopfli/deflate.c formats/zopfli/blocksplitter.c formats/zopfli/lz77.c
 ZOPFLIPNG_SRC   := formats/zopflipng/lodepng/lodepng.cpp formats/zopflipng/lodepng/lodepng_util.cpp formats/zopflipng/zopflipng_lib.cc
 
-CFLAGS      := -Wall -O3 -msse2 -mfpmath=sse -flto
-ifeq ($(CC),clang)
-    CFLAGS  := $(filter-out -flto,$(CFLAGS))
+CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse
+ifneq ($(CC),clang)
+    CFLAGS  += -flto
+endif
+
+LDFLAGS += -s
+ifeq ($(shell uname -s),Darwin)
+    LDFLAGS += -liconv
 endif
 
 .PHONY:     leanify clean
 
 leanify:    lzma.a miniz.o mozjpeg.a tinyxml2.o zopfli.a zopflipng.a
-	$(CXX) $(CFLAGS) --std=c++0x -Wno-multichar -s $(LEANIFY_SRC) $^ -o $@
+	$(CXX) $(CFLAGS) --std=c++0x -Wno-multichar $(LEANIFY_SRC) $^ $(LDFLAGS) -o $@
 
 miniz.o:    $(MINIZ_SRC)
 	$(CC) $(CFLAGS) -Wno-strict-aliasing -c $?
