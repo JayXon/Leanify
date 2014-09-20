@@ -47,11 +47,11 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
 
             switch (chunk_type)
             {
-            case 'SNRt':    // tRNS     transparent
-            case 'LTca':    // acTL     APNG
-            case 'LTcf':    // fcTL     APNG
-            case 'TAdf':    // fdAT     APNG    TODO: use zopfli to recompress fdAT
-            case 'cTpn':    // npTc     Android 9Patch images (*.9.png)
+            case 0x534E5274:    // tRNS     transparent
+            case 0x4C546361:    // acTL     APNG
+            case 0x4C546366:    // fcTL     APNG
+            case 0x54416466:    // fdAT     APNG    TODO: use zopfli to recompress fdAT
+            case 0x6354706E:    // npTc     Android 9Patch images (*.9.png)
                 // move this chunk
                 if (p_write != p_read)
                 {
@@ -90,7 +90,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         p_read += chunk_lenth + 12;
 
 
-    } while (chunk_type != 'DNEI');     // IEND
+    } while (chunk_type != 0x444E4549);     // IEND
 
     fp -= size_leanified;
     uint32_t png_size = p_write - fp;
