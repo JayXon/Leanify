@@ -19,17 +19,29 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
     uint32_t pe_header_offset = *(uint32_t *)(fp + 0x3C);
     ImageFileHeader *image_file_header = reinterpret_cast<ImageFileHeader *>(fp + pe_header_offset + 4);
+    ImageOptionalHeader *optional_header = reinterpret_cast<ImageOptionalHeader *>((char *)image_file_header + sizeof(ImageFileHeader));
     size_t total_header_size = pe_header_offset + 4 + sizeof(ImageFileHeader);
+    size_t min_header_size = total_header_size + sizeof(ImageOptionalHeader);
 
     // check ImageFileHeader is not out of file range
     // check PE signature: PE00
     // check Section Table is not out of file range
     if (total_header_size > size ||
         *(uint32_t *)(fp + pe_header_offset) != 0x00004550 ||
-        (total_header_size += image_file_header->SizeOfOptionalHeader + sizeof(ImageSectionHeader) * image_file_header->NumberOfSections) > size)
+        min_header_size > size ||
+        (total_header_size += image_file_header->SizeOfOptionalHeader + sizeof(ImageSectionHeader) * image_file_header->NumberOfSections) > size ||
+        (optional_header->Magic != 0x10B && optional_header->Magic != 0x20B) ||
+        optional_header->FileAlignment == 0 ||
+        optional_header->SectionAlignment == 0)
     {
         std::cerr << "Not a valid PE file." << std::endl;
         return Format::Leanify(size_leanified);
+    }
+
+    // make sure total_header_size will cover Optional Header
+    if (total_header_size < min_header_size)
+    {
+        total_header_size = min_header_size;
     }
 
     const uint32_t new_pe_header_offset = 0x10;
@@ -43,6 +55,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         memset(fp - size_leanified + sizeof(header_magic), 0, new_pe_header_offset - sizeof(header_magic));
         memmove(fp - size_leanified + new_pe_header_offset, fp + pe_header_offset, total_header_size - new_pe_header_offset);
         image_file_header = reinterpret_cast<ImageFileHeader *>(fp - size_leanified + 0x14);
+        optional_header = reinterpret_cast<ImageOptionalHeader *>((char *)image_file_header + sizeof(ImageFileHeader));
         // set new PE Header offset
         *(uint32_t *)(fp - size_leanified + 0x3C) = new_pe_header_offset;
     }
@@ -61,7 +74,6 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
-    ImageOptionalHeader *optional_header = reinterpret_cast<ImageOptionalHeader *>((char *)image_file_header + sizeof(ImageFileHeader));
 
     // Data Directories
     // PE32:    Magic number: 0x10B     Offset: 0x60
