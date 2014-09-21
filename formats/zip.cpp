@@ -100,7 +100,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                     uint32_t new_size = LeanifyFile(p_read + header_size, original_compressed_size, p_read - p_write);
                     p_read += header_size + original_compressed_size;
                     *compressed_size = *uncompressed_size = new_size;
-                    *crc = crc32(0, (unsigned char *)p_write + header_size, new_size);
+                    *crc = mz_crc32(0, (unsigned char *)p_write + header_size, new_size);
                 }
                 else
                 {
@@ -131,7 +131,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 
             if (!buffer ||
                 s != *uncompressed_size ||
-                *crc != crc32(0, buffer, *uncompressed_size))
+                *crc != mz_crc32(0, buffer, *uncompressed_size))
             {
                 std::cerr << "ZIP file corrupted!" << std::endl;
                 mz_free(buffer);
@@ -157,7 +157,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             if (outsize < original_compressed_size)
             {
                 p_read += original_compressed_size;
-                *crc = crc32(0, buffer, new_uncompressed_size);
+                *crc = mz_crc32(0, buffer, new_uncompressed_size);
                 *compressed_size = outsize;
                 *uncompressed_size = new_uncompressed_size;
                 memcpy(p_write, out, outsize);
