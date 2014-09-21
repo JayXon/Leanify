@@ -22,7 +22,7 @@ leanify:    lzma.a miniz.o mozjpeg.a tinyxml2.o zopfli.a zopflipng.a
 	$(CXX) $(CFLAGS) --std=c++0x $(LEANIFY_SRC) $^ $(LDFLAGS) -o $@
 
 miniz.o:    $(MINIZ_SRC)
-	$(CC) $(CFLAGS) -Wno-strict-aliasing -c $?
+	$(CC) $(CFLAGS) -c $?
 
 tinyxml2.o: $(TINYXML_SRC)
 	$(CXX) $(CFLAGS) -c $?
@@ -32,7 +32,7 @@ lzma.a:     $(LZMA_SRC)
 	ar rcs $@ $(patsubst formats/LZMA/%.c,%.o,$^)
 
 mozjpeg.a:  $(MOZJPEG_SRC)
-	$(CC) $(CFLAGS) -Wno-attributes -c $?
+	$(CC) $(CFLAGS) -c $?
 	ar rcs $@ $(patsubst formats/mozjpeg/%.c,%.o,$^)
 
 zopfli.a:   $(ZOPFLI_SRC)
