@@ -110,7 +110,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     // looking for reloc and rsrc in Section Table
     for (int i = 0; i < image_file_header->NumberOfSections; i++)
     {
-        if (section_table[i].VirtualAddress == reloc_virtual_address)
+        if (reloc_virtual_address && section_table[i].VirtualAddress == reloc_virtual_address)
         {
             // if IMAGE_FILE_RELOCS_STRIPPED is set
             if (image_file_header->Characteristics & 0x0001)
@@ -136,7 +136,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 }
             }
         }
-        else if (section_table[i].VirtualAddress == rsrc_virtual_address)
+        else if (rsrc_virtual_address && section_table[i].VirtualAddress == rsrc_virtual_address)
         {
             rsrc_raw_offset = section_table[i].PointerToRawData;
             rsrc_raw_size = section_table[i].SizeOfRawData;
