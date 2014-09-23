@@ -371,10 +371,15 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
+    // read NumberOfRvaAndSizes
     // this can work on both PE32 and PE32+
-    int num_data_dir = *(uint32_t *)((char *)data_directories - 4);
+    uint32_t num_data_dir = *(uint32_t *)((char *)data_directories - 4);
+    if (num_data_dir > 16)
+    {
+        num_data_dir = 16;
+    }
     // update Data Directories too
-    for (int i = 0; i < num_data_dir; i++)
+    for (uint32_t i = 0; i < num_data_dir; i++)
     {
         if (data_directories[i].VirtualAddress > reloc_virtual_address)
         {
