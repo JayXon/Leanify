@@ -26,9 +26,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     // check ImageFileHeader is not out of file range
     // check PE signature: PE00
     // check Section Table is not out of file range
-    if (total_header_size > size ||
+    if (min_header_size > size ||
         *(uint32_t *)(fp + pe_header_offset) != 0x00004550 ||
-        min_header_size > size ||
         (total_header_size += image_file_header->SizeOfOptionalHeader + sizeof(ImageSectionHeader) * image_file_header->NumberOfSections) > size ||
         (optional_header->Magic != 0x10B && optional_header->Magic != 0x20B) ||
         optional_header->FileAlignment == 0 ||
