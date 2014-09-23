@@ -300,7 +300,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             }
             else
             {
-                memmove(fp - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified, fp + rsrc_new_end + rsrc_size_leanified, rsrc_end - rsrc_new_end - rsrc_size_leanified);
+                if (rsrc_end > rsrc_new_end + rsrc_size_leanified)
+                {
+                    memmove(fp - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified, fp + rsrc_new_end + rsrc_size_leanified, rsrc_end - rsrc_new_end - rsrc_size_leanified);
+                }
                 rsrc_size_leanified = 0;
             }
             if (reloc_raw_size && reloc_raw_offset > rsrc_raw_offset)
