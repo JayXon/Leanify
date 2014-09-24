@@ -164,6 +164,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         header_size_leanified = pe_size_leanified = correct_size_of_headers - header_size_aligned;
         optional_header->SizeOfHeaders = header_size_aligned;
     }
+    else if (total_header_size <= correct_size_of_headers)
+    {
+        header_size_aligned = correct_size_of_headers;
+    }
 
     // fill the rest of the headers with 0
     // only if PE Header offset has changed
