@@ -359,7 +359,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         {
             section_table[i].VirtualAddress -= reloc_virtual_size;
         }
-        if (section_table[i].VirtualAddress == rsrc_virtual_address)
+        if (section_table[i].VirtualAddress > rsrc_virtual_address)
+        {
+            section_table[i].VirtualAddress -= rsrc_decrease_size;
+        }
+        else if (section_table[i].VirtualAddress == rsrc_virtual_address)
         {
             section_table[i].SizeOfRawData = rsrc_raw_size;
             section_table[i].VirtualSize = rsrc_virtual_size;
@@ -391,6 +395,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         if (data_directories[i].VirtualAddress > reloc_virtual_address)
         {
             data_directories[i].VirtualAddress -= reloc_virtual_size;
+        }
+        if (data_directories[i].VirtualAddress > rsrc_virtual_address)
+        {
+            data_directories[i].VirtualAddress -= rsrc_decrease_size;
         }
     }
 
