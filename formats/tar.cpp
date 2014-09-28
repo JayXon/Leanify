@@ -3,6 +3,11 @@
 
 size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 {
+    if (!is_valid)
+    {
+        return size;
+    }
+
     char *p_read = fp;
     fp -= size_leanified;
     char *p_write = fp;
@@ -84,6 +89,8 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         p_write += 512;
 
     } while (p_write < fp + size);
+
+    level--;
 
     // write 2 more zero-filled records
     memset(p_write, 0, 1024);

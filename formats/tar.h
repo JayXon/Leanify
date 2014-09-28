@@ -16,19 +16,24 @@ extern int level;
 class Tar : Format
 {
 public:
-    Tar(void *p, size_t s = 0) : Format(p, s) {}
-
-    ~Tar() { level--; }
+    Tar(void *p, size_t s = 0) : Format(p, s)
+    {
+        // check file size first
+        is_valid = s > 512 && s % 512 == 0 &&
+            CalcChecksum((unsigned char *)p) == strtol(fp + 148, nullptr, 8);
+    }
 
     size_t Leanify(size_t size_leanified = 0);
 
     bool IsValid() const
     {
-        return CalcChecksum((unsigned char *)fp) == strtol(fp + 148, nullptr, 8);
+        return is_valid;
     }
 
 private:
     int CalcChecksum(unsigned char *header) const;
+
+    bool is_valid;
 
 };
 

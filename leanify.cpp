@@ -94,8 +94,6 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
     {
         // tar file does not have header magic
         // ustar is optional
-        // check file size first
-        if (file_size > 512 && file_size % 512 == 0)
         {
             Tar t(file_pointer, file_size);
             // checking first record checksum
@@ -109,16 +107,18 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
             }
         }
 
-        // xml file does not have header magic to tell if it is a xml file.
-        // have to try to parse and see if there is any errors.
-        Xml x(file_pointer, file_size);
-        if (x.IsValid())
+        // XML file does not have header magic
+        // have to parse and see if there are any errors.
         {
-            if (is_verbose)
+            Xml x(file_pointer, file_size);
+            if (x.IsValid())
             {
-                std::cout << "XML detected." << std::endl;
+                if (is_verbose)
+                {
+                    std::cout << "XML detected." << std::endl;
+                }
+                return x.Leanify(size_leanified);
             }
-            return x.Leanify(size_leanified);
         }
     }
 
