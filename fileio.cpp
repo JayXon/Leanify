@@ -113,15 +113,20 @@ void File::UnMapFile(size_t new_size)
         if (!FlushViewOfFile(fp, 0))
         {
             PrintErrorMessage("Write file error!");
-            return;
         }
     }
-    UnmapViewOfFile(fp);
+    if (!UnmapViewOfFile(fp))
+    {
+        PrintErrorMessage("UnmapViewOfFile error!");
+    }
     CloseHandle(hMap);
     if (new_size)
     {
         SetFilePointer(hFile, new_size, NULL, FILE_BEGIN);
-        SetEndOfFile(hFile);
+        if (!SetEndOfFile(hFile))
+        {
+            PrintErrorMessage("SetEndOfFile error!");
+        }
     }
     CloseHandle(hFile);
 }
