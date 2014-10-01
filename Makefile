@@ -11,9 +11,10 @@ ifneq ($(CC),clang)
     CFLAGS  += -flto
 endif
 
-LDFLAGS += -s
 ifeq ($(shell uname -s),Darwin)
     LDFLAGS += -liconv
+else
+    LDFLAGS += -s
 endif
 
 .PHONY:     leanify clean
