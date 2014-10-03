@@ -100,10 +100,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         ZopfliPNGOptions zopflipng_options;
         zopflipng_options.lossy_transparent = true;
         // see the switch above for information about these chunks
-        zopflipng_options.keepchunks.push_back("acTL");
-        zopflipng_options.keepchunks.push_back("fcTL");
-        zopflipng_options.keepchunks.push_back("fdAT");
-        zopflipng_options.keepchunks.push_back("npTc");
+        zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
         zopflipng_options.num_iterations = iterations;
         zopflipng_options.num_iterations_large = iterations / 3 + 1;
         // trying both methods does not worth the time it spend
