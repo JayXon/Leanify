@@ -95,28 +95,24 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     fp -= size_leanified;
     uint32_t png_size = p_write - fp;
 
-    if (!is_fast)
+
+    ZopfliPNGOptions zopflipng_options;
+    zopflipng_options.use_zopfli = !is_fast;
+    zopflipng_options.lossy_transparent = true;
+    // see the switch above for information about these chunks
+    zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
+    zopflipng_options.num_iterations = iterations;
+    zopflipng_options.num_iterations_large = iterations / 3 + 1;
+    // trying both methods does not worth the time it spend
+    // it's better to use the time for more iterations.
+    // zopflipng_options.block_split_strategy = 3;
+
+
+    const std::vector<unsigned char> origpng(fp, fp + png_size);
+    std::vector<unsigned char> resultpng;
+
+    if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
     {
-        ZopfliPNGOptions zopflipng_options;
-        zopflipng_options.lossy_transparent = true;
-        // see the switch above for information about these chunks
-        zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
-        zopflipng_options.num_iterations = iterations;
-        zopflipng_options.num_iterations_large = iterations / 3 + 1;
-        // trying both methods does not worth the time it spend
-        // it's better to use the time for more iterations.
-        // zopflipng_options.block_split_strategy = 3;
-
-
-        const std::vector<unsigned char> origpng(fp, fp + png_size);
-        std::vector<unsigned char> resultpng;
-
-        if (ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
-        {
-            // error occurred
-            return png_size;
-        }
-
         // only use the result PNG if it is smaller
         // sometimes the original PNG is already highly optimized
         // then maybe ZopfliPNG will produce bigger file
