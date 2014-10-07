@@ -24,7 +24,10 @@ public:
 
     static const unsigned char header_magic[3];
 
+private:
     static jmp_buf setjmp_buffer;
+
+    static void mozjpeg_error_handler(j_common_ptr cinfo);
 };
 
 

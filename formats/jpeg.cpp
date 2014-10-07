@@ -2,14 +2,14 @@
 
 
 const unsigned char Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
-jmp_buf Jpeg::setjmp_buffer = {};
 
-void my_error_exit(j_common_ptr cinfo)
+jmp_buf Jpeg::setjmp_buffer;
+
+void Jpeg::mozjpeg_error_handler(j_common_ptr cinfo)
 {
-    /* Always display the message */
-    (*cinfo->err->output_message) (cinfo);
+    (*cinfo->err->output_message)(cinfo);
 
-    longjmp(Jpeg::setjmp_buffer, 1);
+    longjmp(setjmp_buffer, 1);
 }
 
 
@@ -17,13 +17,12 @@ void my_error_exit(j_common_ptr cinfo)
 size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 {
 
-    struct jpeg_decompress_struct srcinfo;
-    struct jpeg_compress_struct dstinfo;
-    struct jpeg_error_mgr jsrcerr, jdsterr;
+    struct jpeg_decompress_struct   srcinfo;
+    struct jpeg_compress_struct     dstinfo;
+    struct jpeg_error_mgr           jsrcerr, jdsterr;
 
-    /* Initialize the JPEG decompression object with default error handling. */
     srcinfo.err = jpeg_std_error(&jsrcerr);
-    jsrcerr.error_exit = my_error_exit;
+    jsrcerr.error_exit = mozjpeg_error_handler;
     if (setjmp(setjmp_buffer))
     {
         jpeg_destroy_compress(&dstinfo);
@@ -33,9 +32,9 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     }
 
     jpeg_create_decompress(&srcinfo);
-    /* Initialize the JPEG compression object with default error handling. */
+
     dstinfo.err = jpeg_std_error(&jdsterr);
-    jdsterr.error_exit = my_error_exit;
+    jdsterr.error_exit = mozjpeg_error_handler;
 
     jpeg_create_compress(&dstinfo);
 
@@ -49,18 +48,17 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     /* Specify data source for decompression */
     jpeg_mem_src(&srcinfo, (unsigned char *)fp, size);
 
-    /* Read file header */
-    (void)jpeg_read_header(&srcinfo, TRUE);
+    (void)jpeg_read_header(&srcinfo, true);
 
     /* Read source file as DCT coefficients */
-    jvirt_barray_ptr *coef_arrays = jpeg_read_coefficients(&srcinfo);
+    auto coef_arrays = jpeg_read_coefficients(&srcinfo);
 
     /* Initialize destination compression parameters from source values */
     jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
 
-    dstinfo.optimize_coding = TRUE;
+    dstinfo.optimize_coding = true;
 
-    unsigned char *outbuffer = NULL;
+    unsigned char *outbuffer = nullptr;
     unsigned long outsize = 0;
     /* Specify data destination for compression */
     jpeg_mem_dest(&dstinfo, &outbuffer, &outsize);
@@ -71,6 +69,8 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     /* Finish compression and release memory */
     jpeg_finish_compress(&dstinfo);
 
+    (void)jpeg_finish_decompress(&srcinfo);
+    jpeg_destroy_decompress(&srcinfo);
 
     fp -= size_leanified;
     // use mozjpeg result if it's smaller than original
@@ -85,8 +85,6 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     }
 
     jpeg_destroy_compress(&dstinfo);
-    (void)jpeg_finish_decompress(&srcinfo);
-    jpeg_destroy_decompress(&srcinfo);
 
     return size;
 }
