@@ -1,8 +1,9 @@
 #include "swf.h"
 
-const unsigned char Swf::header_magic[] = { 'F', 'W', 'S' };
+const unsigned char Swf::header_magic[]         = { 'F', 'W', 'S' };
 const unsigned char Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
-const unsigned char Swf::header_magic_lzma[] = { 'Z', 'W', 'S' };
+const unsigned char Swf::header_magic_lzma[]    = { 'Z', 'W', 'S' };
+
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 {
@@ -83,7 +84,6 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         case 20:    // DefineBitsLossless
         case 36:    // DefineBitsLossless2
         {
-            // move header
             size_t header_size = 7 + (p[3] == 3);
             if (is_verbose)
             {
@@ -98,8 +98,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             
             UpdateTagLength(p - tag_size_leanified, tag_header_length, header_size + new_data_size);
             tag_size_leanified += tag_length - header_size - new_data_size;
-            p += tag_length;
-            continue;
+            break;
         }
         case 21:    // DefineBitsJPEG2
         {
@@ -115,8 +114,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 
             UpdateTagLength(p - tag_size_leanified, tag_header_length, 2 + new_size);
             tag_size_leanified += tag_length - 2 - new_size;
-            p += tag_length;
-            continue;
+            break;
         }
         case 35:    // DefineBitsJPEG3
         case 90:    // DefineBitsJPEG4
@@ -141,24 +139,22 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             size_t new_tag_size = new_img_size + new_alpha_data_size + header_size;
             UpdateTagLength(p - tag_size_leanified, tag_header_length, new_tag_size);
             tag_size_leanified += tag_length - new_tag_size;
-            p += tag_length;
-            continue;
-        }
-        case 69:    // FileAttributes
-            *p &= ~(1 << 4);    // set HasMetadata bit to 0
             break;
+        }
         case 77:    // Metadata
             if (is_verbose)
             {
                 std::cout << "Metadata removed." << std::endl;
             }
             tag_size_leanified += tag_length + tag_header_length;
-            p += tag_length;
-            continue;
-        }
-        if (tag_size_leanified)
-        {
-            memmove(p - tag_size_leanified, p, tag_length);
+            break;
+        case 69:    // FileAttributes
+            *p &= ~(1 << 4);    // set HasMetadata bit to 0
+        default:
+            if (tag_size_leanified)
+            {
+                memmove(p - tag_size_leanified, p, tag_length);
+            }
         }
         p += tag_length;
     } while (p < in_buffer + in_len);
