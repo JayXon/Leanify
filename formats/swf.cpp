@@ -179,8 +179,8 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     }
 
     // compress with LZMA
-    size_t s = in_len, props = LZMA_PROPS_SIZE;
-    unsigned char *dst = new unsigned char[in_len + LZMA_PROPS_SIZE];
+    size_t s = in_len + in_len / 4, props = LZMA_PROPS_SIZE;
+    unsigned char *dst = new unsigned char[s + LZMA_PROPS_SIZE];
     // have to set writeEndMark to true
     if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, iterations < 9 ? iterations : 9, 1 << 24, -1, -1, -1, 128, -1))
     {
