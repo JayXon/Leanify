@@ -185,7 +185,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, iterations < 9 ? iterations : 9, 1 << 24, -1, -1, -1, 128, -1))
     {
         std::cerr << "LZMA compression failed." << std::endl;
-        s = SIZE_MAX;
+        s = size;
     }
 
     // free decompressed data
@@ -198,33 +198,37 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         delete[] in_buffer;
     }
 
-    // write header
     fp -= size_leanified;
-    memcpy(fp, header_magic_lzma, sizeof(header_magic_lzma));
-
-    // write SWF version, at least 13 to support LZMA
-    if (fp[3 + size_leanified] < 13)
-    {
-        fp[3] = 13;
-    }
-    else
-    {
-        fp[3] = fp[3 + size_leanified];
-    }
-
-    // decompressed size (including header)
-    *(uint32_t *)(fp + 4) = in_len + 8;
 
     s += LZMA_PROPS_SIZE;
     if (s + 12 < size)
     {
         size = s + 12;
+
+        // write header
+        memcpy(fp, header_magic_lzma, sizeof(header_magic_lzma));
+
+        // write SWF version, at least 13 to support LZMA
+        if (fp[3 + size_leanified] < 13)
+        {
+            fp[3] = 13;
+        }
+        else
+        {
+            fp[3] = fp[3 + size_leanified];
+        }
+
+        // decompressed size (including header)
+        *(uint32_t *)(fp + 4) = in_len + 8;
+
+        // compressed size: LZMA data + end mark
         *(uint32_t *)(fp + 8) = s - LZMA_PROPS_SIZE;
+
         memcpy(fp + 12, dst, s);
     }
     else if (size_leanified)
     {
-        memmove(fp + 8, fp + 8 + size_leanified, size - 8);
+        memmove(fp, fp + size_leanified, size);
     }
 
     delete[] dst;
