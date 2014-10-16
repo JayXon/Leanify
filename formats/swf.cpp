@@ -43,9 +43,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         // | 'ZWS' + version | scriptLen | compressedLen | LZMA props | LZMA data | LZMA end marker |
         unsigned char *dst_buffer = new unsigned char[in_len];
         size_t s = in_len, len = size - 12 - LZMA_PROPS_SIZE;
-        in_buffer += 4;
-        if (LzmaUncompress(dst_buffer, &s, in_buffer + LZMA_PROPS_SIZE, &len, in_buffer, LZMA_PROPS_SIZE) ||
-            s != in_len || len != size - 18 - LZMA_PROPS_SIZE)
+        // check compressed length
+        if (*(uint32_t *)in_buffer != len ||
+            LzmaUncompress(dst_buffer, &s, in_buffer + 4 + LZMA_PROPS_SIZE, &len, in_buffer + 4, LZMA_PROPS_SIZE) ||
+            s != in_len)
         {
             std::cerr << "SWF file corrupted!" << std::endl;
             delete[] dst_buffer;
