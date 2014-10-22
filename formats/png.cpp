@@ -33,8 +33,17 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
 
         // read chunk length
         // use bswap to convert Big-Endian to Little-Endian
+        // 12 = length: 4 + type: 4 + crc: 4
+        uint32_t chunk_lenth = bswap32(*(uint32_t *)p_read) + 12;
 
-        uint32_t chunk_lenth = bswap32(*(uint32_t *)p_read);
+        // detect truncated file
+        if (p_read + chunk_lenth > fp + size)
+        {
+            memmove(p_write, p_read, fp + size - p_read);
+            p_write += fp + size - p_read;
+            p_read = fp + size;
+            break;
+        }
 
         // read chunk type
         chunk_type = *(uint32_t *)(p_read + 4);
@@ -52,16 +61,11 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             case 0x4C546366:    // fcTL     APNG
             case 0x54416466:    // fdAT     APNG    TODO: use zopfli to recompress fdAT
             case 0x6354706E:    // npTc     Android 9Patch images (*.9.png)
-                // move this chunk
-                if (p_write != p_read)
-                {
-                    memmove(p_write, p_read, chunk_lenth + 12);
-                }
-                p_write += chunk_lenth + 12;
                 break;
 
             default:
                 // remove this chunk
+                p_read += chunk_lenth;
                 if (is_verbose)
                 {
                     // chunk name
@@ -71,23 +75,20 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                     }
                     std::cout << " chunk removed." << std::endl;
                 }
-                break;
+                continue;
             }
 
         }
-        else
+
+        // move this chunk
+        if (p_write != p_read)
         {
-            // move this chunk
-            if (p_write != p_read)
-            {
-                memmove(p_write, p_read, chunk_lenth + 12);
-            }
-            p_write += chunk_lenth + 12;
+            memmove(p_write, p_read, chunk_lenth);
         }
-
 
         // skip whole chunk
-        p_read += chunk_lenth + 12;
+        p_write += chunk_lenth;
+        p_read += chunk_lenth;
 
 
     } while (chunk_type != 0x444E4549);     // IEND
