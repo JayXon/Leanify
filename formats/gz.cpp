@@ -11,9 +11,10 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     // written according to this specification
     // http://www.gzip.org/zlib/rfc-gzip.html
 
-    if (size_leanified)
+    if (size <= 18)
     {
-        memmove(fp - size_leanified, fp, 10);
+        std::cerr << "Not a valid GZ file." << std::endl;
+        return Format::Leanify(size_leanified);
     }
 
     char flags = *(fp + 3);
@@ -32,7 +33,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (flags & (1 << 3))   // FNAME
     {
-        while (*p_read++)
+        while (p_read < fp + size && *p_read++)
         {
             // skip string
         }
@@ -40,7 +41,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (flags & (1 << 4))   // FCOMMENT
     {
-        while (*p_read++)
+        while (p_read < fp + size && *p_read++)
         {
             // skip string
         }
@@ -49,6 +50,16 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     if (flags & (1 << 1))   // FHCRC
     {
         p_read += 2;
+    }
+
+    if (p_read >= fp + size)
+    {
+        return Format::Leanify(size_leanified);
+    }
+
+    if (size_leanified)
+    {
+        memmove(fp - size_leanified, fp, 10);
     }
 
     if (is_fast)

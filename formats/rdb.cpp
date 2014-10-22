@@ -7,6 +7,12 @@ const unsigned char Rdb::header_magic[] = { 0x35, 0x33, 0x31, 0x45, 0x39, 0x38, 
 
 size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
 {
+    if (size <= 0x20)
+    {
+        std::cerr << "Not a valid RDB file." << std::endl;
+        return Format::Leanify(size_leanified);
+    }
+
     level++;
     char *p_read;
     size_t rdb_size_leanified = 0;
