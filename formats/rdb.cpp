@@ -13,7 +13,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         return Format::Leanify(size_leanified);
     }
 
-    level++;
+    depth++;
     char *p_read;
     size_t rdb_size_leanified = 0;
 
@@ -63,23 +63,30 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
             continue;
         }
 
-        // output filename
-        for (int i = 0; i < level; i++)
+        if (depth <= max_depth)
         {
-            std::cout << "-> ";
+            // output filename
+            for (int i = 1; i < depth; i++)
+            {
+                std::cout << "-> ";
+            }
+
+            char mbs[256] = { 0 };
+            UTF16toMBS(file_name, p_index - (char *)file_name, mbs, sizeof(mbs));
+            std::cout << mbs << std::endl;
+
+            // Leanify inner file
+            size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified);
+            if (new_size != file_size)
+            {
+                // update the size in index
+                *(uint64_t *)(p_index + 8) = new_size;
+                rdb_size_leanified += (size_t)file_size - new_size;
+            }
         }
-
-        char mbs[256] = { 0 };
-        UTF16toMBS(file_name, p_index - (char *)file_name, mbs, sizeof(mbs));
-        std::cout << mbs << std::endl;
-
-        // Leanify inner file
-        size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified);
-        if (new_size != file_size)
+        else
         {
-            // update the size in index
-            *(uint64_t *)(p_index + 8) = new_size;
-            rdb_size_leanified += (size_t)file_size - new_size;
+            memmove(p_read - rdb_size_leanified - size_leanified, p_read, (size_t)file_size);
         }
 
         p_read += file_size;
@@ -87,5 +94,6 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         p_index += 16;
     }
     size = p_read - fp - size_leanified - rdb_size_leanified;
+    depth--;
     return size;
 }

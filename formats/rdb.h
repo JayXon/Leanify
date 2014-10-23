@@ -11,7 +11,8 @@
 #include "../utils.h"
 
 
-extern int level;
+extern int depth;
+extern int max_depth;
 
 class Rdb : Format
 {
@@ -19,7 +20,6 @@ public:
     Rdb(void *p, size_t s = 0) : Format(p, s) {}
     // using Format::Format;
     // VS2013 does not support C++11 inheriting constructors
-    ~Rdb() { level--; }
 
     size_t Leanify(size_t size_leanified = 0);
 

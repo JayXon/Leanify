@@ -15,6 +15,7 @@
 
 extern bool is_fast;
 extern int iterations;
+extern int depth;
 
 class Gz : Format
 {

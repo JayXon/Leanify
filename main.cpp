@@ -76,10 +76,11 @@ void PrintInfo()
 {
     std::cerr << "Leanify\t" << VERSION << std::endl << std::endl;
     std::cerr << "Usage: Leanify [options] paths" << std::endl;
-    std::cerr << "  -i iteration\tMore iterations means slower but better result. Default: 15." << std::endl;
-    std::cerr << "  -f\t\tFast mode, no recompression." << std::endl;
-    std::cerr << "  -q\t\tQuiet mode, no output." << std::endl;
-    std::cerr << "  -v\t\tVerbose output." << std::endl;
+    std::cerr << "  -i <iteration>  More iterations means slower but better result. Default: 15." << std::endl;
+    std::cerr << "  -d <max depth>  Maximum recursive depth." << std::endl;
+    std::cerr << "  -f              Fast mode, no recompression." << std::endl;
+    std::cerr << "  -q              Quiet mode, no output." << std::endl;
+    std::cerr << "  -v              Verbose output." << std::endl;
     PauseIfNotTerminal();
 }
 
@@ -97,12 +98,13 @@ int main(int argc, char const *argv[])
     is_fast = false;
     is_verbose = false;
     iterations = 15;
-    level = 0;
+    depth = 1;
+    max_depth = INT_MAX;
 
     int i;
     for (i = 1; i < argc && argv[i][0] == L'-'; i++)
     {
-        bool need_plus1 = false;
+        int num_optargs = 0;
         for (int j = 1; argv[i][j]; j++)
         {
             switch (argv[i][j])
@@ -116,9 +118,9 @@ int main(int argc, char const *argv[])
                 if (i < argc - 1)
                 {
 #ifdef _WIN32
-                    iterations = wcstol(argv[i + 1], nullptr, 10);
+                    iterations = wcstol(argv[i + ++num_optargs], nullptr, 10);
 #else
-                    iterations = strtol(argv[i + 1], nullptr, 10);
+                    iterations = strtol(argv[i + ++num_optargs], nullptr, 10);
 #endif // _WIN32
                     // strtol will return 0 on fail
                     if (iterations == 0)
@@ -127,7 +129,24 @@ int main(int argc, char const *argv[])
                         PrintInfo();
                         return 1;
                     }
-                    need_plus1 = true;
+                }
+                break;
+            case 'd':
+            case 'D':
+                if (i < argc - 1)
+                {
+#ifdef _WIN32
+                    max_depth = wcstol(argv[i + ++num_optargs], nullptr, 10);
+#else
+                    max_depth = strtol(argv[i + ++num_optargs], nullptr, 10);
+#endif // _WIN32
+                    // strtol will return 0 on fail
+                    if (max_depth == 0)
+                    {
+                        std::cerr << "There should be a positive number after -d option." << std::endl;
+                        PrintInfo();
+                        return 1;
+                    }
                 }
                 break;
             case 'q':
@@ -146,10 +165,7 @@ int main(int argc, char const *argv[])
                 return 1;
             }
         }
-        if (need_plus1)
-        {
-            i++;
-        }
+        i += num_optargs;
     }
 
     if (i == argc)

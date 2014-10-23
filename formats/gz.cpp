@@ -17,6 +17,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         return Format::Leanify(size_leanified);
     }
 
+    depth++;
     char flags = *(fp + 3);
     // set the flags to 0, remove all unnecessary section
     *(fp + 3 - size_leanified) = 0;
@@ -86,7 +87,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     }
 
     uncompressed_size = LeanifyFile(buffer, uncompressed_size);
-    
+
     ZopfliOptions options;
     ZopfliInitOptions(&options);
     options.numiterations = iterations;
@@ -110,7 +111,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     }
     mz_free(buffer);
     delete[] out;
-
+    depth--;
     fp -= size_leanified;
     return p_write + 8 - fp;
 }

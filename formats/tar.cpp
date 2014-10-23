@@ -5,13 +5,13 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 {
     if (!is_valid)
     {
-        return size;
+        return Format::Leanify(size_leanified);
     }
 
     char *p_read = fp;
     fp -= size_leanified;
     char *p_write = fp;
-    level++;
+    depth++;
 
     do
     {
@@ -38,17 +38,15 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         size_t size_aligned = (original_size + 0x1FF) & ~0x1FF;
         if (original_size)
         {
-            if (type == 0 || type == '0')
+            if ((type == 0 || type == '0') && depth <= max_depth)
             {
                 // normal file
-                if (is_verbose)
+                for (int i = 1; i < depth; i++)
                 {
-                    for (int i = 0; i < level; i++)
-                    {
-                        std::cout << "-> ";
-                    }
-                    std::cout << p_write << std::endl;
+                    std::cout << "-> ";
                 }
+                std::cout << p_write << std::endl;
+
                 size_t new_size = LeanifyFile(p_read, original_size, size_leanified);
                 if (new_size < original_size)
                 {
@@ -73,6 +71,10 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
                 }
                 else
                 {
+                    // update checksum
+                    sprintf(p_write + 148, "%06o", CalcChecksum((unsigned char *)p_write));
+                    p_write[155] = ' ';
+
                     // make sure the rest space is all 0
                     memset(p_write + new_size + 512, 0, size_aligned - new_size);
                     p_write += size_aligned;
@@ -90,7 +92,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 
     } while (p_write < fp + size);
 
-    level--;
+    depth--;
 
     // write 2 more zero-filled records
     memset(p_write, 0, 1024);

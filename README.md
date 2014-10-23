@@ -208,10 +208,11 @@ Remove comment in `End of central directory record`.
 
 ```
 Usage: Leanify [options] path1 path2 path3 ...
-  -i iteration  More iterations means slower but better result. Default: 15.
-  -f            Fast mode, no recompression.
-  -q            Quiet mode, no output.
-  -v            Verbose output.
+  -i <iteration>  More iterations means slower but better result. Default: 15.
+  -d <max depth>  Maximum recursive depth.
+  -f              Fast mode, no recompression.
+  -q              Quiet mode, no output.
+  -v              Verbose output.
 ```
 
 

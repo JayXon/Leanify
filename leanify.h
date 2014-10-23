@@ -19,6 +19,8 @@
 #include "formats/xml.h"
 #include "formats/zip.h"
 
+extern int depth;
+extern int max_depth;
 
 size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified = 0);
 

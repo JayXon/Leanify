@@ -8,6 +8,10 @@
 // return new size
 size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/)
 {
+    if (depth > max_depth)
+    {
+        return Format(file_pointer, file_size).Leanify(size_leanified);
+    }
     if (!memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)))
     {
         if (is_verbose)

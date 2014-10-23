@@ -249,18 +249,21 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 memmove(fp - size_leanified + header_size_aligned, fp + header_size_aligned + pe_size_leanified, rsrc_raw_offset - pe_size_leanified - header_size_aligned + rsrc_data[0].first[0] - rsrc_virtual_address);
             }
 
-            level++;
+            depth++;
             // res.first is address of IMAGE_RESOURCE_DATA_ENTRY
             // res.second is the name of the resource
             // p[0] is RVA, p[1] is size
             for (auto &res : rsrc_data)
             {
-                // print resource name
-                for (int i = 0; i < level; i++)
+                if (depth <= max_depth)
                 {
-                    std::cout << "-> ";
+                    // print resource name
+                    for (int i = 1; i < depth; i++)
+                    {
+                        std::cout << "-> ";
+                    }
+                    std::cout << res.second << std::endl;
                 }
-                std::cout << res.second << std::endl;
 
                 res.first = (uint32_t *)((char *)res.first - pe_size_leanified - size_leanified);
                 auto p = res.first;
@@ -280,7 +283,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 p[1] = new_size;
                 last_end += new_size;
             }
-            level--;
+            depth--;
             rsrc_size_leanified = old_end - last_end;
             uint32_t rsrc_new_end = rsrc_raw_offset + last_end - rsrc_virtual_address;
             uint32_t rsrc_new_end_aligned = ((rsrc_new_end - 1) | (optional_header->FileAlignment - 1)) + 1;

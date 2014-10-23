@@ -51,56 +51,59 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "FB2 detected." << std::endl;
         }
-        level++;
-
-        // iterate through all binary element
-        for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
+        if (depth < max_depth)
         {
-            for (int i = 0; i < level; i++)
-            {
-                std::cout << "-> ";
-            }
-            std::cout << e->Attribute("id") << std::endl;
+            depth++;
 
-            const char *base64_data = e->GetText();
-            if (base64_data == nullptr)
+            // iterate through all binary element
+            for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
             {
-                std::cout << "No data found." << std::endl;
-                continue;
-            }
-            size_t base64_len = strlen(base64_data);
+                for (int i = 1; i < depth; i++)
+                {
+                    std::cout << "-> ";
+                }
+                std::cout << e->Attribute("id") << std::endl;
 
-            // 4 base64 character contains information of 3 bytes
-            size_t binary_len = 3 * base64_len / 4;
-            unsigned char *binary_data = new unsigned char[binary_len];
+                const char *base64_data = e->GetText();
+                if (base64_data == nullptr)
+                {
+                    std::cout << "No data found." << std::endl;
+                    continue;
+                }
+                size_t base64_len = strlen(base64_data);
 
-            if (Base64Decode(base64_data, base64_len, binary_data, &binary_len))
-            {
-                std::cout << "Base64 decode error." << std::endl;
+                // 4 base64 character contains information of 3 bytes
+                size_t binary_len = 3 * base64_len / 4;
+                unsigned char *binary_data = new unsigned char[binary_len];
+
+                if (Base64Decode(base64_data, base64_len, binary_data, &binary_len))
+                {
+                    std::cout << "Base64 decode error." << std::endl;
+                    delete[] binary_data;
+                    continue;
+                }
+
+                // Leanify embedded image
+                binary_len = LeanifyFile(binary_data, binary_len);
+
+                // allocate a few more bytes for padding
+                size_t new_base64_len = 4 * binary_len / 3 + 4;
+                char *new_base64_data = new char[new_base64_len];
+
+                if (Base64Encode(binary_data, binary_len, new_base64_data, new_base64_len))
+                {
+                    std::cout << "Base64 encode error." << std::endl;
+                }
+                else if (strlen(new_base64_data) < base64_len)
+                {
+                    e->SetText(new_base64_data);
+                }
+
                 delete[] binary_data;
-                continue;
+                delete[] new_base64_data;
             }
-
-            // Leanify embedded image
-            binary_len = LeanifyFile(binary_data, binary_len);
-
-            // allocate a few more bytes for padding
-            size_t new_base64_len = 4 * binary_len / 3 + 4;
-            char *new_base64_data = new char[new_base64_len];
-
-            if (Base64Encode(binary_data, binary_len, new_base64_data, new_base64_len))
-            {
-                std::cout << "Base64 encode error." << std::endl;
-            }
-            else if (strlen(new_base64_data) < base64_len)
-            {
-                e->SetText(new_base64_data);
-            }
-
-            delete[] binary_data;
-            delete[] new_base64_data;
+            depth--;
         }
-        level--;
     }
 
     // print leanified XML to memory

@@ -18,11 +18,10 @@ bool is_verbose;
 // iteration of zopfli
 int iterations;
 
-// file inside zip: level 1
-// file inside zip that is inside another zip: level 2
-// used to print "->"
-int level;
-
+// a normal file: depth 1
+// file inside zip that is inside another zip: depth 3
+int depth;
+int max_depth;
 
 
 

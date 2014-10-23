@@ -20,7 +20,7 @@
 // http://msdn.microsoft.com/en-us/gg463119.aspx
 
 extern bool is_verbose;
-extern int  level;
+extern int  depth;
 
 class Pe : Format
 {

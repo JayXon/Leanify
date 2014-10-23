@@ -11,7 +11,8 @@
 #include "../leanify.h"
 
 extern bool is_verbose;
-extern int level;
+extern int depth;
+extern int max_depth;
 
 class Tar : Format
 {

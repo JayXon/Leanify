@@ -18,7 +18,8 @@
 
 extern bool is_fast;
 extern int iterations;
-extern int level;
+extern int depth;
+extern int max_depth;
 
 class Zip : Format
 {
@@ -28,7 +29,7 @@ public:
         ZopfliInitOptions(&zopfli_options);
         zopfli_options.numiterations = iterations;
     }
-    ~Zip() { level--; }
+    ~Zip() { depth--; }
 
     size_t Leanify(size_t size_leanified = 0);
 

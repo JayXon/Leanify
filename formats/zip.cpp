@@ -5,7 +5,7 @@ const unsigned char Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 
 size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 {
-    level++;
+    depth++;
     char *p_read = fp;
     fp -= size_leanified;
     char *p_write = fp;
@@ -42,12 +42,12 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         uint16_t compression_method = *(uint16_t *)(p_write + 8);
 
         // do not output filename if it is a directory
-        if (original_compressed_size || compression_method || flag & 8)
+        if ((original_compressed_size || compression_method || flag & 8) && depth <= max_depth)
         {
             // output filename
             char *name = new char[filename_length + 1]();
             memcpy(name, p_write + 30, filename_length);
-            for (int i = 0; i < level; i++)
+            for (int i = 1; i < depth; i++)
             {
                 std::cout << "-> ";
             }
@@ -92,7 +92,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         // otherwise just memmove the compressed part
         if (compression_method != 8 || is_fast)
         {
-            if (compression_method == 0)
+            if (compression_method == 0 && depth <= max_depth)
             {
                 // method is store
                 if (original_compressed_size)
@@ -146,7 +146,6 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 
             // Leanify uncompressed file
             uint32_t new_uncompressed_size = LeanifyFile(buffer, s);
-
 
             // recompress
             unsigned char bp = 0, *out = NULL;
