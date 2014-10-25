@@ -34,6 +34,11 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (flags & (1 << 3))   // FNAME
     {
+        for (int i = 1; i < depth; i++)
+        {
+            std::cout << "-> ";
+        }
+        std::cout << p_read << std::endl;
         while (p_read < fp + size && *p_read++)
         {
             // skip string
