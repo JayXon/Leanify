@@ -74,7 +74,7 @@ void PauseIfNotTerminal()
 
 void PrintInfo()
 {
-    std::cerr << "Leanify\t" << VERSION << std::endl << std::endl;
+    std::cerr << "Leanify\t" << VERSION_STR << std::endl << std::endl;
     std::cerr << "Usage: Leanify [options] paths" << std::endl;
     std::cerr << "  -i <iteration>  More iterations means slower but better result. Default: 15." << std::endl;
     std::cerr << "  -d <max depth>  Maximum recursive depth." << std::endl;

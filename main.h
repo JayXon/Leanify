@@ -7,9 +7,8 @@
 
 #include "leanify.h"
 #include "fileio.h"
+#include "version.h"
 
-
-#define VERSION "0.4.2"
 
 
 bool is_fast;
