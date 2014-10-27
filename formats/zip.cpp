@@ -145,7 +145,12 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             }
 
             // Leanify uncompressed file
-            uint32_t new_uncompressed_size = LeanifyFile(buffer, s);
+            uint32_t new_uncompressed_size = s;
+            // workaround of TinyXML2 not supporting xml:space="preserve"
+            if (filename_length != 17 || memcmp(p_write - filename_length, "word/document.xml", filename_length))
+            {
+                new_uncompressed_size = LeanifyFile(buffer, s);
+            }
 
             // recompress
             unsigned char bp = 0, *out = NULL;
