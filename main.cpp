@@ -110,11 +110,9 @@ int main(int argc, char const *argv[])
             switch (argv[i][j])
             {
             case 'f':
-            case 'F':
                 is_fast = true;
                 break;
             case 'i':
-            case 'I':
                 if (i < argc - 1)
                 {
 #ifdef _WIN32
@@ -132,7 +130,6 @@ int main(int argc, char const *argv[])
                 }
                 break;
             case 'd':
-            case 'D':
                 if (i < argc - 1)
                 {
 #ifdef _WIN32
@@ -150,12 +147,10 @@ int main(int argc, char const *argv[])
                 }
                 break;
             case 'q':
-            case 'Q':
                 std::cout.setstate(std::ios::failbit);
                 is_verbose = false;
                 break;
             case 'v':
-            case 'V':
                 std::cout.clear();
                 is_verbose = true;
                 break;
