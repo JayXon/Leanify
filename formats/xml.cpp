@@ -44,8 +44,9 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true, tinyxml2::COLLAPSE
 
 size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 {
+    const char *root_name = doc.RootElement()->Name();
     // if the XML is fb2 file
-    if (strcmp(doc.RootElement()->Name(), "FictionBook") == 0)
+    if (strcmp(root_name, "FictionBook") == 0)
     {
         if (is_verbose)
         {
@@ -103,6 +104,17 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 delete[] new_base64_data;
             }
             depth--;
+        }
+    }
+    else if (strcmp(root_name, "svg") == 0)
+    {
+        if (is_verbose)
+        {
+            std::cout << "SVG detected." << std::endl;
+        }
+        for (auto e = doc.RootElement()->FirstChildElement("metadata"); e; e = e->NextSiblingElement("metadata"))
+        {
+            doc.RootElement()->DeleteChild(e);
         }
     }
 

@@ -145,6 +145,8 @@ Remove Metadata Tag.
 ####SVG image (.svg, .svgz)
  
 It is based on [XML].
+  
+Remove metadata.
 
 
 ####tar archive (.tar)
