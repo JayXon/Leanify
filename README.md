@@ -8,7 +8,7 @@ Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessar
 
 * Support recursive minifying. (e.g. a [PNG] inside an [APK] inside a [ZIP])
 * Support a wide variety of [file formats](#file-formats).
-* Lightweight, single file, under 1MB, no external dependency.
+* Lightweight, one file, under 1MB, no external dependency.
 * Everything is done in memory, no temporary files.
 * Cross-Platform, support Windows, Mac, Linux.
 * Support traverse directory recursively.
@@ -31,6 +31,8 @@ It is based on [ZIP].
   
 Note that modifying files inside `APK` will break digital signature.
 To install it, you'll have to sign it again.
+
+If you don't want to modify any files inside `APK`, use `-d 1` option.
 
 
 ####Comic book archive (.cbt, .cbz)
@@ -202,7 +204,7 @@ Remove comment in `End of central directory record`.
 
 [Stable Releases](https://github.com/JayXon/Leanify/releases/)
 
-[Linux 64-bit Nightly Build](https://drone.io/github.com/JayXon/Leanify/files)
+[Linux Nightly Build](https://drone.io/github.com/JayXon/Leanify/files)
 
 
 
