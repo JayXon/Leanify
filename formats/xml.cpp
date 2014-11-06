@@ -2,7 +2,7 @@
 
 
 
-Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true, tinyxml2::COLLAPSE_WHITESPACE)
+Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
 {
     unsigned char *q = (unsigned char *)p;
 
