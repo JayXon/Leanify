@@ -1,10 +1,14 @@
-# 0.4.2 (not release yet)
+# 0.4.2 (2014-11-07)
 
 + Added support for PE.
 
 + Added support for tar.
 
 + Added support for fb2.
+
++ Added support for removing SVG metadata.
+
++ New -d option to specify maximum recursive depth.
 
 + Updated TinyXML2 to 2.2.0
 
@@ -15,6 +19,8 @@
 + Win: More meaningful error message.
 
 + Linux, Mac: Fixed printing UTF16 string.
+
++ Other optimizations and bug fixes.
 
 
 # 0.4.1 (2014-08-10)
