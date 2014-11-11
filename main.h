@@ -13,6 +13,9 @@
 
 bool is_fast;
 bool is_verbose;
+#ifdef _WIN32
+bool is_pause;
+#endif // _WIN32
 
 // iteration of zopfli
 int iterations;

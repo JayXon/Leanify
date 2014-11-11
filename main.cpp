@@ -63,7 +63,7 @@ void PauseIfNotTerminal()
     // pause if Leanify is not started in terminal
     // so that user can see the output instead of just a flash of a black box
 #ifdef _WIN32
-    if (!getenv("PROMPT"))
+    if (is_pause)
     {
         system("pause");
     }
@@ -101,9 +101,17 @@ int main(int argc, char const *argv[])
     depth = 1;
     max_depth = INT_MAX;
 
+#ifdef _WIN32
+    is_pause = !getenv("PROMPT");
+#endif // _WIN32
+
     int i;
     for (i = 1; i < argc && argv[i][0] == L'-'; i++)
     {
+#ifdef _WIN32
+        // do not pause if any options are given
+        is_pause = false;
+#endif // _WIN32
         int num_optargs = 0;
         for (int j = 1; argv[i][j]; j++)
         {
