@@ -20,7 +20,7 @@ void PrintSize(size_t size)
 #ifdef _WIN32
 int ProcessFile(const wchar_t *file_path)
 {
-    char mbs[256] = { 0 };
+    char mbs[MAX_PATH] = { 0 };
     WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs), nullptr, nullptr);
     std::cout << "Processing: " << mbs << std::endl;
 #else
