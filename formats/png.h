@@ -3,8 +3,8 @@
 
 
 
-#include <cstring>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 
 #include "zopflipng/zopflipng_lib.h"

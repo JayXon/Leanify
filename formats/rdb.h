@@ -1,9 +1,9 @@
 #ifndef RDB_H
 #define RDB_H
 
-#include <iostream>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
+#include <iostream>
 
 
 #include "format.h"

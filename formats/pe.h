@@ -3,13 +3,13 @@
 
 
 
-#include <cstring>
-#include <cstdint>
-#include <iostream>
-#include <vector>
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
+#include <iostream>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "format.h"
 #include "../leanify.h"

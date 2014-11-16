@@ -3,11 +3,11 @@
 
 
 
-#include <iostream>
-#include <cstring>
-#include <cstdint>
-#include <vector>
 #include <algorithm>    // std::search
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+#include <vector>
 
 #include "miniz/miniz.h"
 #include "zopfli/deflate.h"

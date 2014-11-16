@@ -3,9 +3,9 @@
 
 
 
-#include <iostream>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
+#include <iostream>
 
 #include "miniz/miniz.h"
 #include "zopfli/deflate.h"

@@ -1,8 +1,8 @@
 #ifndef JPEG_H
 #define JPEG_H
 
-#include <cstdio>
 #include <csetjmp>  // for mozjpeg error handling
+#include <cstdio>
 
 #ifdef _WIN32
 #define XMD_H // prevents mozjpeg to redefine INT32

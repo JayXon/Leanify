@@ -3,12 +3,12 @@
 
 
 
-#include <iostream>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
+#include <iostream>
 
-#include "miniz/miniz.h"
 #include "LZMA/LzmaLib.h"
+#include "miniz/miniz.h"
 
 #include "format.h"
 #include "../leanify.h"
