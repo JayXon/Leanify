@@ -4,6 +4,7 @@
 
 
 #include <cstring>
+#include <functional>
 #include <iostream>
 
 #include "tinyxml2/tinyxml2.h"
@@ -33,6 +34,8 @@ public:
 private:
     bool is_valid;
     tinyxml2::XMLDocument doc;
+
+    void TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement*)> callback);
 };
 
 

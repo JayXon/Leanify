@@ -116,6 +116,19 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
         {
             doc.RootElement()->DeleteChild(e);
         }
+
+        // remove empty attribute
+        TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement* e)
+        {
+            for (auto attr = e->FirstAttribute(); attr; attr = attr->Next())
+            {
+                auto value = attr->Value();
+                if (value == nullptr || *value == 0)
+                {
+                    e->DeleteAttribute(attr->Name());
+                }
+            }
+        });
     }
 
     // print leanified XML to memory
@@ -135,3 +148,15 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
     }
     return size;
 }
+
+void Xml::TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement*)> callback)
+{
+    callback(e);
+
+    for (e = e->FirstChildElement(); e; e = e->NextSiblingElement())
+    {
+        TraverseElements(e, callback);
+    }
+}
+
+
