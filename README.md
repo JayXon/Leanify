@@ -150,6 +150,7 @@ It is based on [XML].
   
 Remove metadata.
 
+Remove empty attributes.
 
 ####tar archive (.tar)
 
@@ -177,13 +178,13 @@ It is based on [XML] and [ZIP].
 ####ZIP archive (.zip)
 
 Leanify all files inside and recompress deflate stream.
-  
+
 Remove extra field in `Local file header`.
-  
-Remove `data descriptor structure`, write these information to `Local file header`.
-  
+
+Remove `Data descriptor structure`, write those information to `Local file header`.
+
 Remove extra field and file comment in `Central directory file header`.
-  
+
 Remove comment in `End of central directory record`.
 
 
