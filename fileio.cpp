@@ -1,5 +1,15 @@
 #include "fileio.h"
 
+#include <iostream>
+#include <cstdio>
+
+#ifndef _WIN32
+#include <sys/mman.h>
+
+#include <fcntl.h>
+#include <ftw.h>
+#include <unistd.h>
+#endif
 
 
 // traverse directory and call Callback() for each file

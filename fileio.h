@@ -1,9 +1,7 @@
 #ifndef FILEIO_H
 #define FILEIO_H
 
-
-#include <iostream>
-#include <cstdio>
+#include <cstddef>
 
 #ifdef _WIN32
 #ifndef UNICODE
@@ -14,12 +12,8 @@
 #endif
 #include <Windows.h>
 #else
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <ftw.h>
-#include <sys/mman.h>
+#include <sys/types.h>
 #endif // _WIN32
 
 
