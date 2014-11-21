@@ -4,6 +4,10 @@
 #include <iomanip>
 #include <iostream>
 
+#ifndef _WIN32
+#include <ftw.h>
+#endif
+
 #include "leanify.h"
 #include "fileio.h"
 #include "version.h"
