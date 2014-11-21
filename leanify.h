@@ -1,6 +1,7 @@
 #ifndef LEANIFY_H
 #define LEANIFY_H
 
+#include <cstddef>
 
 extern int depth;
 extern int max_depth;

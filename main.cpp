@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include <climits>
 #include <iomanip>
 #include <iostream>
 
