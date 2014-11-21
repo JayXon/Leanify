@@ -2,6 +2,7 @@
 #define FORMAT_H
 
 
+#include <cstddef>
 #include <cstring>  // memmove
 
 
