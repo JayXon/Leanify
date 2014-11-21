@@ -1,17 +1,7 @@
 #ifndef SWF_H
 #define SWF_H
 
-
-
-#include <cstdint>
-#include <cstring>
-#include <iostream>
-
-#include "LZMA/LzmaLib.h"
-#include "miniz/miniz.h"
-
 #include "format.h"
-#include "../leanify.h"
 
 extern bool is_verbose;
 extern bool is_fast;

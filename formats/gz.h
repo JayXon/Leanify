@@ -2,20 +2,11 @@
 #define GZ_H
 
 
-
-#include <cstdint>
-#include <cstring>
-#include <iostream>
-
-#include "miniz/miniz.h"
-#include "zopfli/deflate.h"
-
 #include "format.h"
-#include "../leanify.h"
+
 
 extern bool is_fast;
 extern int iterations;
-extern int depth;
 
 class Gz : Format
 {

@@ -1,26 +1,17 @@
 #ifndef PE_H
 #define PE_H
 
-
-
-#include <algorithm>
 #include <cstdint>
-#include <cstring>
-#include <iostream>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "format.h"
-#include "../leanify.h"
-#include "../utils.h"
 
 
 // PE format specification
 // http://msdn.microsoft.com/en-us/gg463119.aspx
 
 extern bool is_verbose;
-extern int  depth;
 
 class Pe : Format
 {

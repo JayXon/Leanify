@@ -1,5 +1,13 @@
 #include "main.h"
 
+#include <iomanip>
+#include <iostream>
+
+#include "leanify.h"
+#include "fileio.h"
+#include "version.h"
+
+
 void PrintSize(size_t size)
 {
     if (size < 1024)

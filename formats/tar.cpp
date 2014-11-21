@@ -1,5 +1,12 @@
 #include "tar.h"
 
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+
+#include "../leanify.h"
+
 
 size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 {

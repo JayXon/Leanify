@@ -2,24 +2,15 @@
 #define ZIP_H
 
 
-
-#include <algorithm>    // std::search
-#include <cstdint>
-#include <cstring>
-#include <iostream>
-#include <vector>
-
-#include "miniz/miniz.h"
 #include "zopfli/deflate.h"
 
 #include "format.h"
-#include "../leanify.h"
 
 
 extern bool is_fast;
 extern int iterations;
 extern int depth;
-extern int max_depth;
+
 
 class Zip : Format
 {

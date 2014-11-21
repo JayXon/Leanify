@@ -1,11 +1,7 @@
 #ifndef ICO_H
 #define ICO_H
 
-#include <cstdint>
-
 #include "format.h"
-#include "png.h"
-
 
 class Ico : Format
 {

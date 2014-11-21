@@ -1,5 +1,14 @@
 #include "swf.h"
 
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+
+#include "LZMA/LzmaLib.h"
+#include "miniz/miniz.h"
+
+#include "../leanify.h"
+
 const unsigned char Swf::header_magic[]         = { 'F', 'W', 'S' };
 const unsigned char Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
 const unsigned char Swf::header_magic_lzma[]    = { 'Z', 'W', 'S' };

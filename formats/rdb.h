@@ -1,18 +1,9 @@
 #ifndef RDB_H
 #define RDB_H
 
-#include <cstdint>
-#include <cstring>
-#include <iostream>
-
 
 #include "format.h"
-#include "../leanify.h"
-#include "../utils.h"
 
-
-extern int depth;
-extern int max_depth;
 
 class Rdb : Format
 {

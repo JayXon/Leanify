@@ -1,5 +1,15 @@
 #include "zip.h"
 
+#include <algorithm>    // std::search
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+#include <vector>
+
+#include "miniz/miniz.h"
+
+#include "../leanify.h"
+
 
 const unsigned char Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 

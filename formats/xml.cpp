@@ -1,5 +1,11 @@
 #include "xml.h"
 
+#include <cstring>
+#include <iostream>
+
+#include "../leanify.h"
+#include "../utils.h"
+
 
 
 Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)

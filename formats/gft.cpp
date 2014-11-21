@@ -1,5 +1,9 @@
 #include "gft.h"
 
+#include <cstdint>
+#include <iostream>
+
+#include "../leanify.h"
 
 
 const unsigned char Gft::header_magic[] = { 0x54, 0x47, 0x46, 0x00, 0x00, 0x00, 0x00, 0x00 };

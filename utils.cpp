@@ -1,5 +1,11 @@
 #include "utils.h"
 
+#ifdef _WIN32
+#include <Windows.h>    // WideCharToMultiByte
+#else
+#include <cstdio>
+#include <iconv.h>      // convert UTF16 to UTF8 on non Windows
+#endif
 
 
 // convert UNICODE string aka UTF16 string

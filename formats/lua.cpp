@@ -1,6 +1,7 @@
 #include "lua.h"
 
-
+#include <cstdint>
+#include <cstring>
 
 
 const unsigned char Lua::header_magic[] = { 0x1B, 0x4C, 0x75, 0x61 };

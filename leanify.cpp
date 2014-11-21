@@ -1,5 +1,23 @@
 #include "leanify.h"
 
+#include <iostream>
+
+#include "formats/miniz/miniz.h"
+#include "formats/zopfli/zlib_container.h"
+
+#include "formats/format.h"
+#include "formats/gft.h"
+#include "formats/gz.h"
+#include "formats/ico.h"
+#include "formats/jpeg.h"
+#include "formats/lua.h"
+#include "formats/pe.h"
+#include "formats/png.h"
+#include "formats/swf.h"
+#include "formats/tar.h"
+#include "formats/rdb.h"
+#include "formats/xml.h"
+#include "formats/zip.h"
 
 // Leanify the file
 // and move the file ahead size_leanified bytes

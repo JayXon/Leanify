@@ -2,13 +2,7 @@
 #define LUA_H
 
 
-
-#include <cstdint>
-#include <cstring>
-
 #include "format.h"
-
-
 
 
 class Lua : Format

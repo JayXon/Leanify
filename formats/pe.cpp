@@ -1,5 +1,13 @@
 #include "pe.h"
 
+#include <algorithm>
+#include <cstring>
+#include <iostream>
+#include <utility>
+
+#include "../leanify.h"
+#include "../utils.h"
+
 
 
 const unsigned char Pe::header_magic[] = { 'M', 'Z' };

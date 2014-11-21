@@ -1,5 +1,9 @@
 #include "ico.h"
 
+#include <cstdint>
+
+#include "png.h"
+
 
 const unsigned char Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
 

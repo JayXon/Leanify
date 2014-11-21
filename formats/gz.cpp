@@ -1,5 +1,14 @@
 #include "gz.h"
 
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+
+#include "miniz/miniz.h"
+#include "zopfli/deflate.h"
+
+#include "../leanify.h"
+
 
 // ID1 ID2 CM
 // CM = 8 is deflate

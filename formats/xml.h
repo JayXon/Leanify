@@ -2,21 +2,14 @@
 #define XML_H
 
 
-
-#include <cstring>
 #include <functional>
-#include <iostream>
 
 #include "tinyxml2/tinyxml2.h"
 
 #include "format.h"
-#include "../leanify.h"
-#include "../utils.h"
 
 
 extern bool is_verbose;
-extern int  depth;
-extern int  max_depth;
 
 
 class Xml : Format

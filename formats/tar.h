@@ -2,17 +2,12 @@
 #define TAR_H
 
 
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <iostream>
+#include <cstdlib>
 
 #include "format.h"
-#include "../leanify.h"
+
 
 extern bool is_verbose;
-extern int depth;
-extern int max_depth;
 
 class Tar : Format
 {

@@ -2,24 +2,7 @@
 #define PNG_H
 
 
-
-#include <cstdint>
-#include <cstring>
-#include <iostream>
-
-#include "zopflipng/zopflipng_lib.h"
-
 #include "format.h"
-
-
-
-#ifdef _MSC_VER
-#   define bswap32(x) _byteswap_ulong(x)
-#elif defined __GNUC__
-#   define bswap32(x) __builtin_bswap32(x)
-#else
-#   define bswap32(x) _bswap(x)
-#endif
 
 
 extern bool is_fast;
