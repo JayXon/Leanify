@@ -177,7 +177,7 @@ It is based on [XML] and [ZIP].
 
 ####ZIP archive (.zip)
 
-Leanify all files inside and recompress deflate stream.
+Leanify all files inside and recompress deflate stream using [`Zopfli`](http://googledevelopers.blogspot.com/2013/02/compress-data-more-densely-with-zopfli.html).
 
 Remove extra field in `Local file header`.
 
