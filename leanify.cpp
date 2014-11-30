@@ -86,6 +86,14 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Ico(file_pointer, file_size).Leanify(size_leanified);
     }
+    else if (!memcmp(file_pointer, "(DWF V06.00)", 12))
+    {
+        if (is_verbose)
+        {
+            std::cout << "DWF detected." << std::endl;
+        }
+        return Zip((char *)file_pointer + 12, file_size - 12).Leanify(size_leanified) + 12;
+    }
     else if (!memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)))
     {
         if (is_verbose)
