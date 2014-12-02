@@ -45,6 +45,15 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         return Format::Leanify(size_leanified);
     }
 
+    if (optional_header->Subsystem == 1)
+    {
+        if (is_verbose)
+        {
+            std::cout << ".sys (driver file) detected, skip." << std::endl;
+        }
+        return Format::Leanify(size_leanified);
+    }
+
     // make sure total_header_size will cover Optional Header
     if (total_header_size < min_header_size)
     {
