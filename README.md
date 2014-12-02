@@ -177,7 +177,7 @@ It is based on [XML] and [ZIP].
 
 ####ZIP archive (.zip)
 
-Leanify all files inside and recompress deflate stream.
+Leanify all files inside and recompress deflate stream using [Zopfli](https://code.google.com/p/zopfli/).
 
 Remove extra field in `Local file header`.
 
