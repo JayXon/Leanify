@@ -47,6 +47,11 @@ It is based on [XML] and [ZIP].
 Office document 1997-2003 (.doc, .xls, .ppt) is not supported.
 
 
+####Design Web Format (.dwf, dwfx)
+
+It is based on [ZIP].
+
+
 ####EPUB file (.epub)
 
 It is based on [ZIP].
