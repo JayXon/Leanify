@@ -1,4 +1,4 @@
-Leanify [![Build Status](https://img.shields.io/travis/JayXon/Leanify.svg?style=flat)](https://travis-ci.org/JayXon/Leanify) [![Latest Release](https://img.shields.io/github/release/JayXon/Leanify.svg?style=flat)](https://github.com/JayXon/Leanify/releases)
+Leanify [![Build Status](https://img.shields.io/travis/JayXon/Leanify.svg?style=flat)](https://travis-ci.org/JayXon/Leanify) [![Windows Build status](https://img.shields.io/appveyor/ci/JayXon/Leanify.svg?style=flat)](https://ci.appveyor.com/project/JayXon/leanify) [![Latest Release](https://img.shields.io/github/release/JayXon/Leanify.svg?style=flat)](https://github.com/JayXon/Leanify/releases)
 =======
 
 Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessary data (debug information, comments, metadata, etc.) and recompress the file to reduce file size. It will not reduce image quality at all.
