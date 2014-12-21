@@ -161,7 +161,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
 }
 
 
-size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified /*= 0*/)
+size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
 {
     if (!is_fast)
     {
@@ -183,7 +183,7 @@ size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified 
             mz_free(buffer);
             if (new_size < src_len)
             {
-                memcpy(src - size_leanified, out_buffer, new_size);
+                memcpy((char *)src - size_leanified, out_buffer, new_size);
                 delete[] out_buffer;
                 return new_size;
             }
@@ -191,6 +191,6 @@ size_t ZlibRecompress(unsigned char *src, size_t src_len, size_t size_leanified 
         }
     }
 
-    memmove(src - size_leanified, src, src_len);
+    memmove((char *)src - size_leanified, src, src_len);
     return src_len;
 }
