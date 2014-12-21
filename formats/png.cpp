@@ -65,7 +65,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         // judge the case of first letter
         // remove all ancillary chunks except tRNS and APNG chunks and npTc
         // tRNS has transparency information
-        if (chunk_type & 0x20000000)
+        if (chunk_type & 0x20)
         {
 
             switch (chunk_type)
@@ -78,8 +78,6 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                 break;
 
             default:
-                // remove this chunk
-                p_read += chunk_lenth;
                 if (is_verbose)
                 {
                     // chunk name
@@ -89,6 +87,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                     }
                     std::cout << " chunk removed." << std::endl;
                 }
+                // remove this chunk
+                p_read += chunk_lenth;
                 continue;
             }
 
