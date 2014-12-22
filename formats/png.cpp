@@ -4,8 +4,10 @@
 #include <cstring>
 #include <iostream>
 
+#include "miniz/miniz.h"
 #include "zopflipng/zopflipng_lib.h"
 
+#include "../leanify.h"
 
 #ifdef _MSC_VER
 #   define bswap32(x) _byteswap_ulong(x)
@@ -24,7 +26,7 @@ const unsigned char Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 
 size_t Png::Leanify(size_t size_leanified /*= 0*/)
 {
 
-    char *p_read, *p_write;
+    char *p_read, *p_write, *idat_addr;
 
     // header
     p_read = fp;
@@ -100,6 +102,12 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             memmove(p_write, p_read, chunk_lenth);
         }
 
+        // save IDAT chunk address
+        if (chunk_type == 0x54414449)
+        {
+            idat_addr = p_write;
+        }
+
         // skip whole chunk
         p_write += chunk_lenth;
         p_read += chunk_lenth;
@@ -138,7 +146,18 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
+    // sometimes the strategy chosen by ZopfliPNG is worse than original
+    // then try to recompress IDAT chunk using only zopfli
+    uint32_t idat_length = bswap32(*(uint32_t *)idat_addr);
+    uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
+    if (idat_length != new_idat_length)
+    {
+        *(uint32_t *)idat_addr = bswap32(new_idat_length);
+        *(uint32_t *)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, (unsigned char *)idat_addr + 4, new_idat_length + 4));
+        char *idat_end = idat_addr + idat_length + 12;
+        memmove(idat_addr + new_idat_length + 12, idat_end, fp + png_size - idat_end);
+        png_size -= idat_length - new_idat_length;
+    }
 
     return png_size;
-
 }
