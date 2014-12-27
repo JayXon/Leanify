@@ -50,10 +50,10 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         // read chunk length
         // use bswap to convert Big-Endian to Little-Endian
         // 12 = length: 4 + type: 4 + crc: 4
-        uint32_t chunk_lenth = bswap32(*(uint32_t *)p_read) + 12;
+        uint32_t chunk_length = bswap32(*(uint32_t *)p_read) + 12;
 
         // detect truncated file
-        if (p_read + chunk_lenth > fp + size)
+        if (p_read + chunk_length > fp + size)
         {
             memmove(p_write, p_read, fp + size - p_read);
             p_write += fp + size - p_read;
@@ -90,7 +90,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                     std::cout << " chunk removed." << std::endl;
                 }
                 // remove this chunk
-                p_read += chunk_lenth;
+                p_read += chunk_length;
                 continue;
             }
 
@@ -99,7 +99,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         // move this chunk
         if (p_write != p_read)
         {
-            memmove(p_write, p_read, chunk_lenth);
+            memmove(p_write, p_read, chunk_length);
         }
 
         // save IDAT chunk address
@@ -109,8 +109,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         }
 
         // skip whole chunk
-        p_write += chunk_lenth;
-        p_read += chunk_lenth;
+        p_write += chunk_length;
+        p_read += chunk_length;
 
 
     } while (chunk_type != 0x444E4549);     // IEND
