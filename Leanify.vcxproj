@@ -179,6 +179,7 @@
     <ClCompile Include="formats\mozjpeg\jaricom.c" />
     <ClCompile Include="formats\mozjpeg\jcapimin.c" />
     <ClCompile Include="formats\mozjpeg\jcarith.c" />
+    <ClCompile Include="formats\mozjpeg\jcext.c" />
     <ClCompile Include="formats\mozjpeg\jchuff.c" />
     <ClCompile Include="formats\mozjpeg\jcmarker.c" />
     <ClCompile Include="formats\mozjpeg\jcmaster.c" />

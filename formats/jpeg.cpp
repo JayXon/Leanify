@@ -42,6 +42,10 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     {
         dstinfo.err->trace_level++;
     }
+    if (is_fast)
+    {
+        jpeg_c_set_int_param(&dstinfo, JINT_COMPRESS_PROFILE, JCP_FASTEST);
+    }
 
     /* Specify data source for decompression */
     jpeg_mem_src(&srcinfo, (unsigned char *)fp, size);

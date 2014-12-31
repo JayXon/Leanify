@@ -273,6 +273,9 @@
     <ClCompile Include="formats\mozjpeg\jidctfst.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jcext.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
