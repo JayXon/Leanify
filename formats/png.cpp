@@ -25,12 +25,9 @@ const unsigned char Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 
 
 size_t Png::Leanify(size_t size_leanified /*= 0*/)
 {
-
-    char *p_read, *p_write, *idat_addr;
-
     // header
-    p_read = fp;
-    p_write = p_read - size_leanified;
+    char *p_read = fp;
+    char *p_write = p_read - size_leanified;
 
     if (size_leanified)
     {
@@ -40,9 +37,10 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     p_read += sizeof(header_magic);
     p_write += sizeof(header_magic);
 
-
     // chunk
     uint32_t chunk_type;
+
+    char *idat_addr = nullptr;
 
     do
     {
@@ -144,6 +142,11 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             memcpy(fp, resultpng.data(), resultpng.size());
             return resultpng.size();
         }
+    }
+
+    if (idat_addr == nullptr)
+    {
+        return png_size;
     }
 
     // sometimes the strategy chosen by ZopfliPNG is worse than original
