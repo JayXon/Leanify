@@ -5,14 +5,14 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2003-2010 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010, D. R. Commander.
+ * Copyright (C) 2010, 2014, D. R. Commander.
  * mozjpeg Modifications:
  * Copyright (C) 2014, Mozilla Corporation.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains master control logic for the JPEG compressor.
  * These routines are concerned with parameter validation, initial setup,
- * and inter-pass control (determining the number of passes and the work 
+ * and inter-pass control (determining the number of passes and the work
  * to be done in each pass).
  */
 
@@ -20,41 +20,8 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jpegcomp.h"
-
-
-/* Private state */
-
-typedef enum {
-	main_pass,		/* input data, also do first output step */
-	huff_opt_pass,		/* Huffman code optimization pass */
-	output_pass,		/* data output pass */
-        trellis_pass            /* trellis quantization pass */
-} c_pass_type;
-
-typedef struct {
-  struct jpeg_comp_master pub;	/* public fields */
-
-  c_pass_type pass_type;	/* the type of the current pass */
-
-  int pass_number;		/* # of passes completed */
-  int total_passes;		/* total # of passes needed */
-
-  int scan_number;		/* current index in scan_info[] */
-  
-  /* fields for scan optimisation */
-  int pass_number_scan_opt_base; /* pass number where scan optimization begins */
-  unsigned char * scan_buffer[64]; /* buffer for a given scan */
-  unsigned long scan_size[64]; /* size for a given scan */
-  unsigned long best_cost; /* bit count for best frequency split */
-  int best_freq_split_idx_luma; /* index for best frequency split (luma) */
-  int best_freq_split_idx_chroma; /* index for best frequency split (chroma) */
-  int best_Al_luma; /* best value for Al found in scan search (luma) */
-  int best_Al_chroma; /* best value for Al found in scan search (luma) */
-  boolean interleave_chroma_dc; /* indicate whether to interleave chroma DC scans */
-  struct jpeg_destination_mgr * saved_dest; /* saved value of cinfo->dest */
-} my_comp_master;
-
-typedef my_comp_master * my_master_ptr;
+#include "jmemsys.h"
+#include "jcmaster.h"
 
 
 /*
@@ -120,7 +87,7 @@ initial_setup (j_compress_ptr cinfo, boolean transcode_only)
   /* Check that number of components won't exceed internal array sizes */
   if (cinfo->num_components > MAX_COMPONENTS)
     ERREXIT2(cinfo, JERR_COMPONENT_COUNT, cinfo->num_components,
-	     MAX_COMPONENTS);
+             MAX_COMPONENTS);
 
   /* Compute maximum sampling factors; check factor validity */
   cinfo->max_h_samp_factor = 1;
@@ -128,12 +95,12 @@ initial_setup (j_compress_ptr cinfo, boolean transcode_only)
   for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
        ci++, compptr++) {
     if (compptr->h_samp_factor<=0 || compptr->h_samp_factor>MAX_SAMP_FACTOR ||
-	compptr->v_samp_factor<=0 || compptr->v_samp_factor>MAX_SAMP_FACTOR)
+        compptr->v_samp_factor<=0 || compptr->v_samp_factor>MAX_SAMP_FACTOR)
       ERREXIT(cinfo, JERR_BAD_SAMPLING);
     cinfo->max_h_samp_factor = MAX(cinfo->max_h_samp_factor,
-				   compptr->h_samp_factor);
+                                   compptr->h_samp_factor);
     cinfo->max_v_samp_factor = MAX(cinfo->max_v_samp_factor,
-				   compptr->v_samp_factor);
+                                   compptr->v_samp_factor);
   }
 
   /* Compute dimensions of components */
@@ -150,17 +117,17 @@ initial_setup (j_compress_ptr cinfo, boolean transcode_only)
     /* Size in DCT blocks */
     compptr->width_in_blocks = (JDIMENSION)
       jdiv_round_up((long) cinfo->_jpeg_width * (long) compptr->h_samp_factor,
-		    (long) (cinfo->max_h_samp_factor * DCTSIZE));
+                    (long) (cinfo->max_h_samp_factor * DCTSIZE));
     compptr->height_in_blocks = (JDIMENSION)
       jdiv_round_up((long) cinfo->_jpeg_height * (long) compptr->v_samp_factor,
-		    (long) (cinfo->max_v_samp_factor * DCTSIZE));
+                    (long) (cinfo->max_v_samp_factor * DCTSIZE));
     /* Size in samples */
     compptr->downsampled_width = (JDIMENSION)
       jdiv_round_up((long) cinfo->_jpeg_width * (long) compptr->h_samp_factor,
-		    (long) cinfo->max_h_samp_factor);
+                    (long) cinfo->max_h_samp_factor);
     compptr->downsampled_height = (JDIMENSION)
       jdiv_round_up((long) cinfo->_jpeg_height * (long) compptr->v_samp_factor,
-		    (long) cinfo->max_v_samp_factor);
+                    (long) cinfo->max_v_samp_factor);
     /* Mark component needed (this flag isn't actually used for compression) */
     compptr->component_needed = TRUE;
   }
@@ -170,7 +137,7 @@ initial_setup (j_compress_ptr cinfo, boolean transcode_only)
    */
   cinfo->total_iMCU_rows = (JDIMENSION)
     jdiv_round_up((long) cinfo->_jpeg_height,
-		  (long) (cinfo->max_v_samp_factor*DCTSIZE));
+                  (long) (cinfo->max_v_samp_factor*DCTSIZE));
 }
 
 
@@ -192,7 +159,7 @@ validate_script (j_compress_ptr cinfo)
   /* -1 until that coefficient has been seen; then last Al for it */
 #endif
 
-  if (cinfo->optimize_scans) {
+  if (cinfo->master->optimize_scans) {
     cinfo->progressive_mode = TRUE;
     /* When we optimize scans, there is redundancy in the scan list
      * and this function will fail. Therefore skip all this checking
@@ -211,15 +178,15 @@ validate_script (j_compress_ptr cinfo)
 #ifdef C_PROGRESSIVE_SUPPORTED
     cinfo->progressive_mode = TRUE;
     last_bitpos_ptr = & last_bitpos[0][0];
-    for (ci = 0; ci < cinfo->num_components; ci++) 
+    for (ci = 0; ci < cinfo->num_components; ci++)
       for (coefi = 0; coefi < DCTSIZE2; coefi++)
-	*last_bitpos_ptr++ = -1;
+        *last_bitpos_ptr++ = -1;
 #else
     ERREXIT(cinfo, JERR_NOT_COMPILED);
 #endif
   } else {
     cinfo->progressive_mode = FALSE;
-    for (ci = 0; ci < cinfo->num_components; ci++) 
+    for (ci = 0; ci < cinfo->num_components; ci++)
       component_sent[ci] = FALSE;
   }
 
@@ -231,10 +198,10 @@ validate_script (j_compress_ptr cinfo)
     for (ci = 0; ci < ncomps; ci++) {
       thisi = scanptr->component_index[ci];
       if (thisi < 0 || thisi >= cinfo->num_components)
-	ERREXIT1(cinfo, JERR_BAD_SCAN_SCRIPT, scanno);
+        ERREXIT1(cinfo, JERR_BAD_SCAN_SCRIPT, scanno);
       /* Components must appear in SOF order within each scan */
       if (ci > 0 && thisi <= scanptr->component_index[ci-1])
-	ERREXIT1(cinfo, JERR_BAD_SCAN_SCRIPT, scanno);
+        ERREXIT1(cinfo, JERR_BAD_SCAN_SCRIPT, scanno);
     }
     /* Validate progression parameters */
     Ss = scanptr->Ss;
@@ -256,43 +223,43 @@ validate_script (j_compress_ptr cinfo)
 #define MAX_AH_AL 13
 #endif
       if (Ss < 0 || Ss >= DCTSIZE2 || Se < Ss || Se >= DCTSIZE2 ||
-	  Ah < 0 || Ah > MAX_AH_AL || Al < 0 || Al > MAX_AH_AL)
-	ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+          Ah < 0 || Ah > MAX_AH_AL || Al < 0 || Al > MAX_AH_AL)
+        ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
       if (Ss == 0) {
-	if (Se != 0)		/* DC and AC together not OK */
-	  ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+        if (Se != 0)            /* DC and AC together not OK */
+          ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
       } else {
-	if (ncomps != 1)	/* AC scans must be for only one component */
-	  ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+        if (ncomps != 1)        /* AC scans must be for only one component */
+          ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
       }
       for (ci = 0; ci < ncomps; ci++) {
-	last_bitpos_ptr = & last_bitpos[scanptr->component_index[ci]][0];
-	if (Ss != 0 && last_bitpos_ptr[0] < 0) /* AC without prior DC scan */
-	  ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
-	for (coefi = Ss; coefi <= Se; coefi++) {
-	  if (last_bitpos_ptr[coefi] < 0) {
-	    /* first scan of this coefficient */
-	    if (Ah != 0)
-	      ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
-	  } else {
-	    /* not first scan */
-	    if (Ah != last_bitpos_ptr[coefi] || Al != Ah-1)
-	      ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
-	  }
-	  last_bitpos_ptr[coefi] = Al;
-	}
+        last_bitpos_ptr = & last_bitpos[scanptr->component_index[ci]][0];
+        if (Ss != 0 && last_bitpos_ptr[0] < 0) /* AC without prior DC scan */
+          ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+        for (coefi = Ss; coefi <= Se; coefi++) {
+          if (last_bitpos_ptr[coefi] < 0) {
+            /* first scan of this coefficient */
+            if (Ah != 0)
+              ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+          } else {
+            /* not first scan */
+            if (Ah != last_bitpos_ptr[coefi] || Al != Ah-1)
+              ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+          }
+          last_bitpos_ptr[coefi] = Al;
+        }
       }
 #endif
     } else {
       /* For sequential JPEG, all progression parameters must be these: */
       if (Ss != 0 || Se != DCTSIZE2-1 || Ah != 0 || Al != 0)
-	ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
+        ERREXIT1(cinfo, JERR_BAD_PROG_SCRIPT, scanno);
       /* Make sure components are not sent twice */
       for (ci = 0; ci < ncomps; ci++) {
-	thisi = scanptr->component_index[ci];
-	if (component_sent[thisi])
-	  ERREXIT1(cinfo, JERR_BAD_SCAN_SCRIPT, scanno);
-	component_sent[thisi] = TRUE;
+        thisi = scanptr->component_index[ci];
+        if (component_sent[thisi])
+          ERREXIT1(cinfo, JERR_BAD_SCAN_SCRIPT, scanno);
+        component_sent[thisi] = TRUE;
       }
     }
   }
@@ -307,13 +274,13 @@ validate_script (j_compress_ptr cinfo)
      */
     for (ci = 0; ci < cinfo->num_components; ci++) {
       if (last_bitpos[ci][0] < 0)
-	ERREXIT(cinfo, JERR_MISSING_DATA);
+        ERREXIT(cinfo, JERR_MISSING_DATA);
     }
 #endif
   } else {
     for (ci = 0; ci < cinfo->num_components; ci++) {
       if (! component_sent[ci])
-	ERREXIT(cinfo, JERR_MISSING_DATA);
+        ERREXIT(cinfo, JERR_MISSING_DATA);
     }
   }
 }
@@ -331,12 +298,18 @@ select_scan_parameters (j_compress_ptr cinfo)
   my_master_ptr master = (my_master_ptr) cinfo->master;
   if (master->pass_number < master->pass_number_scan_opt_base) {
     cinfo->comps_in_scan = 1;
-    if (cinfo->use_scans_in_trellis) {
-      cinfo->cur_comp_info[0] = &cinfo->comp_info[master->pass_number/(4*cinfo->trellis_num_loops)];
-      cinfo->Ss = (master->pass_number%4 < 2) ? 1 : cinfo->trellis_freq_split+1;
-      cinfo->Se = (master->pass_number%4 < 2) ? cinfo->trellis_freq_split : DCTSIZE2-1;
+    if (cinfo->master->use_scans_in_trellis) {
+      cinfo->cur_comp_info[0] =
+        &cinfo->comp_info[master->pass_number / 
+                          (4 * cinfo->master->trellis_num_loops)];
+      cinfo->Ss = (master->pass_number % 4 < 2) ?
+                  1 : cinfo->master->trellis_freq_split + 1;
+      cinfo->Se = (master->pass_number % 4 < 2) ?
+                  cinfo->master->trellis_freq_split : DCTSIZE2 - 1;
     } else {
-      cinfo->cur_comp_info[0] = &cinfo->comp_info[master->pass_number/(2*cinfo->trellis_num_loops)];
+      cinfo->cur_comp_info[0] =
+        &cinfo->comp_info[master->pass_number /
+                          (2 * cinfo->master->trellis_num_loops)];
       cinfo->Ss = 1;
       cinfo->Se = DCTSIZE2-1;
     }
@@ -348,22 +321,27 @@ select_scan_parameters (j_compress_ptr cinfo)
     cinfo->comps_in_scan = scanptr->comps_in_scan;
     for (ci = 0; ci < scanptr->comps_in_scan; ci++) {
       cinfo->cur_comp_info[ci] =
-	&cinfo->comp_info[scanptr->component_index[ci]];
+        &cinfo->comp_info[scanptr->component_index[ci]];
     }
     cinfo->Ss = scanptr->Ss;
     cinfo->Se = scanptr->Se;
     cinfo->Ah = scanptr->Ah;
     cinfo->Al = scanptr->Al;
-    if (cinfo->optimize_scans) {
+    if (cinfo->master->optimize_scans) {
       /* luma frequency split passes */
-      if (master->scan_number >= cinfo->num_scans_luma_dc+3*cinfo->Al_max_luma+2 &&
-          master->scan_number < cinfo->num_scans_luma)
+      if (master->scan_number >= cinfo->master->num_scans_luma_dc +
+                                 3 * cinfo->master->Al_max_luma + 2 &&
+          master->scan_number < cinfo->master->num_scans_luma)
         cinfo->Al = master->best_Al_luma;
       /* chroma frequency split passes */
-      if (master->scan_number >= cinfo->num_scans_luma+cinfo->num_scans_chroma_dc+(6*cinfo->Al_max_chroma+4) &&
+      if (master->scan_number >= cinfo->master->num_scans_luma +
+                                 cinfo->master->num_scans_chroma_dc +
+                                 (6 * cinfo->master->Al_max_chroma + 4) &&
           master->scan_number < cinfo->num_scans)
         cinfo->Al = master->best_Al_chroma;
     }
+    /* save value for later retrieval during printout of scans */
+    master->actual_Al[master->scan_number] = cinfo->Al;
   }
   else
 #endif
@@ -371,7 +349,7 @@ select_scan_parameters (j_compress_ptr cinfo)
     /* Prepare for single sequential-JPEG scan containing all components */
     if (cinfo->num_components > MAX_COMPS_IN_SCAN)
       ERREXIT2(cinfo, JERR_COMPONENT_COUNT, cinfo->num_components,
-	       MAX_COMPS_IN_SCAN);
+               MAX_COMPS_IN_SCAN);
     cinfo->comps_in_scan = cinfo->num_components;
     for (ci = 0; ci < cinfo->num_components; ci++) {
       cinfo->cur_comp_info[ci] = &cinfo->comp_info[ci];
@@ -391,16 +369,16 @@ per_scan_setup (j_compress_ptr cinfo)
 {
   int ci, mcublks, tmp;
   jpeg_component_info *compptr;
-  
+
   if (cinfo->comps_in_scan == 1) {
-    
+
     /* Noninterleaved (single-component) scan */
     compptr = cinfo->cur_comp_info[0];
-    
+
     /* Overall image size in MCUs */
     cinfo->MCUs_per_row = compptr->width_in_blocks;
     cinfo->MCU_rows_in_scan = compptr->height_in_blocks;
-    
+
     /* For noninterleaved scan, always one block per MCU */
     compptr->MCU_width = 1;
     compptr->MCU_height = 1;
@@ -413,28 +391,28 @@ per_scan_setup (j_compress_ptr cinfo)
     tmp = (int) (compptr->height_in_blocks % compptr->v_samp_factor);
     if (tmp == 0) tmp = compptr->v_samp_factor;
     compptr->last_row_height = tmp;
-    
+
     /* Prepare array describing MCU composition */
     cinfo->blocks_in_MCU = 1;
     cinfo->MCU_membership[0] = 0;
-    
+
   } else {
-    
+
     /* Interleaved (multi-component) scan */
     if (cinfo->comps_in_scan <= 0 || cinfo->comps_in_scan > MAX_COMPS_IN_SCAN)
       ERREXIT2(cinfo, JERR_COMPONENT_COUNT, cinfo->comps_in_scan,
-	       MAX_COMPS_IN_SCAN);
-    
+               MAX_COMPS_IN_SCAN);
+
     /* Overall image size in MCUs */
     cinfo->MCUs_per_row = (JDIMENSION)
       jdiv_round_up((long) cinfo->_jpeg_width,
-		    (long) (cinfo->max_h_samp_factor*DCTSIZE));
+                    (long) (cinfo->max_h_samp_factor*DCTSIZE));
     cinfo->MCU_rows_in_scan = (JDIMENSION)
       jdiv_round_up((long) cinfo->_jpeg_height,
-		    (long) (cinfo->max_v_samp_factor*DCTSIZE));
-    
+                    (long) (cinfo->max_v_samp_factor*DCTSIZE));
+
     cinfo->blocks_in_MCU = 0;
-    
+
     for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
       compptr = cinfo->cur_comp_info[ci];
       /* Sampling factors give # of blocks of component in each MCU */
@@ -452,12 +430,12 @@ per_scan_setup (j_compress_ptr cinfo)
       /* Prepare array describing MCU composition */
       mcublks = compptr->MCU_blocks;
       if (cinfo->blocks_in_MCU + mcublks > C_MAX_BLOCKS_IN_MCU)
-	ERREXIT(cinfo, JERR_BAD_MCU_SIZE);
+        ERREXIT(cinfo, JERR_BAD_MCU_SIZE);
       while (mcublks-- > 0) {
-	cinfo->MCU_membership[cinfo->blocks_in_MCU++] = ci;
+        cinfo->MCU_membership[cinfo->blocks_in_MCU++] = ci;
       }
     }
-    
+
   }
 
   /* Convert restart specified in rows to actual MCU count. */
@@ -481,7 +459,8 @@ METHODDEF(void)
 prepare_for_pass (j_compress_ptr cinfo)
 {
   my_master_ptr master = (my_master_ptr) cinfo->master;
-  cinfo->trellis_passes = master->pass_number < master->pass_number_scan_opt_base;
+  cinfo->master->trellis_passes =
+    master->pass_number < master->pass_number_scan_opt_base;
 
   switch (master->pass_type) {
   case main_pass:
@@ -496,12 +475,12 @@ prepare_for_pass (j_compress_ptr cinfo)
       (*cinfo->prep->start_pass) (cinfo, JBUF_PASS_THRU);
     }
     (*cinfo->fdct->start_pass) (cinfo);
-    (*cinfo->entropy->start_pass) (cinfo, cinfo->optimize_coding);
+    (*cinfo->entropy->start_pass) (cinfo, (cinfo->optimize_coding || cinfo->master->trellis_quant) && !cinfo->arith_code);
     (*cinfo->coef->start_pass) (cinfo,
-				(master->total_passes > 1 ?
-				 JBUF_SAVE_AND_PASS : JBUF_PASS_THRU));
+                                (master->total_passes > 1 ?
+                                 JBUF_SAVE_AND_PASS : JBUF_PASS_THRU));
     (*cinfo->main->start_pass) (cinfo, JBUF_PASS_THRU);
-    if (cinfo->optimize_coding) {
+    if (cinfo->optimize_coding || cinfo->master->trellis_quant) {
       /* No immediate data output; postpone writing frame/scan headers */
       master->pub.call_pass_startup = FALSE;
     } else {
@@ -534,7 +513,7 @@ prepare_for_pass (j_compress_ptr cinfo)
       select_scan_parameters(cinfo);
       per_scan_setup(cinfo);
     }
-    if (cinfo->optimize_scans) {
+    if (cinfo->master->optimize_scans) {
       master->saved_dest = cinfo->dest;
       cinfo->dest = NULL;
       master->scan_size[master->scan_number] = 0;
@@ -550,17 +529,19 @@ prepare_for_pass (j_compress_ptr cinfo)
     master->pub.call_pass_startup = FALSE;
     break;
   case trellis_pass:
-    if (master->pass_number%(cinfo->num_components*(cinfo->use_scans_in_trellis?4:2)) == 1 && cinfo->trellis_q_opt) {
+    if (master->pass_number %
+        (cinfo->num_components * (cinfo->master->use_scans_in_trellis ? 4 : 2)) == 1 &&
+        cinfo->master->trellis_q_opt) {
       int i, j;
 
       for (i = 0; i < NUM_QUANT_TBLS; i++) {
         for (j = 1; j < DCTSIZE2; j++) {
-          cinfo->norm_src[i][j] = 0.0;
-          cinfo->norm_coef[i][j] = 0.0;
+          cinfo->master->norm_src[i][j] = 0.0;
+          cinfo->master->norm_coef[i][j] = 0.0;
         }
       }
     }
-    (*cinfo->entropy->start_pass) (cinfo, TRUE);
+    (*cinfo->entropy->start_pass) (cinfo, !cinfo->arith_code);
     (*cinfo->coef->start_pass) (cinfo, JBUF_REQUANT);
     master->pub.call_pass_startup = FALSE;
     break;
@@ -613,7 +594,7 @@ copy_buffer (j_compress_ptr cinfo, int scan_idx)
     for (i = 0; i < cinfo->scan_info[scan_idx].comps_in_scan; i++)
       fprintf(stderr, "%s%d", (i==0)?"":",", cinfo->scan_info[scan_idx].component_index[i]);
     fprintf(stderr, ": %d %d", cinfo->scan_info[scan_idx].Ss, cinfo->scan_info[scan_idx].Se);
-    fprintf(stderr, " %d %d", cinfo->scan_info[scan_idx].Ah, cinfo->scan_info[scan_idx].Al);
+    fprintf(stderr, " %d %d", cinfo->scan_info[scan_idx].Ah, master->actual_Al[scan_idx]);
     fprintf(stderr, "\n");
   }
   
@@ -638,9 +619,13 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
   my_master_ptr master = (my_master_ptr) cinfo->master;
   
   int base_scan_idx = 0;
-  int luma_freq_split_scan_start = cinfo->num_scans_luma_dc + 3 * cinfo->Al_max_luma + 2;
-  int chroma_freq_split_scan_start = cinfo->num_scans_luma+cinfo->num_scans_chroma_dc+(6*cinfo->Al_max_chroma+4);
-
+  int luma_freq_split_scan_start = cinfo->master->num_scans_luma_dc +
+                                   3 * cinfo->master->Al_max_luma + 2;
+  int chroma_freq_split_scan_start = cinfo->master->num_scans_luma +
+                                     cinfo->master->num_scans_chroma_dc +
+                                     (6 * cinfo->master->Al_max_chroma + 4);
+  int passes_per_scan = cinfo->optimize_coding ? 2 : 1;
+  
   if (next_scan_number > 1 && next_scan_number <= luma_freq_split_scan_start) {
     if ((next_scan_number - 1) % 3 == 2) {
       int Al = (next_scan_number - 1) / 3;
@@ -656,11 +641,12 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
         master->best_Al_luma = Al;
       } else {
         master->scan_number = luma_freq_split_scan_start - 1;
-        master->pass_number = 2 * master->scan_number + 1 + master->pass_number_scan_opt_base;
+        master->pass_number = passes_per_scan * (master->scan_number + 1) - 1 + master->pass_number_scan_opt_base;
       }
     }
   
-  } else if (next_scan_number > luma_freq_split_scan_start && next_scan_number <= cinfo->num_scans_luma) {
+  } else if (next_scan_number > luma_freq_split_scan_start &&
+             next_scan_number <= cinfo->master->num_scans_luma) {
     if (next_scan_number == luma_freq_split_scan_start + 1) {
       master->best_freq_split_idx_luma = 0;
       master->best_cost = master->scan_size[next_scan_number-1];
@@ -680,21 +666,25 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
       if ((idx == 2 && master->best_freq_split_idx_luma == 0) ||
           (idx == 3 && master->best_freq_split_idx_luma != 2) ||
           (idx == 4 && master->best_freq_split_idx_luma != 4)) {
-        master->scan_number = cinfo->num_scans_luma - 1;
-        master->pass_number = 2 * master->scan_number + 1 + master->pass_number_scan_opt_base;
+        master->scan_number = cinfo->master->num_scans_luma - 1;
+        master->pass_number = passes_per_scan * (master->scan_number + 1) - 1 + master->pass_number_scan_opt_base;
         master->pub.is_last_pass = (master->pass_number == master->total_passes - 1);
       }
     }
     
-  } else if (cinfo->num_scans > cinfo->num_scans_luma) {
+  } else if (cinfo->num_scans > cinfo->master->num_scans_luma) {
 
-    if (next_scan_number == cinfo->num_scans_luma+cinfo->num_scans_chroma_dc) {
-      base_scan_idx = cinfo->num_scans_luma;
-      
+    if (next_scan_number == cinfo->master->num_scans_luma + 
+                            cinfo->master->num_scans_chroma_dc) {
+      base_scan_idx = cinfo->master->num_scans_luma;
+
       master->interleave_chroma_dc = master->scan_size[base_scan_idx] <= master->scan_size[base_scan_idx+1] + master->scan_size[base_scan_idx+2];
       
-    } else if (next_scan_number > cinfo->num_scans_luma+cinfo->num_scans_chroma_dc && next_scan_number <= chroma_freq_split_scan_start) {
-      base_scan_idx = cinfo->num_scans_luma + cinfo->num_scans_chroma_dc;
+    } else if (next_scan_number > cinfo->master->num_scans_luma +
+                                  cinfo->master->num_scans_chroma_dc &&
+               next_scan_number <= chroma_freq_split_scan_start) {
+      base_scan_idx = cinfo->master->num_scans_luma +
+                      cinfo->master->num_scans_chroma_dc;
       if ((next_scan_number - base_scan_idx) % 6 == 4) {
         int Al = (next_scan_number - base_scan_idx) / 6;
         int i;
@@ -713,7 +703,7 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
           master->best_Al_chroma = Al;
         } else {
           master->scan_number = chroma_freq_split_scan_start - 1;
-          master->pass_number = 2 * master->scan_number + 1 + master->pass_number_scan_opt_base;
+          master->pass_number = passes_per_scan * (master->scan_number + 1) - 1 + master->pass_number_scan_opt_base;
         }
       }
 
@@ -741,7 +731,7 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
             (idx == 3 && master->best_freq_split_idx_chroma != 2) ||
             (idx == 4 && master->best_freq_split_idx_chroma != 4)) {
           master->scan_number = cinfo->num_scans - 1;
-          master->pass_number = 2 * master->scan_number + 1 + master->pass_number_scan_opt_base;
+          master->pass_number = passes_per_scan * (master->scan_number + 1) - 1 + master->pass_number_scan_opt_base;
           master->pub.is_last_pass = (master->pass_number == master->total_passes - 1);
         }
       }
@@ -754,10 +744,11 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
     
     copy_buffer(cinfo, 0);
 
-    if (cinfo->num_scans > cinfo->num_scans_luma && !cinfo->one_dc_scan) {
-      base_scan_idx = cinfo->num_scans_luma;
+    if (cinfo->num_scans > cinfo->master->num_scans_luma &&
+        cinfo->master->dc_scan_opt_mode != 0) {
+      base_scan_idx = cinfo->master->num_scans_luma;
       
-      if (master->interleave_chroma_dc)
+      if (master->interleave_chroma_dc && cinfo->master->dc_scan_opt_mode != 1)
         copy_buffer(cinfo, base_scan_idx);
       else {
         copy_buffer(cinfo, base_scan_idx+1);
@@ -776,7 +767,7 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
     for (Al = master->best_Al_luma-1; Al >= min_Al; Al--)
       copy_buffer(cinfo, 3 + 3*Al);
 
-    if (cinfo->num_scans > cinfo->num_scans_luma) {
+    if (cinfo->num_scans > cinfo->master->num_scans_luma) {
       if (master->best_freq_split_idx_chroma == 0) {
         copy_buffer(cinfo, chroma_freq_split_scan_start);
         copy_buffer(cinfo, chroma_freq_split_scan_start+1);
@@ -788,7 +779,8 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
         copy_buffer(cinfo, chroma_freq_split_scan_start+4*(master->best_freq_split_idx_chroma-1)+5);
       }
       
-      base_scan_idx = cinfo->num_scans_luma + cinfo->num_scans_chroma_dc;
+      base_scan_idx = cinfo->master->num_scans_luma +
+                      cinfo->master->num_scans_chroma_dc;
       
       for (Al = master->best_Al_chroma-1; Al >= min_Al; Al--) {
         copy_buffer(cinfo, base_scan_idx + 6*Al + 4);
@@ -799,7 +791,7 @@ select_scans (j_compress_ptr cinfo, int next_scan_number)
     for (Al = min_Al-1; Al >= 0; Al--) {
       copy_buffer(cinfo, 3 + 3*Al);
       
-      if (cinfo->num_scans > cinfo->num_scans_luma) {
+      if (cinfo->num_scans > cinfo->master->num_scans_luma) {
         copy_buffer(cinfo, base_scan_idx + 6*Al + 4);
         copy_buffer(cinfo, base_scan_idx + 6*Al + 5);
       }
@@ -832,7 +824,7 @@ finish_pass_master (j_compress_ptr cinfo)
     /* next pass is either output of scan 0 (after optimization)
      * or output of scan 1 (if no optimization).
      */
-    if (cinfo->trellis_quant)
+    if (cinfo->master->trellis_quant)
       master->pass_type = trellis_pass;
     else {
       master->pass_type = output_pass;
@@ -848,7 +840,7 @@ finish_pass_master (j_compress_ptr cinfo)
     /* next pass is either optimization or output of next scan */
     if (cinfo->optimize_coding)
       master->pass_type = huff_opt_pass;
-    if (cinfo->optimize_scans) {
+    if (cinfo->master->optimize_scans) {
       (*cinfo->dest->term_destination)(cinfo);
       cinfo->dest = master->saved_dest;
       select_scans(cinfo, master->scan_number + 1);
@@ -857,15 +849,21 @@ finish_pass_master (j_compress_ptr cinfo)
     master->scan_number++;
     break;
   case trellis_pass:
-    master->pass_type = (cinfo->optimize_coding || master->pass_number < master->pass_number_scan_opt_base-1) ? huff_opt_pass : output_pass;
+    if (cinfo->optimize_coding)
+      master->pass_type = huff_opt_pass;
+    else
+      master->pass_type = (master->pass_number < master->pass_number_scan_opt_base-1) ? trellis_pass : output_pass;
       
-    if ((master->pass_number+1)%(cinfo->num_components*(cinfo->use_scans_in_trellis?4:2)) == 0 && cinfo->trellis_q_opt) {
+    if ((master->pass_number + 1) %
+        (cinfo->num_components * (cinfo->master->use_scans_in_trellis ? 4 : 2)) == 0 &&
+        cinfo->master->trellis_q_opt) {
       int i, j;
 
       for (i = 0; i < NUM_QUANT_TBLS; i++) {
         for (j = 1; j < DCTSIZE2; j++) {
-          if (cinfo->norm_coef[i][j] != 0.0) {
-            int q = (int)(cinfo->norm_src[i][j] / cinfo->norm_coef[i][j] + 0.5);
+          if (cinfo->master->norm_coef[i][j] != 0.0) {
+            int q = (int)(cinfo->master->norm_src[i][j] /
+                          cinfo->master->norm_coef[i][j] + 0.5);
             if (q > 254) q = 254;
             if (q < 1) q = 1;
             cinfo->quant_tbl_ptrs[i]->quantval[j] = q;
@@ -887,16 +885,13 @@ finish_pass_master (j_compress_ptr cinfo)
 GLOBAL(void)
 jinit_c_master_control (j_compress_ptr cinfo, boolean transcode_only)
 {
-  my_master_ptr master;
+  my_master_ptr master = (my_master_ptr) cinfo->master;
 
-  master = (my_master_ptr)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				  SIZEOF(my_comp_master));
-  cinfo->master = (struct jpeg_comp_master *) master;
   master->pub.prepare_for_pass = prepare_for_pass;
   master->pub.pass_startup = pass_startup;
   master->pub.finish_pass = finish_pass_master;
   master->pub.is_last_pass = FALSE;
+  master->pub.call_pass_startup = FALSE;
 
   /* Validate parameters, determine derived values */
   initial_setup(cinfo, transcode_only);
@@ -912,7 +907,7 @@ jinit_c_master_control (j_compress_ptr cinfo, boolean transcode_only)
     cinfo->num_scans = 1;
   }
 
-  if (cinfo->progressive_mode && !cinfo->arith_code)	/*  TEMPORARY HACK ??? */
+  if (cinfo->progressive_mode && !cinfo->arith_code)    /*  TEMPORARY HACK ??? */
     cinfo->optimize_coding = TRUE; /* assume default tables no good for progressive mode */
 
   /* Initialize my private state */
@@ -934,12 +929,19 @@ jinit_c_master_control (j_compress_ptr cinfo, boolean transcode_only)
     master->total_passes = cinfo->num_scans;
   
   master->pass_number_scan_opt_base = 0;
-  if (cinfo->trellis_quant) {
-    master->pass_number_scan_opt_base = ((cinfo->use_scans_in_trellis) ? 4 : 2) * cinfo->num_components * cinfo->trellis_num_loops;
+  if (cinfo->master->trellis_quant) {
+    if (cinfo->optimize_coding)
+      master->pass_number_scan_opt_base =
+        ((cinfo->master->use_scans_in_trellis) ? 4 : 2) * cinfo->num_components *
+        cinfo->master->trellis_num_loops;
+    else
+      master->pass_number_scan_opt_base =
+        ((cinfo->master->use_scans_in_trellis) ? 2 : 1) * cinfo->num_components *
+        cinfo->master->trellis_num_loops + 1;
     master->total_passes += master->pass_number_scan_opt_base;
   }
   
-  if (cinfo->optimize_scans) {
+  if (cinfo->master->optimize_scans) {
     int i;
     master->best_Al_chroma = 0;
     

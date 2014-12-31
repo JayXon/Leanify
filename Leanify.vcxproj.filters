@@ -267,6 +267,12 @@
     <ClCompile Include="utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jdmerge.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="formats\mozjpeg\jidctfst.c">
+      <Filter>Source Files\formats\mozjpeg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">

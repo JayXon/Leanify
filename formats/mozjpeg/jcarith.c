@@ -1,8 +1,10 @@
 /*
  * jcarith.c
  *
+ * This file was part of the Independent JPEG Group's software:
  * Developed 1997-2009 by Guido Vollbeding.
- * This file is part of the Independent JPEG Group's software.
+ * It was modified by The libjpeg-turbo Project to include only code relevant
+ * to libjpeg-turbo.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains portable arithmetic entropy encoding routines for JPEG
@@ -16,7 +18,7 @@
 #define JPEG_INTERNALS
 #include "jinclude.h"
 #include "jpeglib.h"
-
+#include <math.h>
 
 /* Expanded entropy encoder object for arithmetic encoding. */
 
@@ -34,8 +36,8 @@ typedef struct {
   int last_dc_val[MAX_COMPS_IN_SCAN]; /* last DC coef for each component */
   int dc_context[MAX_COMPS_IN_SCAN]; /* context index for DC conditioning */
 
-  unsigned int restarts_to_go;	/* MCUs left in this restart interval */
-  int next_restart_num;		/* next restart number to write (0-7) */
+  unsigned int restarts_to_go;  /* MCUs left in this restart interval */
+  int next_restart_num;         /* next restart number to write (0-7) */
 
   /* Pointers to statistics areas (these workspaces have image lifespan) */
   unsigned char * dc_stats[NUM_ARITH_TBLS];
@@ -101,14 +103,14 @@ typedef arith_entropy_encoder * arith_entropy_ptr;
  */
 
 #ifdef RIGHT_SHIFT_IS_UNSIGNED
-#define ISHIFT_TEMPS	int ishift_temp;
+#define ISHIFT_TEMPS    int ishift_temp;
 #define IRIGHT_SHIFT(x,shft)  \
-	((ishift_temp = (x)) < 0 ? \
-	 (ishift_temp >> (shft)) | ((~0) << (16-(shft))) : \
-	 (ishift_temp >> (shft)))
+        ((ishift_temp = (x)) < 0 ? \
+         (ishift_temp >> (shft)) | ((~0) << (16-(shft))) : \
+         (ishift_temp >> (shft)))
 #else
 #define ISHIFT_TEMPS
-#define IRIGHT_SHIFT(x,shft)	((x) >> (shft))
+#define IRIGHT_SHIFT(x,shft)    ((x) >> (shft))
 #endif
 
 
@@ -118,6 +120,10 @@ emit_byte (int val, j_compress_ptr cinfo)
 {
   struct jpeg_destination_mgr * dest = cinfo->dest;
 
+  /* Do not emit bytes during trellis passes */
+  if (cinfo->master->trellis_passes)
+    return;
+  
   *dest->next_output_byte++ = (JOCTET) val;
   if (--dest->free_in_buffer == 0)
     if (! (*dest->empty_output_buffer) (cinfo))
@@ -149,11 +155,11 @@ finish_pass (j_compress_ptr cinfo)
     /* One final overflow has to be handled */
     if (e->buffer >= 0) {
       if (e->zc)
-	do emit_byte(0x00, cinfo);
-	while (--e->zc);
+        do emit_byte(0x00, cinfo);
+        while (--e->zc);
       emit_byte(e->buffer + 1, cinfo);
       if (e->buffer + 1 == 0xFF)
-	emit_byte(0x00, cinfo);
+        emit_byte(0x00, cinfo);
     }
     e->zc += e->sc;  /* carry-over converts stacked 0xFF bytes to 0x00 */
     e->sc = 0;
@@ -162,17 +168,17 @@ finish_pass (j_compress_ptr cinfo)
       ++e->zc;
     else if (e->buffer >= 0) {
       if (e->zc)
-	do emit_byte(0x00, cinfo);
-	while (--e->zc);
+        do emit_byte(0x00, cinfo);
+        while (--e->zc);
       emit_byte(e->buffer, cinfo);
     }
     if (e->sc) {
       if (e->zc)
-	do emit_byte(0x00, cinfo);
-	while (--e->zc);
+        do emit_byte(0x00, cinfo);
+        while (--e->zc);
       do {
-	emit_byte(0xFF, cinfo);
-	emit_byte(0x00, cinfo);
+        emit_byte(0xFF, cinfo);
+        emit_byte(0x00, cinfo);
       } while (--e->sc);
     }
   }
@@ -187,7 +193,7 @@ finish_pass (j_compress_ptr cinfo)
     if (e->c & 0x7F800L) {
       emit_byte((e->c >> 11) & 0xFF, cinfo);
       if (((e->c >> 11) & 0xFF) == 0xFF)
-	emit_byte(0x00, cinfo);
+        emit_byte(0x00, cinfo);
     }
   }
 }
@@ -216,7 +222,7 @@ finish_pass (j_compress_ptr cinfo)
  */
 
 LOCAL(void)
-arith_encode (j_compress_ptr cinfo, unsigned char *st, int val) 
+arith_encode (j_compress_ptr cinfo, unsigned char *st, int val)
 {
   register arith_entropy_ptr e = (arith_entropy_ptr) cinfo->entropy;
   register unsigned char nl, nm;
@@ -227,9 +233,9 @@ arith_encode (j_compress_ptr cinfo, unsigned char *st, int val)
    * Qe values and probability estimation state machine
    */
   sv = *st;
-  qe = jpeg_aritab[sv & 0x7F];	/* => Qe_Value */
-  nl = qe & 0xFF; qe >>= 8;	/* Next_Index_LPS + Switch_MPS */
-  nm = qe & 0xFF; qe >>= 8;	/* Next_Index_MPS */
+  qe = jpeg_aritab[sv & 0x7F];  /* => Qe_Value */
+  nl = qe & 0xFF; qe >>= 8;     /* Next_Index_LPS + Switch_MPS */
+  nm = qe & 0xFF; qe >>= 8;     /* Next_Index_MPS */
 
   /* Encode & estimation procedures per sections D.1.4 & D.1.5 */
   e->a -= qe;
@@ -243,7 +249,7 @@ arith_encode (j_compress_ptr cinfo, unsigned char *st, int val)
       e->c += e->a;
       e->a = qe;
     }
-    *st = (sv & 0x80) ^ nl;	/* Estimate_after_LPS */
+    *st = (sv & 0x80) ^ nl;     /* Estimate_after_LPS */
   } else {
     /* Encode the more probable symbol */
     if (e->a >= 0x8000L)
@@ -255,7 +261,7 @@ arith_encode (j_compress_ptr cinfo, unsigned char *st, int val)
       e->c += e->a;
       e->a = qe;
     }
-    *st = (sv & 0x80) ^ nm;	/* Estimate_after_MPS */
+    *st = (sv & 0x80) ^ nm;     /* Estimate_after_MPS */
   }
 
   /* Renormalization & data output per section D.1.6 */
@@ -266,43 +272,43 @@ arith_encode (j_compress_ptr cinfo, unsigned char *st, int val)
       /* Another byte is ready for output */
       temp = e->c >> 19;
       if (temp > 0xFF) {
-	/* Handle overflow over all stacked 0xFF bytes */
-	if (e->buffer >= 0) {
-	  if (e->zc)
-	    do emit_byte(0x00, cinfo);
-	    while (--e->zc);
-	  emit_byte(e->buffer + 1, cinfo);
-	  if (e->buffer + 1 == 0xFF)
-	    emit_byte(0x00, cinfo);
-	}
-	e->zc += e->sc;  /* carry-over converts stacked 0xFF bytes to 0x00 */
-	e->sc = 0;
-	/* Note: The 3 spacer bits in the C register guarantee
-	 * that the new buffer byte can't be 0xFF here
-	 * (see page 160 in the P&M JPEG book). */
-	e->buffer = temp & 0xFF;  /* new output byte, might overflow later */
+        /* Handle overflow over all stacked 0xFF bytes */
+        if (e->buffer >= 0) {
+          if (e->zc)
+            do emit_byte(0x00, cinfo);
+            while (--e->zc);
+          emit_byte(e->buffer + 1, cinfo);
+          if (e->buffer + 1 == 0xFF)
+            emit_byte(0x00, cinfo);
+        }
+        e->zc += e->sc;  /* carry-over converts stacked 0xFF bytes to 0x00 */
+        e->sc = 0;
+        /* Note: The 3 spacer bits in the C register guarantee
+         * that the new buffer byte can't be 0xFF here
+         * (see page 160 in the P&M JPEG book). */
+        e->buffer = temp & 0xFF;  /* new output byte, might overflow later */
       } else if (temp == 0xFF) {
-	++e->sc;  /* stack 0xFF byte (which might overflow later) */
+        ++e->sc;  /* stack 0xFF byte (which might overflow later) */
       } else {
-	/* Output all stacked 0xFF bytes, they will not overflow any more */
-	if (e->buffer == 0)
-	  ++e->zc;
-	else if (e->buffer >= 0) {
-	  if (e->zc)
-	    do emit_byte(0x00, cinfo);
-	    while (--e->zc);
-	  emit_byte(e->buffer, cinfo);
-	}
-	if (e->sc) {
-	  if (e->zc)
-	    do emit_byte(0x00, cinfo);
-	    while (--e->zc);
-	  do {
-	    emit_byte(0xFF, cinfo);
-	    emit_byte(0x00, cinfo);
-	  } while (--e->sc);
-	}
-	e->buffer = temp & 0xFF;  /* new output byte (can still overflow) */
+        /* Output all stacked 0xFF bytes, they will not overflow any more */
+        if (e->buffer == 0)
+          ++e->zc;
+        else if (e->buffer >= 0) {
+          if (e->zc)
+            do emit_byte(0x00, cinfo);
+            while (--e->zc);
+          emit_byte(e->buffer, cinfo);
+        }
+        if (e->sc) {
+          if (e->zc)
+            do emit_byte(0x00, cinfo);
+            while (--e->zc);
+          do {
+            emit_byte(0xFF, cinfo);
+            emit_byte(0x00, cinfo);
+          } while (--e->sc);
+        }
+        e->buffer = temp & 0xFF;  /* new output byte (can still overflow) */
       }
       e->c &= 0x7FFFFL;
       e->ct += 8;
@@ -398,45 +404,45 @@ encode_mcu_DC_first (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
     /* Figure F.4: Encode_DC_DIFF */
     if ((v = m - entropy->last_dc_val[ci]) == 0) {
       arith_encode(cinfo, st, 0);
-      entropy->dc_context[ci] = 0;	/* zero diff category */
+      entropy->dc_context[ci] = 0;      /* zero diff category */
     } else {
       entropy->last_dc_val[ci] = m;
       arith_encode(cinfo, st, 1);
       /* Figure F.6: Encoding nonzero value v */
       /* Figure F.7: Encoding the sign of v */
       if (v > 0) {
-	arith_encode(cinfo, st + 1, 0);	/* Table F.4: SS = S0 + 1 */
-	st += 2;			/* Table F.4: SP = S0 + 2 */
-	entropy->dc_context[ci] = 4;	/* small positive diff category */
+        arith_encode(cinfo, st + 1, 0); /* Table F.4: SS = S0 + 1 */
+        st += 2;                        /* Table F.4: SP = S0 + 2 */
+        entropy->dc_context[ci] = 4;    /* small positive diff category */
       } else {
-	v = -v;
-	arith_encode(cinfo, st + 1, 1);	/* Table F.4: SS = S0 + 1 */
-	st += 3;			/* Table F.4: SN = S0 + 3 */
-	entropy->dc_context[ci] = 8;	/* small negative diff category */
+        v = -v;
+        arith_encode(cinfo, st + 1, 1); /* Table F.4: SS = S0 + 1 */
+        st += 3;                        /* Table F.4: SN = S0 + 3 */
+        entropy->dc_context[ci] = 8;    /* small negative diff category */
       }
       /* Figure F.8: Encoding the magnitude category of v */
       m = 0;
       if (v -= 1) {
-	arith_encode(cinfo, st, 1);
-	m = 1;
-	v2 = v;
-	st = entropy->dc_stats[tbl] + 20; /* Table F.4: X1 = 20 */
-	while (v2 >>= 1) {
-	  arith_encode(cinfo, st, 1);
-	  m <<= 1;
-	  st += 1;
-	}
+        arith_encode(cinfo, st, 1);
+        m = 1;
+        v2 = v;
+        st = entropy->dc_stats[tbl] + 20; /* Table F.4: X1 = 20 */
+        while (v2 >>= 1) {
+          arith_encode(cinfo, st, 1);
+          m <<= 1;
+          st += 1;
+        }
       }
       arith_encode(cinfo, st, 0);
       /* Section F.1.4.4.1.2: Establish dc_context conditioning category */
       if (m < (int) ((1L << cinfo->arith_dc_L[tbl]) >> 1))
-	entropy->dc_context[ci] = 0;	/* zero diff category */
+        entropy->dc_context[ci] = 0;    /* zero diff category */
       else if (m > (int) ((1L << cinfo->arith_dc_U[tbl]) >> 1))
-	entropy->dc_context[ci] += 8;	/* large diff category */
+        entropy->dc_context[ci] += 8;   /* large diff category */
       /* Figure F.9: Encoding the magnitude bit pattern of v */
       st += 14;
       while (m >>= 1)
-	arith_encode(cinfo, st, (m & v) ? 1 : 0);
+        arith_encode(cinfo, st, (m & v) ? 1 : 0);
     }
   }
 
@@ -491,21 +497,21 @@ encode_mcu_AC_first (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   /* Figure F.5: Encode_AC_Coefficients */
   for (k = cinfo->Ss; k <= ke; k++) {
     st = entropy->ac_stats[tbl] + 3 * (k - 1);
-    arith_encode(cinfo, st, 0);		/* EOB decision */
+    arith_encode(cinfo, st, 0);         /* EOB decision */
     for (;;) {
       if ((v = (*block)[jpeg_natural_order[k]]) >= 0) {
-	if (v >>= cinfo->Al) {
-	  arith_encode(cinfo, st + 1, 1);
-	  arith_encode(cinfo, entropy->fixed_bin, 0);
-	  break;
-	}
+        if (v >>= cinfo->Al) {
+          arith_encode(cinfo, st + 1, 1);
+          arith_encode(cinfo, entropy->fixed_bin, 0);
+          break;
+        }
       } else {
-	v = -v;
-	if (v >>= cinfo->Al) {
-	  arith_encode(cinfo, st + 1, 1);
-	  arith_encode(cinfo, entropy->fixed_bin, 1);
-	  break;
-	}
+        v = -v;
+        if (v >>= cinfo->Al) {
+          arith_encode(cinfo, st + 1, 1);
+          arith_encode(cinfo, entropy->fixed_bin, 1);
+          break;
+        }
       }
       arith_encode(cinfo, st + 1, 0); st += 3; k++;
     }
@@ -517,15 +523,15 @@ encode_mcu_AC_first (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
       m = 1;
       v2 = v;
       if (v2 >>= 1) {
-	arith_encode(cinfo, st, 1);
-	m <<= 1;
-	st = entropy->ac_stats[tbl] +
-	     (k <= cinfo->arith_ac_K[tbl] ? 189 : 217);
-	while (v2 >>= 1) {
-	  arith_encode(cinfo, st, 1);
-	  m <<= 1;
-	  st += 1;
-	}
+        arith_encode(cinfo, st, 1);
+        m <<= 1;
+        st = entropy->ac_stats[tbl] +
+             (k <= cinfo->arith_ac_K[tbl] ? 189 : 217);
+        while (v2 >>= 1) {
+          arith_encode(cinfo, st, 1);
+          m <<= 1;
+          st += 1;
+        }
       }
     }
     arith_encode(cinfo, st, 0);
@@ -566,7 +572,7 @@ encode_mcu_DC_refine (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
     entropy->restarts_to_go--;
   }
 
-  st = entropy->fixed_bin;	/* use fixed probability estimation */
+  st = entropy->fixed_bin;      /* use fixed probability estimation */
   Al = cinfo->Al;
 
   /* Encode the MCU data blocks */
@@ -635,29 +641,29 @@ encode_mcu_AC_refine (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   for (k = cinfo->Ss; k <= ke; k++) {
     st = entropy->ac_stats[tbl] + 3 * (k - 1);
     if (k > kex)
-      arith_encode(cinfo, st, 0);	/* EOB decision */
+      arith_encode(cinfo, st, 0);       /* EOB decision */
     for (;;) {
       if ((v = (*block)[jpeg_natural_order[k]]) >= 0) {
-	if (v >>= cinfo->Al) {
-	  if (v >> 1)			/* previously nonzero coef */
-	    arith_encode(cinfo, st + 2, (v & 1));
-	  else {			/* newly nonzero coef */
-	    arith_encode(cinfo, st + 1, 1);
-	    arith_encode(cinfo, entropy->fixed_bin, 0);
-	  }
-	  break;
-	}
+        if (v >>= cinfo->Al) {
+          if (v >> 1)                   /* previously nonzero coef */
+            arith_encode(cinfo, st + 2, (v & 1));
+          else {                        /* newly nonzero coef */
+            arith_encode(cinfo, st + 1, 1);
+            arith_encode(cinfo, entropy->fixed_bin, 0);
+          }
+          break;
+        }
       } else {
-	v = -v;
-	if (v >>= cinfo->Al) {
-	  if (v >> 1)			/* previously nonzero coef */
-	    arith_encode(cinfo, st + 2, (v & 1));
-	  else {			/* newly nonzero coef */
-	    arith_encode(cinfo, st + 1, 1);
-	    arith_encode(cinfo, entropy->fixed_bin, 1);
-	  }
-	  break;
-	}
+        v = -v;
+        if (v >>= cinfo->Al) {
+          if (v >> 1)                   /* previously nonzero coef */
+            arith_encode(cinfo, st + 2, (v & 1));
+          else {                        /* newly nonzero coef */
+            arith_encode(cinfo, st + 1, 1);
+            arith_encode(cinfo, entropy->fixed_bin, 1);
+          }
+          break;
+        }
       }
       arith_encode(cinfo, st + 1, 0); st += 3; k++;
     }
@@ -713,45 +719,45 @@ encode_mcu (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
     /* Figure F.4: Encode_DC_DIFF */
     if ((v = (*block)[0] - entropy->last_dc_val[ci]) == 0) {
       arith_encode(cinfo, st, 0);
-      entropy->dc_context[ci] = 0;	/* zero diff category */
+      entropy->dc_context[ci] = 0;      /* zero diff category */
     } else {
       entropy->last_dc_val[ci] = (*block)[0];
       arith_encode(cinfo, st, 1);
       /* Figure F.6: Encoding nonzero value v */
       /* Figure F.7: Encoding the sign of v */
       if (v > 0) {
-	arith_encode(cinfo, st + 1, 0);	/* Table F.4: SS = S0 + 1 */
-	st += 2;			/* Table F.4: SP = S0 + 2 */
-	entropy->dc_context[ci] = 4;	/* small positive diff category */
+        arith_encode(cinfo, st + 1, 0); /* Table F.4: SS = S0 + 1 */
+        st += 2;                        /* Table F.4: SP = S0 + 2 */
+        entropy->dc_context[ci] = 4;    /* small positive diff category */
       } else {
-	v = -v;
-	arith_encode(cinfo, st + 1, 1);	/* Table F.4: SS = S0 + 1 */
-	st += 3;			/* Table F.4: SN = S0 + 3 */
-	entropy->dc_context[ci] = 8;	/* small negative diff category */
+        v = -v;
+        arith_encode(cinfo, st + 1, 1); /* Table F.4: SS = S0 + 1 */
+        st += 3;                        /* Table F.4: SN = S0 + 3 */
+        entropy->dc_context[ci] = 8;    /* small negative diff category */
       }
       /* Figure F.8: Encoding the magnitude category of v */
       m = 0;
       if (v -= 1) {
-	arith_encode(cinfo, st, 1);
-	m = 1;
-	v2 = v;
-	st = entropy->dc_stats[tbl] + 20; /* Table F.4: X1 = 20 */
-	while (v2 >>= 1) {
-	  arith_encode(cinfo, st, 1);
-	  m <<= 1;
-	  st += 1;
-	}
+        arith_encode(cinfo, st, 1);
+        m = 1;
+        v2 = v;
+        st = entropy->dc_stats[tbl] + 20; /* Table F.4: X1 = 20 */
+        while (v2 >>= 1) {
+          arith_encode(cinfo, st, 1);
+          m <<= 1;
+          st += 1;
+        }
       }
       arith_encode(cinfo, st, 0);
       /* Section F.1.4.4.1.2: Establish dc_context conditioning category */
       if (m < (int) ((1L << cinfo->arith_dc_L[tbl]) >> 1))
-	entropy->dc_context[ci] = 0;	/* zero diff category */
+        entropy->dc_context[ci] = 0;    /* zero diff category */
       else if (m > (int) ((1L << cinfo->arith_dc_U[tbl]) >> 1))
-	entropy->dc_context[ci] += 8;	/* large diff category */
+        entropy->dc_context[ci] += 8;   /* large diff category */
       /* Figure F.9: Encoding the magnitude bit pattern of v */
       st += 14;
       while (m >>= 1)
-	arith_encode(cinfo, st, (m & v) ? 1 : 0);
+        arith_encode(cinfo, st, (m & v) ? 1 : 0);
     }
 
     /* Sections F.1.4.2 & F.1.4.4.2: Encoding of AC coefficients */
@@ -765,43 +771,43 @@ encode_mcu (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
     /* Figure F.5: Encode_AC_Coefficients */
     for (k = 1; k <= ke; k++) {
       st = entropy->ac_stats[tbl] + 3 * (k - 1);
-      arith_encode(cinfo, st, 0);	/* EOB decision */
+      arith_encode(cinfo, st, 0);       /* EOB decision */
       while ((v = (*block)[jpeg_natural_order[k]]) == 0) {
-	arith_encode(cinfo, st + 1, 0); st += 3; k++;
+        arith_encode(cinfo, st + 1, 0); st += 3; k++;
       }
       arith_encode(cinfo, st + 1, 1);
       /* Figure F.6: Encoding nonzero value v */
       /* Figure F.7: Encoding the sign of v */
       if (v > 0) {
-	arith_encode(cinfo, entropy->fixed_bin, 0);
+        arith_encode(cinfo, entropy->fixed_bin, 0);
       } else {
-	v = -v;
-	arith_encode(cinfo, entropy->fixed_bin, 1);
+        v = -v;
+        arith_encode(cinfo, entropy->fixed_bin, 1);
       }
       st += 2;
       /* Figure F.8: Encoding the magnitude category of v */
       m = 0;
       if (v -= 1) {
-	arith_encode(cinfo, st, 1);
-	m = 1;
-	v2 = v;
-	if (v2 >>= 1) {
-	  arith_encode(cinfo, st, 1);
-	  m <<= 1;
-	  st = entropy->ac_stats[tbl] +
-	       (k <= cinfo->arith_ac_K[tbl] ? 189 : 217);
-	  while (v2 >>= 1) {
-	    arith_encode(cinfo, st, 1);
-	    m <<= 1;
-	    st += 1;
-	  }
-	}
+        arith_encode(cinfo, st, 1);
+        m = 1;
+        v2 = v;
+        if (v2 >>= 1) {
+          arith_encode(cinfo, st, 1);
+          m <<= 1;
+          st = entropy->ac_stats[tbl] +
+               (k <= cinfo->arith_ac_K[tbl] ? 189 : 217);
+          while (v2 >>= 1) {
+            arith_encode(cinfo, st, 1);
+            m <<= 1;
+            st += 1;
+          }
+        }
       }
       arith_encode(cinfo, st, 0);
       /* Figure F.9: Encoding the magnitude bit pattern of v */
       st += 14;
       while (m >>= 1)
-	arith_encode(cinfo, st, (m & v) ? 1 : 0);
+        arith_encode(cinfo, st, (m & v) ? 1 : 0);
     }
     /* Encode EOB decision only if k <= DCTSIZE2 - 1 */
     if (k <= DCTSIZE2 - 1) {
@@ -824,6 +830,7 @@ start_pass (j_compress_ptr cinfo, boolean gather_statistics)
   arith_entropy_ptr entropy = (arith_entropy_ptr) cinfo->entropy;
   int ci, tbl;
   jpeg_component_info * compptr;
+  boolean progressive_mode;
 
   if (gather_statistics)
     /* Make sure to avoid that in the master control logic!
@@ -834,18 +841,22 @@ start_pass (j_compress_ptr cinfo, boolean gather_statistics)
 
   /* We assume jcmaster.c already validated the progressive scan parameters. */
 
+  /* Trellis optimization does DC and AC in same pass and without refinement
+   * so consider progressive mode to be off in such case */
+  progressive_mode = (cinfo->master->trellis_passes) ? FALSE : cinfo->progressive_mode;
+  
   /* Select execution routines */
-  if (cinfo->progressive_mode) {
+  if (progressive_mode) {
     if (cinfo->Ah == 0) {
       if (cinfo->Ss == 0)
-	entropy->pub.encode_mcu = encode_mcu_DC_first;
+        entropy->pub.encode_mcu = encode_mcu_DC_first;
       else
-	entropy->pub.encode_mcu = encode_mcu_AC_first;
+        entropy->pub.encode_mcu = encode_mcu_AC_first;
     } else {
       if (cinfo->Ss == 0)
-	entropy->pub.encode_mcu = encode_mcu_DC_refine;
+        entropy->pub.encode_mcu = encode_mcu_DC_refine;
       else
-	entropy->pub.encode_mcu = encode_mcu_AC_refine;
+        entropy->pub.encode_mcu = encode_mcu_AC_refine;
     }
   } else
     entropy->pub.encode_mcu = encode_mcu;
@@ -854,31 +865,31 @@ start_pass (j_compress_ptr cinfo, boolean gather_statistics)
   for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
     compptr = cinfo->cur_comp_info[ci];
     /* DC needs no table for refinement scan */
-    if (cinfo->progressive_mode == 0 || (cinfo->Ss == 0 && cinfo->Ah == 0)) {
+    if (progressive_mode == 0 || (cinfo->Ss == 0 && cinfo->Ah == 0)) {
       tbl = compptr->dc_tbl_no;
       if (tbl < 0 || tbl >= NUM_ARITH_TBLS)
-	ERREXIT1(cinfo, JERR_NO_ARITH_TABLE, tbl);
+        ERREXIT1(cinfo, JERR_NO_ARITH_TABLE, tbl);
       if (entropy->dc_stats[tbl] == NULL)
-	entropy->dc_stats[tbl] = (unsigned char *) (*cinfo->mem->alloc_small)
-	  ((j_common_ptr) cinfo, JPOOL_IMAGE, DC_STAT_BINS);
+        entropy->dc_stats[tbl] = (unsigned char *) (*cinfo->mem->alloc_small)
+          ((j_common_ptr) cinfo, JPOOL_IMAGE, DC_STAT_BINS);
       MEMZERO(entropy->dc_stats[tbl], DC_STAT_BINS);
       /* Initialize DC predictions to 0 */
       entropy->last_dc_val[ci] = 0;
       entropy->dc_context[ci] = 0;
     }
     /* AC needs no table when not present */
-    if (cinfo->progressive_mode == 0 || cinfo->Se) {
+    if (progressive_mode == 0 || cinfo->Se) {
       tbl = compptr->ac_tbl_no;
       if (tbl < 0 || tbl >= NUM_ARITH_TBLS)
-	ERREXIT1(cinfo, JERR_NO_ARITH_TABLE, tbl);
+        ERREXIT1(cinfo, JERR_NO_ARITH_TABLE, tbl);
       if (entropy->ac_stats[tbl] == NULL)
-	entropy->ac_stats[tbl] = (unsigned char *) (*cinfo->mem->alloc_small)
-	  ((j_common_ptr) cinfo, JPOOL_IMAGE, AC_STAT_BINS);
+        entropy->ac_stats[tbl] = (unsigned char *) (*cinfo->mem->alloc_small)
+          ((j_common_ptr) cinfo, JPOOL_IMAGE, AC_STAT_BINS);
       MEMZERO(entropy->ac_stats[tbl], AC_STAT_BINS);
 #ifdef CALCULATE_SPECTRAL_CONDITIONING
-      if (cinfo->progressive_mode)
-	/* Section G.1.3.2: Set appropriate arithmetic conditioning value Kx */
-	cinfo->arith_ac_K[tbl] = cinfo->Ss + ((8 + cinfo->Se - cinfo->Ss) >> 4);
+      if (progressive_mode)
+        /* Section G.1.3.2: Set appropriate arithmetic conditioning value Kx */
+        cinfo->arith_ac_K[tbl] = cinfo->Ss + ((8 + cinfo->Se - cinfo->Ss) >> 4);
 #endif
     }
   }
@@ -909,7 +920,7 @@ jinit_arith_encoder (j_compress_ptr cinfo)
 
   entropy = (arith_entropy_ptr)
     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				SIZEOF(arith_entropy_encoder));
+                                sizeof(arith_entropy_encoder));
   cinfo->entropy = (struct jpeg_entropy_encoder *) entropy;
   entropy->pub.start_pass = start_pass;
   entropy->pub.finish_pass = finish_pass;
@@ -922,4 +933,35 @@ jinit_arith_encoder (j_compress_ptr cinfo)
 
   /* Initialize index for fixed probability estimation */
   entropy->fixed_bin[0] = 113;
+}
+
+GLOBAL(void)
+jget_arith_rates (j_compress_ptr cinfo, int dc_tbl_no, int ac_tbl_no, arith_rates *r)
+{
+  int i;
+  arith_entropy_ptr entropy = (arith_entropy_ptr) cinfo->entropy;
+  
+  r->arith_dc_L = cinfo->arith_dc_L[dc_tbl_no];
+  r->arith_dc_U = cinfo->arith_dc_U[dc_tbl_no];
+  r->arith_ac_K = cinfo->arith_ac_K[ac_tbl_no];
+  
+  for (i = 0; i < DC_STAT_BINS; i++) {
+    int state = entropy->dc_stats[dc_tbl_no][i];
+    int mps_val = state >> 7;
+    float prob_lps = (jpeg_aritab[state & 0x7f] >> 16) / 46340.95; /* 32768*sqrt(2) */
+    float prob_0 = (mps_val) ? prob_lps : 1.0 - prob_lps;
+    float prob_1 = 1.0 - prob_0;
+    r->rate_dc[i][0] = -log(prob_0) / log(2.0);
+    r->rate_dc[i][1] = -log(prob_1) / log(2.0);
+  }
+
+  for (i = 0; i < AC_STAT_BINS; i++) {
+    int state = entropy->ac_stats[ac_tbl_no][i];
+    int mps_val = state >> 7;
+    float prob_lps = (jpeg_aritab[state & 0x7f] >> 16) / 46340.95;
+    float prob_0 = (mps_val) ? prob_lps : 1.0 - prob_lps;
+    float prob_1 = 1.0 - prob_0;
+    r->rate_ac[i][0] = -log(prob_0) / log(2.0);
+    r->rate_ac[i][1] = -log(prob_1) / log(2.0);
+  }
 }
