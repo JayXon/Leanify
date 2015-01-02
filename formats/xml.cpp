@@ -123,9 +123,9 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             doc.RootElement()->DeleteChild(e);
         }
 
-        // remove empty attribute
         TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement* e)
         {
+            // remove empty attribute
             for (auto attr = e->FirstAttribute(); attr; attr = attr->Next())
             {
                 auto value = attr->Value();
@@ -133,6 +133,31 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 {
                     e->DeleteAttribute(attr->Name());
                 }
+            }
+
+            // remove empty text element and container element
+            auto name = e->Name();
+            if (e->NoChildren())
+            {
+                if (strcmp(name, "text") == 0 ||
+                    strcmp(name, "tspan") == 0 ||
+                    strcmp(name, "a") == 0 ||
+                    strcmp(name, "defs") == 0 ||
+                    strcmp(name, "g") == 0 ||
+                    strcmp(name, "marker") == 0 ||
+                    strcmp(name, "mask") == 0 ||
+                    strcmp(name, "missing-glyph") == 0 ||
+                    strcmp(name, "pattern") == 0 ||
+                    strcmp(name, "switch") == 0 ||
+                    strcmp(name, "symbol") == 0)
+                {
+                    e->Parent()->DeleteChild(e);
+                }
+            }
+
+            if (strcmp(name, "tref") == 0 && e->Attribute("xlink:href") == nullptr)
+            {
+                e->Parent()->DeleteChild(e);
             }
         });
     }
@@ -155,14 +180,14 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
     return size;
 }
 
-void Xml::TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement*)> callback)
+void Xml::TraverseElements(tinyxml2::XMLElement *ele, std::function<void(tinyxml2::XMLElement*)> callback)
 {
-    callback(e);
-
-    for (e = e->FirstChildElement(); e; e = e->NextSiblingElement())
+    for (auto e = ele->FirstChildElement(); e; e = e->NextSiblingElement())
     {
         TraverseElements(e, callback);
     }
+
+    callback(ele);
 }
 
 
