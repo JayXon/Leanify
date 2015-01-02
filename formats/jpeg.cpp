@@ -58,7 +58,16 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     /* Initialize destination compression parameters from source values */
     jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
 
-    dstinfo.optimize_coding = true;
+    // use arithmetic coding if input file is arithmetic coded
+    if (srcinfo.arith_code)
+    {
+        dstinfo.arith_code = true;
+        dstinfo.optimize_coding = false;
+    }
+    else
+    {
+        dstinfo.optimize_coding = true;
+    }
 
     unsigned char *outbuffer = nullptr;
     unsigned long outsize = 0;
