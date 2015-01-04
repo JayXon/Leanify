@@ -118,10 +118,6 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
         {
             std::cout << "SVG detected." << std::endl;
         }
-        for (auto e = doc.RootElement()->FirstChildElement("metadata"); e; e = e->NextSiblingElement("metadata"))
-        {
-            doc.RootElement()->DeleteChild(e);
-        }
 
         TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement* e)
         {
@@ -152,12 +148,20 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                     strcmp(name, "symbol") == 0)
                 {
                     e->Parent()->DeleteChild(e);
+                    return;
                 }
             }
 
             if (strcmp(name, "tref") == 0 && e->Attribute("xlink:href") == nullptr)
             {
                 e->Parent()->DeleteChild(e);
+                return;
+            }
+
+            if (strcmp(name, "metadata") == 0)
+            {
+                e->Parent()->DeleteChild(e);
+                return;
             }
         });
     }
