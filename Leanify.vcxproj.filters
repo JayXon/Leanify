@@ -198,9 +198,6 @@
     <ClCompile Include="formats\mozjpeg\jdmaster.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jquant1.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
-    </ClCompile>
     <ClCompile Include="formats\mozjpeg\jddctmgr.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
@@ -220,9 +217,6 @@
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="formats\mozjpeg\jdcolor.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jquant2.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="formats\mozjpeg\jdmainct.c">
@@ -266,12 +260,6 @@
     </ClCompile>
     <ClCompile Include="utils.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdmerge.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jidctfst.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="formats\mozjpeg\jcext.c">
       <Filter>Source Files\formats\mozjpeg</Filter>
