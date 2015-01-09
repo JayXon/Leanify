@@ -119,6 +119,15 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             std::cout << "SVG detected." << std::endl;
         }
 
+        // remove XML declaration and doctype
+        for (auto child = doc.FirstChild(); child; child = child->NextSibling())
+        {
+            if (child->ToDeclaration() || child->ToUnknown())
+            {
+                doc.DeleteChild(child);
+            }
+        }
+
         TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement* e)
         {
             // remove empty attribute
