@@ -65,11 +65,18 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             // iterate through all binary element
             for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
             {
+                const char *id = e->Attribute("id");
+                if (id == nullptr)
+                {
+                    doc.RootElement()->DeleteChild(e);
+                    continue;
+                }
+
                 for (int i = 1; i < depth; i++)
                 {
                     std::cout << "-> ";
                 }
-                std::cout << e->Attribute("id") << std::endl;
+                std::cout << id << std::endl;
 
                 const char *base64_data = e->GetText();
                 if (base64_data == nullptr)
