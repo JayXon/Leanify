@@ -66,7 +66,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
             {
                 const char *id = e->Attribute("id");
-                if (id == nullptr)
+                if (id == nullptr || *id == 0)
                 {
                     doc.RootElement()->DeleteChild(e);
                     continue;
