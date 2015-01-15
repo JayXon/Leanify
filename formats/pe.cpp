@@ -452,7 +452,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
             UTF16toMBS((wchar_t *)(rsrc + entry[i].NameOffset + 2), len * 2, mbs, sizeof(mbs));
             new_name = name + mbs;
         }
-        else if (name.empty() && entry[i].Name < sizeof(resource_types) / sizeof(std::string) && resource_types[entry[i].Name].size())
+        else if (name.empty() && entry[i].Name < sizeof(resource_types) / sizeof(std::string) && !resource_types[entry[i].Name].empty())
         {
             // use Predefined Resource Types string instead of an ID
             new_name = resource_types[entry[i].Name];
