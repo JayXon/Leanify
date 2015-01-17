@@ -29,7 +29,8 @@ private:
 
     // modified from winnt.h
 
-    struct ImageFileHeader {
+    struct ImageFileHeader
+    {
         uint16_t    Machine;
         uint16_t    NumberOfSections;
         uint32_t    TimeDateStamp;
@@ -39,7 +40,8 @@ private:
         uint16_t    Characteristics;
     };
 
-    struct ImageOptionalHeader {
+    struct ImageOptionalHeader
+    {
         uint16_t    Magic;
         uint8_t     MajorLinkerVersion;
         uint8_t     MinorLinkerVersion;
@@ -72,14 +74,17 @@ private:
         uint32_t    NumberOfRvaAndSizes;
     };
 
-    struct ImageDataDirectory {
+    struct ImageDataDirectory
+    {
         uint32_t    VirtualAddress;
         uint32_t    Size;
     };
 
-    struct ImageSectionHeader {
+    struct ImageSectionHeader
+    {
         uint8_t     Name[8];
-        union {
+        union
+        {
             uint32_t    PhysicalAddress;
             uint32_t    VirtualSize;
         };
@@ -94,7 +99,8 @@ private:
     };
 
 
-    struct ImageResourceDirectory {
+    struct ImageResourceDirectory
+    {
         uint32_t    Characteristics;
         uint32_t    TimeDateStamp;
         uint16_t    MajorVersion;
@@ -103,18 +109,23 @@ private:
         uint16_t    NumberOfIdEntries;
     };
 
-    struct ImageResourceDirectoryEntry {
-        union {
-            struct {
+    struct ImageResourceDirectoryEntry
+    {
+        union
+        {
+            struct
+            {
                 uint32_t    NameOffset : 31;
                 uint32_t    NameIsString : 1;
             };
             uint32_t    Name;
             uint16_t    Id;
         };
-        union {
+        union
+        {
             uint32_t    OffsetToData;
-            struct {
+            struct
+            {
                 uint32_t    OffsetToDirectory : 31;
                 uint32_t    DataIsDirectory : 1;
             };

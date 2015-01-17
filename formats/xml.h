@@ -28,7 +28,7 @@ private:
     bool is_valid;
     tinyxml2::XMLDocument doc;
 
-    void TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement*)> callback);
+    void TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement *)> callback);
 };
 
 

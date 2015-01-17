@@ -18,7 +18,7 @@ void TraverseDirectory(const wchar_t Dir[], int Callback(const wchar_t file_path
 {
     WIN32_FIND_DATA FindFileData;
     wchar_t DirSpec[MAX_PATH];
-    //DWORD dwError;  
+    //DWORD dwError;
     lstrcpy(DirSpec, Dir);
     lstrcat(DirSpec, L"\\*");
 
@@ -157,7 +157,7 @@ File::File(const char *filepath)
     fp = nullptr;
     fd = open(filepath, O_RDWR);
 
-    if(fd == -1)
+    if (fd == -1)
     {
         perror("Open file error");
         return;

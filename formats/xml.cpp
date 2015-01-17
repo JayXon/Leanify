@@ -135,7 +135,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             }
         }
 
-        TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement* e)
+        TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement *e)
         {
             // remove empty attribute
             for (auto attr = e->FirstAttribute(); attr; attr = attr->Next())
@@ -200,7 +200,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
     return size;
 }
 
-void Xml::TraverseElements(tinyxml2::XMLElement *ele, std::function<void(tinyxml2::XMLElement*)> callback)
+void Xml::TraverseElements(tinyxml2::XMLElement *ele, std::function<void(tinyxml2::XMLElement *)> callback)
 {
     for (auto e = ele->FirstChildElement(); e; e = e->NextSiblingElement())
     {

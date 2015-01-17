@@ -11,7 +11,7 @@ const unsigned char Gft::header_magic[] = { 0x54, 0x47, 0x46, 0x00, 0x00, 0x00, 
 
 size_t Gft::Leanify(size_t size_leanified /*= 0*/)
 {
-    //header
+    // header
     uint32_t header_size;
     if (size < 0x14 || size <= (header_size = *(uint32_t *)(fp + 0x10)))
     {

@@ -20,7 +20,10 @@ public:
         ZopfliInitOptions(&zopfli_options);
         zopfli_options.numiterations = iterations;
     }
-    ~Zip() { depth--; }
+    ~Zip()
+    {
+        depth--;
+    }
 
     size_t Leanify(size_t size_leanified = 0);
 

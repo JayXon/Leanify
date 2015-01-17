@@ -40,15 +40,15 @@ void Lua::FunctionParser()
     {
         switch (*p_read++)
         {
-            // 1=LUA_TBOOLEAN
+        // 1=LUA_TBOOLEAN
         case 1:
             p_read++;
             break;
-            // 3=LUA_TNUMBER
+        // 3=LUA_TNUMBER
         case 3:
             p_read += 8;
             break;
-            // 4=LUA_TSTRING
+        // 4=LUA_TSTRING
         case 4:
             p_read += *(uint32_t *)p_read + 4;
         }

@@ -102,7 +102,7 @@ void PrintInfo()
 int main()
 {
     int argc;
-    wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    wchar_t **argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 #else
 int main(int argc, char const *argv[])
 {
@@ -196,7 +196,7 @@ int main(int argc, char const *argv[])
     std::cout.precision(2);
 
     // support multiple input file
-    do 
+    do
     {
         if (IsDirectory(argv[i]))
         {
@@ -209,7 +209,8 @@ int main(int argc, char const *argv[])
             ProcessFile(argv[i]);
         }
 
-    } while (++i < argc);
+    }
+    while (++i < argc);
 
 
     PauseIfNotTerminal();

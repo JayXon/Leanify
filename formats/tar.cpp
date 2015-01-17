@@ -97,7 +97,8 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         }
         p_write += 512;
 
-    } while (p_write < fp + size);
+    }
+    while (p_write < fp + size);
 
     depth--;
 

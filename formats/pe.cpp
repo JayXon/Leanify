@@ -13,13 +13,15 @@
 const unsigned char Pe::header_magic[] = { 'M', 'Z' };
 
 
-const std::string Pe::resource_types[] = {
+const std::string Pe::resource_types[] =
+{
     // 0 - 9
     "", "CURSOR", "BITMAP", "ICON", "MENU", "DIALOG", "STRING", "FONTDIR", "FONT", "ACCELERATOR",
     // 10 - 19
     "RCDATA", "MESSAGETABLE", "GROUP_CURSOR", "", "GROUP_ICON", "", "VERSION", "DLGINCLUDE", "", "PLUGPLAY",
     // 20 - 24
-    "VXD", "ANICURSOR", "ANIICON", "HTML", "MANIFEST" };
+    "VXD", "ANICURSOR", "ANIICON", "HTML", "MANIFEST"
+};
 
 
 size_t Pe::Leanify(size_t size_leanified /*= 0*/)
@@ -221,7 +223,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
             std::cout << rsrc_data.size() << " embedded resources found." << std::endl;
         }
         // sort it according to it's data offset
-        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const std::pair<uint32_t *, std::string> &a, const std::pair<uint32_t *, std::string> &b){ return *a.first < *b.first; });
+        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const std::pair<uint32_t *, std::string> &a, const std::pair<uint32_t *, std::string> &b)
+        {
+            return *a.first < *b.first;
+        });
         uint32_t last_end = rsrc_data[0].first[0];
 
         // detect non standard resource, maybe produced by some packer

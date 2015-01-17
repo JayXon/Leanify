@@ -105,7 +105,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             }
             // recompress Zlib bitmap data
             size_t new_data_size = ZlibRecompress(p + header_size, tag_length - header_size, tag_size_leanified);
-            
+
             UpdateTagLength(p - tag_size_leanified, tag_header_length, header_size + new_data_size);
             tag_size_leanified += tag_length - header_size - new_data_size;
             break;
@@ -167,7 +167,8 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             }
         }
         p += tag_length;
-    } while (p < in_buffer + in_len);
+    }
+    while (p < in_buffer + in_len);
 
     in_len -= tag_size_leanified;
 

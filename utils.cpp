@@ -16,7 +16,7 @@ void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen)
     WideCharToMultiByte(CP_ACP, 0, u, srclen / 2, mbs, dstlen, nullptr, nullptr);
 #else
     iconv_t conv = iconv_open("UTF-8", "UTF-16");
-    if (iconv(conv, (char **)&u, &srclen, &mbs, &dstlen) == (size_t)-1)
+    if (iconv(conv, (char **)&u, &srclen, &mbs, &dstlen) == (size_t) - 1)
     {
         perror("iconv");
     }
@@ -28,7 +28,8 @@ void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen)
 
 int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
 {
-    static const uint8_t d[] = {
+    static const uint8_t d[] =
+    {
         66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 64, 66, 66, 64, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
         66, 66, 66, 66, 66, 66, 66, 64, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 62, 66, 66, 66, 63, 52, 53,
         54, 55, 56, 57, 58, 59, 60, 61, 66, 66, 66, 65, 66, 66, 66, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
@@ -45,18 +46,24 @@ int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
     const char *end = in + in_len;
     size_t buf = 1, len = 0;
 
-    while (in < end) {
-        uint8_t c = d[(uint8_t)*in++];
+    while (in < end)
+    {
+        uint8_t c = d[(uint8_t) * in++];
 
-        switch (c) {
-        case 66:    return 2;   /* invalid input, return error */
-        case 65:    in = end;   /* pad character, end of data */
-        case 64:    continue;   /* skip whitespace */
+        switch (c)
+        {
+        case 66:
+            return 2;   /* invalid input, return error */
+        case 65:
+            in = end;   /* pad character, end of data */
+        case 64:
+            continue;   /* skip whitespace */
         default:
             buf = buf << 6 | c;
 
             /* If the buffer is full, split it into bytes */
-            if (buf & 0x1000000) {
+            if (buf & 0x1000000)
+            {
                 if ((len += 3) > *out_len) return 1; /* buffer overflow */
                 *out++ = buf >> 16;
                 *out++ = buf >> 8;
@@ -66,12 +73,14 @@ int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
         }
     }
 
-    if (buf & 0x40000) {
+    if (buf & 0x40000)
+    {
         if ((len += 2) > *out_len) return 1; /* buffer overflow */
         *out++ = buf >> 10;
         *out++ = buf >> 2;
     }
-    else if (buf & 0x1000) {
+    else if (buf & 0x1000)
+    {
         if (++len > *out_len) return 1; /* buffer overflow */
         *out++ = buf >> 4;
     }

@@ -26,7 +26,7 @@ public:
     File(const char *filepath);
 #endif // _WIN32
 
-    void * GetFilePionter() const
+    void *GetFilePionter() const
     {
         return fp;
     }

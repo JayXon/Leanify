@@ -111,7 +111,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         p_read += chunk_length;
 
 
-    } while (chunk_type != 0x444E4549);     // IEND
+    }
+    while (chunk_type != 0x444E4549);       // IEND
 
     fp -= size_leanified;
     uint32_t png_size = p_write - fp;
