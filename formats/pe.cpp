@@ -474,7 +474,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
         }
         if (entry[i].DataIsDirectory)
         {
-            TraverseRSRC(reinterpret_cast<ImageResourceDirectory *>(rsrc + entry[i].OffsetToDirectory), new_name + "/", move_size);
+            TraverseRSRC(reinterpret_cast<ImageResourceDirectory *>(rsrc + entry[i].OffsetToDirectory), new_name + '/', move_size);
         }
         else
         {
