@@ -98,57 +98,47 @@ int Base64Encode(const void *in, size_t in_len, char *out, size_t out_len)
     /* increment over the length of the string, three characters at a time */
     for (size_t x = 0; x < in_len; x += 3)
     {
+        if (resultIndex + 4 >= out_len) return 1;   /* indicate failure: buffer too small */
+
         /* these three 8-bit (ASCII) characters become one 24-bit number */
         uint32_t n = data[x] << 16;
 
-        if ((x + 1) < in_len)
-            n += data[x + 1] << 8;
-
         if ((x + 2) < in_len)
-            n += data[x + 2];
+        {
+            n += (data[x + 1] << 8) + data[x + 2];
+        }
+        else if ((x + 1) < in_len)
+        {
+            n += data[x + 1] << 8;
+        }
 
         /*
         * if we have one byte available, then its encoding is spread
         * out over two characters
         */
-        if (resultIndex + 1 >= out_len) return 1;   /* indicate failure: buffer too small */
         out[resultIndex++] = base64chars[(uint8_t)(n >> 18) & 63];
         out[resultIndex++] = base64chars[(uint8_t)(n >> 12) & 63];
 
-        /*
-        * if we have only two bytes available, then their encoding is
-        * spread out over three chars
-        */
-        if ((x + 1) < in_len)
-        {
-            if (resultIndex >= out_len) return 1;   /* indicate failure: buffer too small */
-            out[resultIndex++] = base64chars[(uint8_t)(n >> 6) & 63];
-        }
-
-        /*
-        * if we have all three bytes available, then their encoding is spread
-        * out over four characters
-        */
         if ((x + 2) < in_len)
         {
-            if (resultIndex >= out_len) return 1;   /* indicate failure: buffer too small */
+            out[resultIndex++] = base64chars[(uint8_t)(n >> 6) & 63];
             out[resultIndex++] = base64chars[(uint8_t)n & 63];
         }
-    }
-
-    /*
-    * create and add padding that is required if we did not have a multiple of 3
-    * number of characters available
-    */
-    int padCount = in_len % 3;
-    if (padCount > 0)
-    {
-        for (; padCount < 3; padCount++)
+        else
         {
-            if (resultIndex >= out_len) return 1;   /* indicate failure: buffer too small */
+            if ((x + 1) < in_len)
+            {
+                out[resultIndex++] = base64chars[(uint8_t)(n >> 6) & 63];
+            }
+            else
+            {
+                out[resultIndex++] = '=';
+            }
             out[resultIndex++] = '=';
         }
+
     }
+
     if (resultIndex >= out_len) return 1;   /* indicate failure: buffer too small */
     out[resultIndex] = 0;
     return 0;   /* indicate success */
