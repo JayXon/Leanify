@@ -43,19 +43,19 @@ int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
         66, 66, 66, 66, 66, 66
     };
 
-    const char *end = in + in_len;
-    size_t buf = 1, len = 0;
+    uint32_t buf = 1;
+    size_t len = 0;
 
-    while (in < end)
+    for (size_t i = 0; i < in_len; i++)
     {
-        uint8_t c = d[(uint8_t) * in++];
+        uint8_t c = d[(uint8_t)in[i]];
 
         switch (c)
         {
         case 66:
             return 2;   /* invalid input, return error */
         case 65:
-            in = end;   /* pad character, end of data */
+            i = in_len; /* pad character, end of data */
         case 64:
             continue;   /* skip whitespace */
         default:
