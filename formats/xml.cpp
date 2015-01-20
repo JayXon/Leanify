@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <string>
 
 #include "../leanify.h"
 #include "../utils.h"
@@ -137,14 +138,38 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 
         TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement *e)
         {
-            // remove empty attribute
             for (auto attr = e->FirstAttribute(); attr; attr = attr->Next())
             {
                 auto value = attr->Value();
+                // remove empty attribute
                 if (value == nullptr || *value == 0)
                 {
                     e->DeleteAttribute(attr->Name());
+                    continue;
                 }
+
+                // shrink spaces and newlines in attribute
+                std::string s(value);
+                size_t ssize = 0;
+                for (size_t i = 0; i < s.size(); i++)
+                {
+                    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\t')
+                    {
+                        do 
+                        {
+                            i++;
+                        }
+                        while (s[i] == ' ' || s[i] == '\n' || s[i] == '\t');
+                        s[ssize++] = ' ';
+                    }
+                    s[ssize++] = s[i];
+                }
+                if (ssize && s[ssize - 1] == ' ')
+                {
+                    ssize--;
+                }
+                s.resize(ssize);
+                e->SetAttribute(attr->Name(), s.c_str());
             }
 
             // remove empty text element and container element
