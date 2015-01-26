@@ -22,7 +22,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 
     std::vector<uint32_t> vector_crc, vector_comp_size, vector_uncomp_size, vector_local_header_offset;
     // Local file header
-    while (!memcmp(p_read, header_magic, sizeof(header_magic)))
+    while (memcmp(p_read, header_magic, sizeof(header_magic)) == 0)
     {
         vector_local_header_offset.push_back(p_write - fp);
 
@@ -202,7 +202,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     // Central directory file header
     const unsigned char cd_header_magic[] = { 0x50, 0x4B, 0x01, 0x02 };
     int i = 0;
-    while (!memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)))
+    while (memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)) == 0)
     {
 
         int header_size = 46 + *(uint16_t *)(p_read + 28);

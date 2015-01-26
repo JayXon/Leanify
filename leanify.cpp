@@ -30,7 +30,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
     {
         return Format(file_pointer, file_size).Leanify(size_leanified);
     }
-    if (!memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)))
+    if (memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -38,7 +38,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Png(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)))
+    else if (memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -46,7 +46,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Jpeg(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)))
+    else if (memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -54,7 +54,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Lua(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)))
+    else if (memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -62,7 +62,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Zip(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)))
+    else if (memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -70,7 +70,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Pe(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)))
+    else if (memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -78,7 +78,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Gz(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)))
+    else if (memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -86,7 +86,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Ico(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, "(DWF V06.00)", 12))
+    else if (memcmp(file_pointer, "(DWF V06.00)", 12) == 0)
     {
         if (is_verbose)
         {
@@ -94,7 +94,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Zip((char *)file_pointer + 12, file_size - 12).Leanify(size_leanified) + 12;
     }
-    else if (!memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)))
+    else if (memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -102,7 +102,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Gft(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)))
+    else if (memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)) == 0)
     {
         if (is_verbose)
         {
@@ -110,9 +110,9 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         }
         return Rdb(file_pointer, file_size).Leanify(size_leanified);
     }
-    else if (!memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) ||
-             !memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) ||
-             !memcmp(file_pointer, Swf::header_magic_lzma, sizeof(Swf::header_magic_lzma)))
+    else if (memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) == 0 ||
+             memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) == 0 ||
+             memcmp(file_pointer, Swf::header_magic_lzma, sizeof(Swf::header_magic_lzma)) == 0)
     {
         if (is_verbose)
         {

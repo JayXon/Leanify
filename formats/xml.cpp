@@ -21,7 +21,7 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
     const unsigned char utf16le_bom[] = { 0xFF, 0xFE };
     */
     // skip utf8 bom
-    if (!memcmp(q, utf8_bom, sizeof(utf8_bom)))
+    if (memcmp(q, utf8_bom, sizeof(utf8_bom)) == 0)
     {
         q += sizeof(utf8_bom);
     }

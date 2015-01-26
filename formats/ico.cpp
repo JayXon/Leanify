@@ -39,7 +39,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
         }
 
         // only Leanify PNG
-        if (!memcmp(fp + offset, Png::header_magic, sizeof(Png::header_magic)))
+        if (memcmp(fp + offset, Png::header_magic, sizeof(Png::header_magic)) == 0)
         {
             uint32_t new_size = Png(fp + offset).Leanify(size_leanified + new_size_leanified);
             if (new_size != old_size)
