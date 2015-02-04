@@ -4,7 +4,7 @@
 
 #ifdef _WIN32
 #define STRTOL wcstol
-#define STRCMP wcscmp
+#define STRCMP(X, Y) wcscmp(X, L ## Y)
 #else
 #define STRTOL strtol
 #define STRCMP strcmp

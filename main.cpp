@@ -169,27 +169,27 @@ int main(int argc, char *argv[])
                 is_verbose = true;
                 break;
             case '-':
-                if (STRCMP(argv[i] + j + 1, L"fastmode") == 0)
+                if (STRCMP(argv[i] + j + 1, "fastmode") == 0)
                 {
                     j += 7;
                     argv[i][j + 1] = 'f';
                 }
-                else if (STRCMP(argv[i] + j + 1, L"iteration") == 0)
+                else if (STRCMP(argv[i] + j + 1, "iteration") == 0)
                 {
                     j += 8;
                     argv[i][j + 1] = 'i';
                 }
-                else if (STRCMP(argv[i] + j + 1, L"max_depth") == 0)
+                else if (STRCMP(argv[i] + j + 1, "max_depth") == 0)
                 {
                     j += 8;
                     argv[i][j + 1] = 'd';
                 }
-                else if (STRCMP(argv[i] + j + 1, L"quiet") == 0)
+                else if (STRCMP(argv[i] + j + 1, "quiet") == 0)
                 {
                     j += 4;
                     argv[i][j + 1] = 'q';
                 }
-                else if (STRCMP(argv[i] + j + 1, L"verbose") == 0)
+                else if (STRCMP(argv[i] + j + 1, "verbose") == 0)
                 {
                     j += 6;
                     argv[i][j + 1] = 'v';
