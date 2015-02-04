@@ -89,12 +89,15 @@ void PauseIfNotTerminal()
 void PrintInfo()
 {
     std::cerr << "Leanify\t" << VERSION_STR << std::endl << std::endl;
-    std::cerr << "Usage: Leanify [options] paths" << std::endl;
-    std::cerr << "  -i <iteration>  More iterations means slower but better result. Default: 15." << std::endl;
-    std::cerr << "  -d <max depth>  Maximum recursive depth." << std::endl;
-    std::cerr << "  -f              Fast mode, no recompression." << std::endl;
-    std::cerr << "  -q              Quiet mode, no output." << std::endl;
-    std::cerr << "  -v              Verbose output." << std::endl;
+    std::cerr <<
+        "Usage: Leanify [options] paths\n"
+        "  -i, --iteration <iteration>   More iterations produce better result, but\n"
+        "                                  use more time, default is 15.\n"
+        "  -d, --max_depth <max depth>   Maximum recursive depth, unlimited by default.\n"
+        "                                  Set to 1 will disable recursive minifying.\n"
+        "  -f, --fastmode                Fast mode, no recompression.\n"
+        "  -q, --quiet                   No output to stdout.\n"
+        "  -v, --verbose                 Verbose output." << std::endl;
     PauseIfNotTerminal();
 }
 
