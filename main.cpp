@@ -1,6 +1,7 @@
 #include "main.h"
 
 #include <climits>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 
@@ -104,7 +105,7 @@ int main()
     int argc;
     wchar_t **argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 #else
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
 #endif // _WIN32
 
@@ -149,7 +150,7 @@ int main(int argc, char const *argv[])
             case 'd':
                 if (i < argc - 1)
                 {
-                    STRTOL(argv[i + ++num_optargs], nullptr, 10);
+                    max_depth = STRTOL(argv[i + ++num_optargs], nullptr, 10);
                     // strtol will return 0 on fail
                     if (max_depth == 0)
                     {
