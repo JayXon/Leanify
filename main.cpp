@@ -35,7 +35,7 @@ void PrintSize(size_t size)
 int ProcessFile(const wchar_t *file_path)
 {
     char mbs[MAX_PATH] = { 0 };
-    WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs), nullptr, nullptr);
+    WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
     std::cout << "Processing: " << mbs << std::endl;
 #else
 // written like this in order to be callback funtion of ftw()
@@ -196,7 +196,13 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
+#ifdef _WIN32
+                    char mbs[64] = { 0 };
+                    WideCharToMultiByte(CP_ACP, 0, argv[i] + j + 1, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
+                    std::cerr << "Unknown option: " << mbs << std::endl;
+#else
                     std::cerr << "Unknown option: " << argv[i] + j + 1 << std::endl;
+#endif // _WIN32
                     PrintInfo();
                     return 1;
                 }
