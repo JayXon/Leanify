@@ -136,11 +136,7 @@ int main(int argc, char const *argv[])
             case 'i':
                 if (i < argc - 1)
                 {
-#ifdef _WIN32
-                    iterations = wcstol(argv[i + ++num_optargs], nullptr, 10);
-#else
-                    iterations = strtol(argv[i + ++num_optargs], nullptr, 10);
-#endif // _WIN32
+                    iterations = STRTOL(argv[i + ++num_optargs], nullptr, 10);
                     // strtol will return 0 on fail
                     if (iterations == 0)
                     {
@@ -153,11 +149,7 @@ int main(int argc, char const *argv[])
             case 'd':
                 if (i < argc - 1)
                 {
-#ifdef _WIN32
-                    max_depth = wcstol(argv[i + ++num_optargs], nullptr, 10);
-#else
-                    max_depth = strtol(argv[i + ++num_optargs], nullptr, 10);
-#endif // _WIN32
+                    STRTOL(argv[i + ++num_optargs], nullptr, 10);
                     // strtol will return 0 on fail
                     if (max_depth == 0)
                     {
@@ -174,6 +166,39 @@ int main(int argc, char const *argv[])
             case 'v':
                 std::cout.clear();
                 is_verbose = true;
+                break;
+            case '-':
+                if (STRCMP(argv[i] + j + 1, L"fastmode") == 0)
+                {
+                    j += 7;
+                    argv[i][j + 1] = 'f';
+                }
+                else if (STRCMP(argv[i] + j + 1, L"iteration") == 0)
+                {
+                    j += 8;
+                    argv[i][j + 1] = 'i';
+                }
+                else if (STRCMP(argv[i] + j + 1, L"max_depth") == 0)
+                {
+                    j += 8;
+                    argv[i][j + 1] = 'd';
+                }
+                else if (STRCMP(argv[i] + j + 1, L"quiet") == 0)
+                {
+                    j += 4;
+                    argv[i][j + 1] = 'q';
+                }
+                else if (STRCMP(argv[i] + j + 1, L"verbose") == 0)
+                {
+                    j += 6;
+                    argv[i][j + 1] = 'v';
+                }
+                else
+                {
+                    std::cerr << "Unknown option: " << argv[i] + j + 1 << std::endl;
+                    PrintInfo();
+                    return 1;
+                }
                 break;
             default:
                 std::cerr << "Unknown option: " << (char)argv[i][j] << std::endl;

@@ -2,6 +2,13 @@
 #define MAIN_H
 
 
+#ifdef _WIN32
+#define STRTOL wcstol
+#define STRCMP wcscmp
+#else
+#define STRTOL strtol
+#define STRCMP strcmp
+#endif // _WIN32
 
 bool is_fast;
 bool is_verbose;
