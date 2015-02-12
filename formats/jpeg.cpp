@@ -2,6 +2,7 @@
 
 
 const unsigned char Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
+bool Jpeg::keep_exif = false;
 
 jmp_buf Jpeg::setjmp_buffer;
 
@@ -50,6 +51,11 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     /* Specify data source for decompression */
     jpeg_mem_src(&srcinfo, (unsigned char *)fp, size);
 
+    if (keep_exif)
+    {
+        jpeg_save_markers(&srcinfo, JPEG_APP0 + 1, 0xFFFF);
+    }
+
     (void)jpeg_read_header(&srcinfo, true);
 
     /* Read source file as DCT coefficients */
@@ -76,6 +82,17 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 
     /* Start compressor (note no image data is actually written here) */
     jpeg_write_coefficients(&dstinfo, coef_arrays);
+
+    if (keep_exif)
+    {
+        for (auto marker = srcinfo.marker_list; marker; marker = marker->next)
+        {
+            if (marker->marker == JPEG_APP0 + 1)
+            {
+                jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
+            }
+        }
+    }
 
     /* Finish compression and release memory */
     jpeg_finish_compress(&dstinfo);

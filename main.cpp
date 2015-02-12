@@ -13,6 +13,7 @@
 #include "fileio.h"
 #include "version.h"
 
+#include "formats/jpeg.h"
 
 void PrintSize(size_t size)
 {
@@ -196,6 +197,11 @@ int main(int argc, char *argv[])
                 {
                     j += 6;
                     argv[i][j + 1] = 'v';
+                }
+                else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0)
+                {
+                    j += 9;
+                    Jpeg::keep_exif = true;
                 }
                 else
                 {
