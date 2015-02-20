@@ -91,14 +91,15 @@ void PrintInfo()
 {
     std::cerr << "Leanify\t" << VERSION_STR << std::endl << std::endl;
     std::cerr <<
-        "Usage: Leanify [options] paths\n"
+        "Usage: leanify [options] paths\n"
         "  -i, --iteration <iteration>   More iterations produce better result, but\n"
         "                                  use more time, default is 15.\n"
         "  -d, --max_depth <max depth>   Maximum recursive depth, unlimited by default.\n"
         "                                  Set to 1 will disable recursive minifying.\n"
         "  -f, --fastmode                Fast mode, no recompression.\n"
         "  -q, --quiet                   No output to stdout.\n"
-        "  -v, --verbose                 Verbose output." << std::endl;
+        "  -v, --verbose                 Verbose output.\n"
+        "  --keep-exif                   Do not remove Exif.\n";
     PauseIfNotTerminal();
 }
 

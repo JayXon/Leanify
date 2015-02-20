@@ -217,12 +217,15 @@ Remove comment in `End of central directory record`.
 ##Usage
 
 ```
-Usage: Leanify [options] path1 path2 path3 ...
-  -i <iteration>  More iterations means slower but better result. Default: 15.
-  -d <max depth>  Maximum recursive depth.
-  -f              Fast mode, no recompression.
-  -q              Quiet mode, no output.
-  -v              Verbose output.
+Usage: leanify [options] paths
+  -i, --iteration <iteration>   More iterations produce better result, but
+                                  use more time, default is 15.
+  -d, --max_depth <max depth>   Maximum recursive depth, unlimited by default.
+                                  Set to 1 will disable recursive minifying.
+  -f, --fastmode                Fast mode, no recompression.
+  -q, --quiet                   No output to stdout.
+  -v, --verbose                 Verbose output.
+  --keep-exif                   Do not remove Exif.
 ```
 
 
