@@ -11,6 +11,7 @@ class Format
 public:
     Format(void *p, size_t s = 0) : fp((char *)p), size(s) {};
 
+    virtual ~Format() {};
 
     virtual size_t Leanify(size_t size_leanified = 0)
     {
