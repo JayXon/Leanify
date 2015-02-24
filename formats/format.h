@@ -12,7 +12,7 @@ public:
     Format(void *p, size_t s = 0) : fp((char *)p), size(s) {};
 
 
-    size_t Leanify(size_t size_leanified = 0)
+    virtual size_t Leanify(size_t size_leanified = 0)
     {
         if (size_leanified)
         {

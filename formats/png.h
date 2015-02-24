@@ -10,7 +10,7 @@ extern bool is_verbose;
 extern int iterations;
 
 
-class Png : Format
+class Png : public Format
 {
 
 public:

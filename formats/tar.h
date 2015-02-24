@@ -9,7 +9,7 @@
 
 extern bool is_verbose;
 
-class Tar : Format
+class Tar : public Format
 {
 public:
     Tar(void *p, size_t s = 0) : Format(p, s)

@@ -5,7 +5,7 @@
 #include "format.h"
 
 
-class Lua : Format
+class Lua : public Format
 {
 public:
     Lua(void *p, size_t s = 0) : Format(p, s), p_read((char *)p), p_write((char *)p) {}

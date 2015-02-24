@@ -19,24 +19,20 @@
 #include "formats/xml.h"
 #include "formats/zip.h"
 
-// Leanify the file
-// and move the file ahead size_leanified bytes
-// the new location of the file will be file_pointer - size_leanified
-// it's designed this way to avoid extra memmove or memcpy
-// return new size
-size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/)
+Format *GetType(void *file_pointer, size_t file_size)
 {
     if (depth > max_depth)
     {
-        return Format(file_pointer, file_size).Leanify(size_leanified);
+        return new Format(file_pointer, file_size);
     }
+
     if (memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)) == 0)
     {
         if (is_verbose)
         {
             std::cout << "PNG detected." << std::endl;
         }
-        return Png(file_pointer, file_size).Leanify(size_leanified);
+        return new Png(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)) == 0)
     {
@@ -44,7 +40,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "JPEG detected." << std::endl;
         }
-        return Jpeg(file_pointer, file_size).Leanify(size_leanified);
+        return new Jpeg(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)) == 0)
     {
@@ -52,7 +48,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "Lua detected." << std::endl;
         }
-        return Lua(file_pointer, file_size).Leanify(size_leanified);
+        return new Lua(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)) == 0)
     {
@@ -60,7 +56,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "ZIP detected." << std::endl;
         }
-        return Zip(file_pointer, file_size).Leanify(size_leanified);
+        return new Zip(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)) == 0)
     {
@@ -68,7 +64,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "PE detected." << std::endl;
         }
-        return Pe(file_pointer, file_size).Leanify(size_leanified);
+        return new Pe(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)) == 0)
     {
@@ -76,7 +72,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "GZ detected." << std::endl;
         }
-        return Gz(file_pointer, file_size).Leanify(size_leanified);
+        return new Gz(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)) == 0)
     {
@@ -84,7 +80,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "ICO detected." << std::endl;
         }
-        return Ico(file_pointer, file_size).Leanify(size_leanified);
+        return new Ico(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, "(DWF V06.00)", 12) == 0)
     {
@@ -92,7 +88,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "DWF detected." << std::endl;
         }
-        return Zip((char *)file_pointer + 12, file_size - 12).Leanify(size_leanified) + 12;
+        return new Zip((char *)file_pointer + 12, file_size - 12);
     }
     else if (memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)) == 0)
     {
@@ -100,7 +96,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "GFT detected." << std::endl;
         }
-        return Gft(file_pointer, file_size).Leanify(size_leanified);
+        return new Gft(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)) == 0)
     {
@@ -108,7 +104,7 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "RDB detected." << std::endl;
         }
-        return Rdb(file_pointer, file_size).Leanify(size_leanified);
+        return new Rdb(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) == 0 ||
              memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) == 0 ||
@@ -118,37 +114,39 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         {
             std::cout << "SWF detected." << std::endl;
         }
-        return Swf(file_pointer, file_size).Leanify(size_leanified);
+        return new Swf(file_pointer, file_size);
     }
     else
     {
         // tar file does not have header magic
         // ustar is optional
         {
-            Tar t(file_pointer, file_size);
+            Tar *t = new Tar(file_pointer, file_size);
             // checking first record checksum
-            if (t.IsValid())
+            if (t->IsValid())
             {
                 if (is_verbose)
                 {
                     std::cout << "tar detected." << std::endl;
                 }
-                return t.Leanify(size_leanified);
+                return t;
             }
+            delete t;
         }
 
         // XML file does not have header magic
         // have to parse and see if there are any errors.
         {
-            Xml x(file_pointer, file_size);
-            if (x.IsValid())
+            Xml *x = new Xml(file_pointer, file_size);
+            if (x->IsValid())
             {
                 if (is_verbose)
                 {
                     std::cout << "XML detected." << std::endl;
                 }
-                return x.Leanify(size_leanified);
+                return x;
             }
+            delete x;
         }
     }
 
@@ -157,7 +155,21 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /
         std::cout << "Format not supported!" << std::endl;
     }
     // for unsupported format, just memmove it.
-    return Format(file_pointer, file_size).Leanify(size_leanified);
+    return new Format(file_pointer, file_size);
+}
+
+
+// Leanify the file
+// and move the file ahead size_leanified bytes
+// the new location of the file will be file_pointer - size_leanified
+// it's designed this way to avoid extra memmove or memcpy
+// return new size
+size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/)
+{
+    Format *f = GetType(file_pointer, file_size);
+    size_t r = f->Leanify(size_leanified);
+    delete f;
+    return r;
 }
 
 

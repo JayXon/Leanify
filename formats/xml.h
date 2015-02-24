@@ -12,7 +12,7 @@
 extern bool is_verbose;
 
 
-class Xml : Format
+class Xml : public Format
 {
 public:
     Xml(void *p, size_t s = 0);

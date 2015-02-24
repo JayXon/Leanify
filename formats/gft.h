@@ -6,7 +6,7 @@
 
 
 
-class Gft : Format
+class Gft : public Format
 {
 public:
     Gft(void *p, size_t s = 0) : Format(p, s) {}

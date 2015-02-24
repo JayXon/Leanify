@@ -5,7 +5,7 @@
 #include "format.h"
 
 
-class Rdb : Format
+class Rdb : public Format
 {
 public:
     Rdb(void *p, size_t s = 0) : Format(p, s) {}

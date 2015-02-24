@@ -6,7 +6,7 @@
 
 // The support for this format is not yet implemented see bmp.cpp for details.
 
-class Bmp : Format
+class Bmp : public Format
 {
 public:
     Bmp(void *p, size_t s = 0) : Format(p, s) {}

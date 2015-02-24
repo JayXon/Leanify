@@ -15,7 +15,7 @@
 extern bool is_fast;
 extern bool is_verbose;
 
-class Jpeg : Format
+class Jpeg : public Format
 {
 public:
     Jpeg(void *p, size_t s = 0) : Format(p, s) {}

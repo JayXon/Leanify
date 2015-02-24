@@ -8,7 +8,7 @@
 extern bool is_fast;
 extern int iterations;
 
-class Gz : Format
+class Gz : public Format
 {
 public:
     Gz(void *p, size_t s = 0) : Format(p, s) {}

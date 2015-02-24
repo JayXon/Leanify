@@ -3,7 +3,7 @@
 
 #include "format.h"
 
-class Ico : Format
+class Ico : public Format
 {
 public:
     Ico(void *p, size_t s = 0) : Format(p, s) {}

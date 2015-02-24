@@ -7,7 +7,7 @@ extern bool is_verbose;
 extern bool is_fast;
 extern int iterations;
 
-class Swf : Format
+class Swf : public Format
 {
 public:
     Swf(void *p, size_t s = 0) : Format(p, s) {}

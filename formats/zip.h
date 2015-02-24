@@ -12,7 +12,7 @@ extern int iterations;
 extern int depth;
 
 
-class Zip : Format
+class Zip : public Format
 {
 public:
     Zip(void *p, size_t s = 0) : Format(p, s)

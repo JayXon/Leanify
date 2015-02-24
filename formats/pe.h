@@ -13,7 +13,7 @@
 
 extern bool is_verbose;
 
-class Pe : Format
+class Pe : public Format
 {
 
 public:
