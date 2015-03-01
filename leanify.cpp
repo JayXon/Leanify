@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "formats/miniz/miniz.h"
-#include "formats/zopfli/zlib_container.h"
+#include "lib/miniz/miniz.h"
+#include "lib/zopfli/zlib_container.h"
 
 #include "formats/format.h"
 #include "formats/gft.h"

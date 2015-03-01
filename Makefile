@@ -1,10 +1,10 @@
 LEANIFY_SRC     := $(wildcard *.cpp formats/*.cpp)
-LZMA_SRC        := formats/LZMA/Alloc.c formats/LZMA/LzFind.c formats/LZMA/LzmaDec.c formats/LZMA/LzmaEnc.c formats/LZMA/LzmaLib.c
-MINIZ_SRC       := formats/miniz/miniz.c
-MOZJPEG_SRC     := formats/mozjpeg/jaricom.c formats/mozjpeg/jcapimin.c formats/mozjpeg/jcarith.c formats/mozjpeg/jcext.c formats/mozjpeg/jchuff.c formats/mozjpeg/jcmarker.c formats/mozjpeg/jcmaster.c formats/mozjpeg/jcomapi.c formats/mozjpeg/jcparam.c formats/mozjpeg/jcphuff.c formats/mozjpeg/jctrans.c formats/mozjpeg/jdapimin.c formats/mozjpeg/jdarith.c formats/mozjpeg/jdatadst.c formats/mozjpeg/jdatasrc.c formats/mozjpeg/jdcoefct.c formats/mozjpeg/jdcolor.c formats/mozjpeg/jddctmgr.c formats/mozjpeg/jdhuff.c formats/mozjpeg/jdinput.c formats/mozjpeg/jdmainct.c formats/mozjpeg/jdmarker.c formats/mozjpeg/jdmaster.c formats/mozjpeg/jdphuff.c formats/mozjpeg/jdpostct.c formats/mozjpeg/jdsample.c formats/mozjpeg/jdtrans.c formats/mozjpeg/jerror.c formats/mozjpeg/jidctflt.c formats/mozjpeg/jidctint.c formats/mozjpeg/jidctred.c formats/mozjpeg/jmemmgr.c formats/mozjpeg/jmemnobs.c formats/mozjpeg/jsimd_none.c formats/mozjpeg/jutils.c
-TINYXML_SRC     := formats/tinyxml2/tinyxml2.cpp
-ZOPFLI_SRC      := formats/zopfli/hash.c formats/zopfli/squeeze.c formats/zopfli/gzip_container.c formats/zopfli/katajainen.c formats/zopfli/zopfli_lib.c formats/zopfli/cache.c formats/zopfli/zlib_container.c formats/zopfli/util.c formats/zopfli/tree.c formats/zopfli/deflate.c formats/zopfli/blocksplitter.c formats/zopfli/lz77.c
-ZOPFLIPNG_SRC   := formats/zopflipng/lodepng/lodepng.cpp formats/zopflipng/lodepng/lodepng_util.cpp formats/zopflipng/zopflipng_lib.cc
+LZMA_SRC        := lib/LZMA/Alloc.c lib/LZMA/LzFind.c lib/LZMA/LzmaDec.c lib/LZMA/LzmaEnc.c lib/LZMA/LzmaLib.c
+MINIZ_SRC       := lib/miniz/miniz.c
+MOZJPEG_SRC     := lib/mozjpeg/jaricom.c lib/mozjpeg/jcapimin.c lib/mozjpeg/jcarith.c lib/mozjpeg/jcext.c lib/mozjpeg/jchuff.c lib/mozjpeg/jcmarker.c lib/mozjpeg/jcmaster.c lib/mozjpeg/jcomapi.c lib/mozjpeg/jcparam.c lib/mozjpeg/jcphuff.c lib/mozjpeg/jctrans.c lib/mozjpeg/jdapimin.c lib/mozjpeg/jdarith.c lib/mozjpeg/jdatadst.c lib/mozjpeg/jdatasrc.c lib/mozjpeg/jdcoefct.c lib/mozjpeg/jdcolor.c lib/mozjpeg/jddctmgr.c lib/mozjpeg/jdhuff.c lib/mozjpeg/jdinput.c lib/mozjpeg/jdmainct.c lib/mozjpeg/jdmarker.c lib/mozjpeg/jdmaster.c lib/mozjpeg/jdphuff.c lib/mozjpeg/jdpostct.c lib/mozjpeg/jdsample.c lib/mozjpeg/jdtrans.c lib/mozjpeg/jerror.c lib/mozjpeg/jidctflt.c lib/mozjpeg/jidctint.c lib/mozjpeg/jidctred.c lib/mozjpeg/jmemmgr.c lib/mozjpeg/jmemnobs.c lib/mozjpeg/jsimd_none.c lib/mozjpeg/jutils.c
+TINYXML_SRC     := lib/tinyxml2/tinyxml2.cpp
+ZOPFLI_SRC      := lib/zopfli/hash.c lib/zopfli/squeeze.c lib/zopfli/gzip_container.c lib/zopfli/katajainen.c lib/zopfli/zopfli_lib.c lib/zopfli/cache.c lib/zopfli/zlib_container.c lib/zopfli/util.c lib/zopfli/tree.c lib/zopfli/deflate.c lib/zopfli/blocksplitter.c lib/zopfli/lz77.c
+ZOPFLIPNG_SRC   := lib/zopflipng/lodepng/lodepng.cpp lib/zopflipng/lodepng/lodepng_util.cpp lib/zopflipng/zopflipng_lib.cc
 
 CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse
 ifneq ($(CC),clang)
@@ -30,15 +30,15 @@ tinyxml2.o: $(TINYXML_SRC)
 
 lzma.a:     $(LZMA_SRC)
 	$(CC) $(CFLAGS) -D _7ZIP_ST -Wno-unused-but-set-variable -Wno-self-assign -Wno-unknown-warning-option -c $?
-	ar rcs $@ $(patsubst formats/LZMA/%.c,%.o,$^)
+	ar rcs $@ $(patsubst lib/LZMA/%.c,%.o,$^)
 
 mozjpeg.a:  $(MOZJPEG_SRC)
 	$(CC) $(CFLAGS) -c $?
-	ar rcs $@ $(patsubst formats/mozjpeg/%.c,%.o,$^)
+	ar rcs $@ $(patsubst lib/mozjpeg/%.c,%.o,$^)
 
 zopfli.a:   $(ZOPFLI_SRC)
 	$(CC) $(filter-out -flto -O3,$(CFLAGS)) -O2 -c $?
-	ar rcs $@ $(patsubst formats/zopfli/%.c,%.o,$^)
+	ar rcs $@ $(patsubst lib/zopfli/%.c,%.o,$^)
 
 zopflipng.a:$(ZOPFLIPNG_SRC)
 	$(CXX) $(CFLAGS) -c $?

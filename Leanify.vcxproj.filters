@@ -16,23 +16,26 @@
     <Filter Include="Source Files\formats">
       <UniqueIdentifier>{0515174f-ead6-4c34-bc6d-28caa6328b14}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\formats\zopflipng">
-      <UniqueIdentifier>{f1b9091a-b86f-4412-9cbe-9fd2c017db97}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\formats\zopflipng\lodepng">
-      <UniqueIdentifier>{d8af6712-5337-48d5-ad50-b247491708e5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\formats\zopfli">
-      <UniqueIdentifier>{fd445d3c-46b8-4e6e-9873-22d5ad8f9d09}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\formats">
       <UniqueIdentifier>{052bcb98-874f-4e68-814e-4db31fa3f8e7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\formats\mozjpeg">
+    <Filter Include="Source Files\lib">
+      <UniqueIdentifier>{c4770949-c1fa-4c7f-9e50-07450b5093df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib\LZMA">
+      <UniqueIdentifier>{4d3051da-2db0-41bc-92d9-2f4af769f9a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib\mozjpeg">
       <UniqueIdentifier>{29e470fe-f7bd-40f4-baa8-31effed6a3f9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\formats\LZMA">
-      <UniqueIdentifier>{4d3051da-2db0-41bc-92d9-2f4af769f9a4}</UniqueIdentifier>
+    <Filter Include="Source Files\lib\zopfli">
+      <UniqueIdentifier>{fd445d3c-46b8-4e6e-9873-22d5ad8f9d09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib\zopflipng">
+      <UniqueIdentifier>{f1b9091a-b86f-4412-9cbe-9fd2c017db97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib\zopflipng\lodepng">
+      <UniqueIdentifier>{d8af6712-5337-48d5-ad50-b247491708e5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -66,58 +69,52 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopflipng\zopflipng_lib.cc">
-      <Filter>Source Files\formats\zopflipng</Filter>
+    <ClCompile Include="lib\zopflipng\zopflipng_lib.cc">
+      <Filter>Source Files\lib\zopflipng</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopflipng\lodepng\lodepng.cpp">
-      <Filter>Source Files\formats\zopflipng\lodepng</Filter>
+    <ClCompile Include="lib\zopflipng\lodepng\lodepng.cpp">
+      <Filter>Source Files\lib\zopflipng\lodepng</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopflipng\lodepng\lodepng_util.cpp">
-      <Filter>Source Files\formats\zopflipng\lodepng</Filter>
+    <ClCompile Include="lib\zopflipng\lodepng\lodepng_util.cpp">
+      <Filter>Source Files\lib\zopflipng\lodepng</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\blocksplitter.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\blocksplitter.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\cache.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\cache.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\deflate.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\deflate.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\gzip_container.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\gzip_container.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\hash.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\hash.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\katajainen.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\katajainen.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\lz77.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\lz77.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\squeeze.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\squeeze.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\tree.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\tree.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\util.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\util.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\zlib_container.c">
-      <Filter>Source Files\formats\zopfli</Filter>
+    <ClCompile Include="lib\zopfli\zlib_container.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
-    <ClCompile Include="formats\zopfli\zopfli_lib.c">
-      <Filter>Source Files\formats\zopfli</Filter>
-    </ClCompile>
-    <ClCompile Include="formats\tinyxml2\tinyxml2.cpp">
-      <Filter>Source Files\formats</Filter>
+    <ClCompile Include="lib\zopfli\zopfli_lib.c">
+      <Filter>Source Files\lib\zopfli</Filter>
     </ClCompile>
     <ClCompile Include="formats\gz.cpp">
-      <Filter>Source Files\formats</Filter>
-    </ClCompile>
-    <ClCompile Include="formats\miniz\miniz.c">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
     <ClCompile Include="formats\ico.cpp">
@@ -126,131 +123,131 @@
     <ClCompile Include="leanify.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jctrans.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jctrans.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdtrans.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdtrans.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdapimin.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdapimin.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcapimin.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcapimin.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdatadst.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdatadst.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdatasrc.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdatasrc.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jerror.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jerror.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcomapi.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcomapi.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jutils.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jutils.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcmarker.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcmarker.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jmemmgr.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jmemmgr.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcarith.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcarith.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jaricom.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jaricom.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcmaster.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcmaster.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcparam.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcparam.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcphuff.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcphuff.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jchuff.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jchuff.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdmarker.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdmarker.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdinput.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdinput.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdhuff.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdhuff.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdphuff.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdphuff.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdarith.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdarith.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdcoefct.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdcoefct.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdmaster.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdmaster.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jddctmgr.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jddctmgr.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jidctint.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jidctint.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jidctred.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jidctred.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jsimd_none.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jsimd_none.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jidctflt.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jidctflt.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdsample.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdsample.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdcolor.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdcolor.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdmainct.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdmainct.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jdpostct.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jdpostct.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jmemnobs.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jmemnobs.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="formats\swf.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\Alloc.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\Alloc.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\LzFind.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\LzFind.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\LzmaDec.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\LzmaDec.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\LzmaEnc.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\LzmaEnc.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\LzmaLib.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\LzmaLib.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\LzFindMt.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\LzFindMt.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="formats\LZMA\Threads.c">
-      <Filter>Source Files\formats\LZMA</Filter>
+    <ClCompile Include="lib\LZMA\Threads.c">
+      <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
     <ClCompile Include="formats\tar.cpp">
       <Filter>Source Files\formats</Filter>
@@ -261,8 +258,14 @@
     <ClCompile Include="utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="formats\mozjpeg\jcext.c">
-      <Filter>Source Files\formats\mozjpeg</Filter>
+    <ClCompile Include="lib\mozjpeg\jcext.c">
+      <Filter>Source Files\lib\mozjpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\miniz\miniz.c">
+      <Filter>Source Files\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\tinyxml2\tinyxml2.cpp">
+      <Filter>Source Files\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

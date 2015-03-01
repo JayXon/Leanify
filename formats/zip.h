@@ -2,7 +2,7 @@
 #define ZIP_H
 
 
-#include "zopfli/deflate.h"
+#include "../lib/zopfli/deflate.h"
 
 #include "format.h"
 

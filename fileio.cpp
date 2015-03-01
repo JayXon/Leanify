@@ -1,7 +1,7 @@
 #include "fileio.h"
 
-#include <iostream>
 #include <cstdio>
+#include <iostream>
 
 #ifndef _WIN32
 #include <sys/mman.h>

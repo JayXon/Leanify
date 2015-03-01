@@ -4,7 +4,7 @@
 
 #include <functional>
 
-#include "tinyxml2/tinyxml2.h"
+#include "../lib/tinyxml2/tinyxml2.h"
 
 #include "format.h"
 

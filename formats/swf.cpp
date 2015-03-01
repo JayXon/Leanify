@@ -4,8 +4,8 @@
 #include <cstring>
 #include <iostream>
 
-#include "LZMA/LzmaLib.h"
-#include "miniz/miniz.h"
+#include "../lib/LZMA/LzmaLib.h"
+#include "../lib/miniz/miniz.h"
 
 #include "../leanify.h"
 

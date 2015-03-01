@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "miniz/miniz.h"
+#include "../lib/miniz/miniz.h"
 
 #include "../leanify.h"
 
