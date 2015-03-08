@@ -120,7 +120,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     }
     else
     {
-        memmove(p_write, p_read, original_size);
+        memmove(p_write, p_read, original_size + 8);
         p_write += original_size;
     }
     mz_free(buffer);
