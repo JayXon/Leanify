@@ -2256,7 +2256,7 @@ void XMLPrinter::PushComment( const char* comment )
         PrintSpace( _depth );
     }
     _firstElement = false;
-    Print( "<!--%s-->", comment );
+    // Print( "<!--%s-->", comment );
 }
 
 
