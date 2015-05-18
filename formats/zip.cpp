@@ -134,48 +134,58 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             p_read += header_size;
             p_write += header_size;
 
-
-            // uncompress
-            size_t s = 0;
-            unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(p_read, original_compressed_size, &s, 0);
-
-            if (!buffer ||
-                s != *uncompressed_size ||
-                *crc != mz_crc32(0, buffer, *uncompressed_size))
+            if (*uncompressed_size)
             {
-                std::cerr << "ZIP file corrupted!" << std::endl;
+                // uncompress
+                size_t s = 0;
+                unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(p_read, original_compressed_size, &s, 0);
+
+                if (!buffer ||
+                    s != *uncompressed_size ||
+                    *crc != mz_crc32(0, buffer, *uncompressed_size))
+                {
+                    std::cerr << "ZIP file corrupted!" << std::endl;
+                    mz_free(buffer);
+                    memmove(p_write, p_read, original_compressed_size);
+                    p_read += original_compressed_size;
+                    p_write += original_compressed_size;
+                    vector_crc.push_back(*crc);
+                    vector_comp_size.push_back(original_compressed_size);
+                    vector_uncomp_size.push_back(*uncompressed_size);
+                    continue;
+                }
+
+                // Leanify uncompressed file
+                uint32_t new_uncompressed_size = s;
+                // workaround of TinyXML2 not supporting xml:space="preserve"
+                if (filename_length != 17 || memcmp(p_write - filename_length, "word/document.xml", filename_length))
+                {
+                    new_uncompressed_size = LeanifyFile(buffer, s);
+                }
+
+                // recompress
+                unsigned char bp = 0, *out = NULL;
+                size_t outsize = 0;
+                ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncompressed_size, &bp, &out, &outsize);
+
+
+                if (outsize < original_compressed_size)
+                {
+                    p_read += original_compressed_size;
+                    *crc = mz_crc32(0, buffer, new_uncompressed_size);
+                    *compressed_size = outsize;
+                    *uncompressed_size = new_uncompressed_size;
+                    memcpy(p_write, out, outsize);
+                    p_write += outsize;
+                }
+                else
+                {
+                    memmove(p_write, p_read, original_compressed_size);
+                    p_write += original_compressed_size;
+                    p_read += original_compressed_size;
+                }
                 mz_free(buffer);
-                memmove(p_write, p_read, original_compressed_size);
-                p_read += original_compressed_size;
-                p_write += original_compressed_size;
-                vector_crc.push_back(*crc);
-                vector_comp_size.push_back(original_compressed_size);
-                vector_uncomp_size.push_back(*uncompressed_size);
-                continue;
-            }
-
-            // Leanify uncompressed file
-            uint32_t new_uncompressed_size = s;
-            // workaround of TinyXML2 not supporting xml:space="preserve"
-            if (filename_length != 17 || memcmp(p_write - filename_length, "word/document.xml", filename_length))
-            {
-                new_uncompressed_size = LeanifyFile(buffer, s);
-            }
-
-            // recompress
-            unsigned char bp = 0, *out = NULL;
-            size_t outsize = 0;
-            ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncompressed_size, &bp, &out, &outsize);
-
-
-            if (outsize < original_compressed_size)
-            {
-                p_read += original_compressed_size;
-                *crc = mz_crc32(0, buffer, new_uncompressed_size);
-                *compressed_size = outsize;
-                *uncompressed_size = new_uncompressed_size;
-                memcpy(p_write, out, outsize);
-                p_write += outsize;
+                delete[] out;
             }
             else
             {
@@ -183,8 +193,6 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 p_write += original_compressed_size;
                 p_read += original_compressed_size;
             }
-            mz_free(buffer);
-            delete[] out;
         }
 
         // we don't use data descriptor, so that can save more bytes (16 per file)
