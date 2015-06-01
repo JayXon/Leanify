@@ -15,7 +15,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
     char *p_index = fp - size_leanified + 6;
 
     // invalid Icon file
-    if (6 + n * 16U >= size || *(uint32_t *)(p_index + 8) + *(uint32_t *)(p_index + 12) > size)
+    if (6 + n * 16U >= size || *(uint32_t *)(fp + 6 + 8) + *(uint32_t *)(fp + 6 + 12) > size)
     {
         return Format::Leanify(size_leanified);
     }
