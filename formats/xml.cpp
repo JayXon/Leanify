@@ -5,7 +5,7 @@
 #include <string>
 
 #include "../leanify.h"
-#include "../utils.h"
+#include "base64.h"
 
 
 
@@ -88,35 +88,19 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                         continue;
                     }
                     size_t base64_len = strlen(base64_data);
+                    // copy to a new location because base64_data is const
+                    char *new_base64_data = new char[base64_len + 1];
+                    memcpy(new_base64_data, base64_data, base64_len);
 
-                    // 4 base64 character contains information of 3 bytes
-                    size_t binary_len = 3 * base64_len / 4;
-                    unsigned char *binary_data = new unsigned char[binary_len];
+                    Base64 b64(new_base64_data, base64_len);
+                    size_t new_base64_len = b64.Leanify();
 
-                    if (Base64Decode(base64_data, base64_len, binary_data, &binary_len))
+                    if (new_base64_len < base64_len)
                     {
-                        std::cout << "Base64 decode error." << std::endl;
-                        delete[] binary_data;
-                        continue;
-                    }
-
-                    // Leanify embedded image
-                    binary_len = LeanifyFile(binary_data, binary_len);
-
-                    // allocate a few more bytes for padding
-                    size_t new_base64_len = 4 * binary_len / 3 + 4;
-                    char *new_base64_data = new char[new_base64_len];
-
-                    if (Base64Encode(binary_data, binary_len, new_base64_data, new_base64_len))
-                    {
-                        std::cout << "Base64 encode error." << std::endl;
-                    }
-                    else if (strlen(new_base64_data) < base64_len)
-                    {
+                        new_base64_data[new_base64_len] = 0;
                         e->SetText(new_base64_data);
                     }
 
-                    delete[] binary_data;
                     delete[] new_base64_data;
                 }
                 depth--;

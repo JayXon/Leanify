@@ -267,6 +267,9 @@
     <ClCompile Include="lib\tinyxml2\tinyxml2.cpp">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
+    <ClCompile Include="formats\base64.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -328,6 +331,9 @@
     </ClInclude>
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\base64.h">
+      <Filter>Header Files\formats</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
