@@ -129,14 +129,15 @@ size_t Base64::Leanify(size_t size_leanified /*= 0*/)
     {
         std::cerr << "Base64 decode error." << std::endl;
         delete[] binary_data;
-        return size;
+        return Format::Leanify(size_leanified);
     }
 
     // Leanify embedded file
     binary_len = LeanifyFile(binary_data, binary_len);
 
+    fp -= size_leanified;
     // encode back
-    size = Base64Encode(binary_data, binary_len, fp - size_leanified);
+    size = Base64Encode(binary_data, binary_len, fp);
 
     delete[] binary_data;
     return size;
