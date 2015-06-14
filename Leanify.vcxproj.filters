@@ -270,6 +270,9 @@
     <ClCompile Include="formats\base64.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
+    <ClCompile Include="formats\dwf.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -333,6 +336,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="formats\base64.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\dwf.h">
       <Filter>Header Files\formats</Filter>
     </ClInclude>
   </ItemGroup>

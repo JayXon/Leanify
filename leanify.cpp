@@ -5,6 +5,7 @@
 #include "lib/miniz/miniz.h"
 #include "lib/zopfli/zlib_container.h"
 
+#include "formats/dwf.h"
 #include "formats/format.h"
 #include "formats/gft.h"
 #include "formats/gz.h"
@@ -82,13 +83,13 @@ Format *GetType(void *file_pointer, size_t file_size)
         }
         return new Ico(file_pointer, file_size);
     }
-    else if (memcmp(file_pointer, "(DWF V06.00)", 12) == 0)
+    else if (memcmp(file_pointer, Dwf::header_magic, sizeof(Dwf::header_magic)) == 0)
     {
         if (is_verbose)
         {
             std::cout << "DWF detected." << std::endl;
         }
-        return new Zip((char *)file_pointer + 12, file_size - 12);
+        return new Dwf(file_pointer, file_size);
     }
     else if (memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)) == 0)
     {
