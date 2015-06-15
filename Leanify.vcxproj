@@ -164,6 +164,7 @@
     <ClCompile Include="fileio.cpp" />
     <ClCompile Include="formats\base64.cpp" />
     <ClCompile Include="formats\bmp.cpp" />
+    <ClCompile Include="formats\data_uri.cpp" />
     <ClCompile Include="formats\dwf.cpp" />
     <ClCompile Include="formats\gft.cpp" />
     <ClCompile Include="formats\gz.cpp" />
@@ -244,6 +245,7 @@
     <ClInclude Include="fileio.h" />
     <ClInclude Include="formats\base64.h" />
     <ClInclude Include="formats\bmp.h" />
+    <ClInclude Include="formats\data_uri.h" />
     <ClInclude Include="formats\dwf.h" />
     <ClInclude Include="formats\format.h" />
     <ClInclude Include="formats\gft.h" />

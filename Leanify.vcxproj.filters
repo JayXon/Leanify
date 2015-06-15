@@ -273,6 +273,9 @@
     <ClCompile Include="formats\dwf.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
+    <ClCompile Include="formats\data_uri.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -339,6 +342,9 @@
       <Filter>Header Files\formats</Filter>
     </ClInclude>
     <ClInclude Include="formats\dwf.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\data_uri.h">
       <Filter>Header Files\formats</Filter>
     </ClInclude>
   </ItemGroup>

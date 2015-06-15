@@ -5,6 +5,7 @@
 #include "lib/miniz/miniz.h"
 #include "lib/zopfli/zlib_container.h"
 
+#include "formats/data_uri.h"
 #include "formats/dwf.h"
 #include "formats/format.h"
 #include "formats/gft.h"
@@ -45,7 +46,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
                 {
                     std::cout << ext << " detected." << std::endl;
                 }
-                // TODO: search for Data URI base64
+                return new DataURI(file_pointer, file_size);
             }
         }
 
