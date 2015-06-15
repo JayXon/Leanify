@@ -20,13 +20,36 @@
 #include "formats/xml.h"
 #include "formats/zip.h"
 
-Format *GetType(void *file_pointer, size_t file_size)
+Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
 {
     if (depth > max_depth)
     {
         return new Format(file_pointer, file_size);
     }
 
+    if (!filename.empty())
+    {
+        size_t dot = filename.find_last_of('.');
+        if (dot != std::string::npos)
+        {
+            std::string ext = filename.substr(dot + 1);
+            // tolower
+            for (auto &c : ext)
+                c |= 0x20;
+            if (ext == "html" ||
+                ext == "htm" ||
+                ext == "js" ||
+                ext == "css")
+            {
+                if (is_verbose)
+                {
+                    std::cout << ext << " detected." << std::endl;
+                }
+                // TODO: search for Data URI base64
+            }
+        }
+
+    }
     if (memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)) == 0)
     {
         if (is_verbose)
@@ -165,9 +188,9 @@ Format *GetType(void *file_pointer, size_t file_size)
 // the new location of the file will be file_pointer - size_leanified
 // it's designed this way to avoid extra memmove or memcpy
 // return new size
-size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/)
+size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/, std::string filename /*= ""*/)
 {
-    Format *f = GetType(file_pointer, file_size);
+    Format *f = GetType(file_pointer, file_size, filename);
     size_t r = f->Leanify(size_leanified);
     delete f;
     return r;

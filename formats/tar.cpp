@@ -54,7 +54,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
                 }
                 std::cout << p_write << std::endl;
 
-                size_t new_size = LeanifyFile(p_read, original_size, size_leanified);
+                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, std::string(p_write));
                 if (new_size < original_size)
                 {
                     // write new size

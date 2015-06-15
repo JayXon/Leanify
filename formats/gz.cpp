@@ -41,6 +41,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         p_read += *(uint16_t *)p_read + 2;
     }
 
+    std::string filename;
     if (flags & (1 << 3))   // FNAME
     {
         for (int i = 1; i < depth; i++)
@@ -48,6 +49,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
             std::cout << "-> ";
         }
         std::cout << p_read << std::endl;
+        filename = std::string(p_read);
         while (p_read < fp + size && *p_read++)
         {
             // skip string
@@ -100,7 +102,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         return size - (p_read - p_write);
     }
 
-    uncompressed_size = LeanifyFile(buffer, uncompressed_size);
+    uncompressed_size = LeanifyFile(buffer, uncompressed_size, 0, filename);
 
     ZopfliOptions options;
     ZopfliInitOptions(&options);

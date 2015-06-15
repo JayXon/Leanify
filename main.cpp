@@ -38,6 +38,7 @@ int ProcessFile(const wchar_t *file_path)
     char mbs[MAX_PATH] = { 0 };
     WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
     std::cout << "Processing: " << mbs << std::endl;
+    std::string filename(mbs);
 #else
 // written like this in order to be callback funtion of ftw()
 int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typeflag = FTW_F)
@@ -47,6 +48,7 @@ int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typ
         return 0;
     }
     std::cout << "Processing: " << file_path << std::endl;
+    std::string filename(file_path);
 #endif // _WIN32
 
 
@@ -56,7 +58,7 @@ int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typ
     {
         size_t original_size = input_file.GetSize();
 
-        size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size);
+        size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
 
         PrintSize(original_size);
         std::cout << " -> ";

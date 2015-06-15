@@ -300,7 +300,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                     last_end += gap;
                 }
 
-                size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified + size_leanified);
+                size_t new_size = LeanifyFile(fp + rsrc_raw_offset + p[0] - rsrc_virtual_address, p[1], p[0] - last_end + pe_size_leanified + size_leanified, res.second);
                 p[0] = last_end;
                 p[1] = new_size;
                 last_end += new_size;

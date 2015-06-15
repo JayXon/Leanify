@@ -2,8 +2,8 @@
 
 #include <algorithm>    // std::search
 #include <cstdint>
-#include <cstring>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "../lib/miniz/miniz.h"
@@ -51,18 +51,16 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         uint16_t flag = *(uint16_t *)(p_write + 6);
         uint16_t compression_method = *(uint16_t *)(p_write + 8);
 
+        std::string filename(p_write + 30, filename_length);
         // do not output filename if it is a directory
         if ((original_compressed_size || compression_method || flag & 8) && depth <= max_depth)
         {
             // output filename
-            char *name = new char[filename_length + 1]();
-            memcpy(name, p_write + 30, filename_length);
             for (int i = 1; i < depth; i++)
             {
                 std::cout << "-> ";
             }
-            std::cout << name << std::endl;
-            delete[] name;
+            std::cout << filename << std::endl;
         }
 
 
@@ -107,7 +105,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 // method is store
                 if (original_compressed_size)
                 {
-                    uint32_t new_size = LeanifyFile(p_read + header_size, original_compressed_size, p_read - p_write);
+                    uint32_t new_size = LeanifyFile(p_read + header_size, original_compressed_size, p_read - p_write, filename);
                     p_read += header_size + original_compressed_size;
                     *compressed_size = *uncompressed_size = new_size;
                     *crc = mz_crc32(0, (unsigned char *)p_write + header_size, new_size);
@@ -158,9 +156,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 // Leanify uncompressed file
                 uint32_t new_uncompressed_size = s;
                 // workaround of TinyXML2 not supporting xml:space="preserve"
-                if (filename_length != 17 || memcmp(p_write - filename_length, "word/document.xml", filename_length))
+                if (filename_length != 17 || filename != "word/document.xml")
                 {
-                    new_uncompressed_size = LeanifyFile(buffer, s);
+                    new_uncompressed_size = LeanifyFile(buffer, s, 0, filename);
                 }
 
                 // recompress
