@@ -1,4 +1,4 @@
-Leanify [![Build Status](https://img.shields.io/travis/JayXon/Leanify.svg?style=flat)](https://travis-ci.org/JayXon/Leanify) [![Windows Build status](https://img.shields.io/appveyor/ci/JayXon/Leanify.svg?style=flat)](https://ci.appveyor.com/project/JayXon/leanify) [![Latest Release](https://img.shields.io/github/release/JayXon/Leanify.svg?style=flat)](https://github.com/JayXon/Leanify/releases)
+Leanify [![Build Status](https://travis-ci.org/JayXon/Leanify.svg)](https://travis-ci.org/JayXon/Leanify) [![Windows Build status](https://ci.appveyor.com/api/projects/status/2p9i3ru8apwq2uic?svg=true)](https://ci.appveyor.com/project/JayXon/leanify) [![Download](https://img.shields.io/github/downloads/JayXon/Leanify/latest/total.svg)](https://github.com/JayXon/Leanify/releases) [![Latest Release](https://img.shields.io/github/release/JayXon/Leanify.svg)](https://github.com/JayXon/Leanify/releases/latest) [![GitHub license](https://img.shields.io/github/license/JayXon/Leanify.svg)](LICENSE)
 =======
 
 Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessary data (debug information, comments, metadata, etc.) and recompress the file to reduce file size. It will not reduce image quality at all.
@@ -182,7 +182,7 @@ It is based on [XML] and [ZIP].
 
 ####ZIP archive (.zip)
 
-Leanify all files inside and recompress deflate stream using [Zopfli](https://code.google.com/p/zopfli/).
+Leanify all files inside and recompress deflate stream using [Zopfli](https://github.com/google/zopfli).
 
 Remove extra field in `Local file header`.
 
@@ -198,6 +198,9 @@ Remove comment in `End of central directory record`.
 
 
 ####BMP image (.bmp, .dib)
+
+
+####GIF image (.gif)
 
 
 ####Microsoft Compound File Binary
@@ -248,11 +251,6 @@ Usage: leanify [options] paths
 make
 ```
 
-
-
-##License
-
-Leanify is released under the [MIT License](LICENSE).
 
 
 [APK]: #apk-file-apk
