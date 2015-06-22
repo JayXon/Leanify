@@ -34,13 +34,14 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
         if (dot != std::string::npos)
         {
             std::string ext = filename.substr(dot + 1);
-            // tolower
+            // toupper
             for (auto &c : ext)
-                c |= 0x20;
-            if (ext == "html" ||
-                ext == "htm" ||
-                ext == "js" ||
-                ext == "css")
+                c &= ~0x20;
+
+            if (ext == "HTML" ||
+                ext == "HTM" ||
+                ext == "JS" ||
+                ext == "CSS")
             {
                 if (is_verbose)
                 {
