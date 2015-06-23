@@ -20,7 +20,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     fp -= size_leanified;
     char *p_write = fp;
 
-    std::vector<uint32_t> vector_crc, vector_comp_size, vector_uncomp_size, vector_local_header_offset;
+    std::vector<uint32_t> vector_local_header_offset;
     // Local file header
     while (memcmp(p_read, header_magic, sizeof(header_magic)) == 0)
     {
@@ -147,9 +147,6 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                     memmove(p_write, p_read, original_compressed_size);
                     p_read += original_compressed_size;
                     p_write += original_compressed_size;
-                    vector_crc.push_back(*crc);
-                    vector_comp_size.push_back(original_compressed_size);
-                    vector_uncomp_size.push_back(*uncompressed_size);
                     continue;
                 }
 
@@ -198,10 +195,6 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         {
             p_read += 16;
         }
-        // save these values in vector in order to write it to central directory later
-        vector_crc.push_back(*crc);
-        vector_comp_size.push_back(*compressed_size);
-        vector_uncomp_size.push_back(*uncompressed_size);
     }
 
     char *central_directory = p_write;
@@ -235,10 +228,15 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             *(uint16_t *)(p_write + 32) = 0;
         }
 
-        *(uint32_t *)(p_write + 16) = vector_crc[i];
-        *(uint32_t *)(p_write + 20) = vector_comp_size[i];
-        *(uint32_t *)(p_write + 24) = vector_uncomp_size[i];
+        char *local_header = fp + vector_local_header_offset[i];
+
+        // copy new CRC-32, Compressed size, Uncompressed size
+        // from Local file header to Central directory file header
+        memcpy(p_write + 16, local_header + 14, 12);
+
+        // new Local file header offset
         *(uint32_t *)(p_write + 42) = vector_local_header_offset[i];
+
         i++;
 
         p_read += header_size;
