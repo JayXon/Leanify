@@ -46,14 +46,14 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         uint32_t *compressed_size = crc + 1;
         uint32_t *uncompressed_size = compressed_size + 1;
 
-        uint32_t original_compressed_size = *compressed_size;
+        uint32_t orig_comp_size = *compressed_size;
 
         uint16_t flag = *(uint16_t *)(p_write + 6);
-        uint16_t compression_method = *(uint16_t *)(p_write + 8);
+        uint16_t *compression_method = (uint16_t *)(p_write + 8);
 
         std::string filename(p_write + 30, filename_length);
         // do not output filename if it is a directory
-        if ((original_compressed_size || compression_method || flag & 8) && depth <= max_depth)
+        if ((orig_comp_size || *compression_method || flag & 8) && depth <= max_depth)
         {
             // output filename
             for (int i = 1; i < depth; i++)
@@ -91,22 +91,22 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 }
             }
             *crc = *(uint32_t *)(dd + 4);
-            *compressed_size = original_compressed_size = *(uint32_t *)(dd + 8);
+            *compressed_size = orig_comp_size = *(uint32_t *)(dd + 8);
             *uncompressed_size = *(uint32_t *)(dd + 12);
         }
 
         // if compression method is not deflate or fast mode
         // then only Leanify embedded file if the method is store
         // otherwise just memmove the compressed part
-        if (compression_method != 8 || is_fast)
+        if (*compression_method != 8 || is_fast)
         {
-            if (compression_method == 0 && depth <= max_depth)
+            if (*compression_method == 0 && depth <= max_depth)
             {
                 // method is store
-                if (original_compressed_size)
+                if (orig_comp_size)
                 {
-                    uint32_t new_size = LeanifyFile(p_read + header_size, original_compressed_size, p_read - p_write, filename);
-                    p_read += header_size + original_compressed_size;
+                    uint32_t new_size = LeanifyFile(p_read + header_size, orig_comp_size, p_read - p_write, filename);
+                    p_read += header_size + orig_comp_size;
                     *compressed_size = *uncompressed_size = new_size;
                     *crc = mz_crc32(0, (unsigned char *)p_write + header_size, new_size);
                 }
@@ -117,9 +117,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             }
             else
             {
-                // other method, move it
-                memmove(p_write + header_size, p_read + header_size, original_compressed_size);
-                p_read += header_size + original_compressed_size;
+                // unsupported compression method, move it
+                memmove(p_write + header_size, p_read + header_size, orig_comp_size);
+                p_read += header_size + orig_comp_size;
 
             }
             p_write += header_size + *compressed_size;
@@ -136,7 +136,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             {
                 // uncompress
                 size_t s = 0;
-                unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(p_read, original_compressed_size, &s, 0);
+                unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(p_read, orig_comp_size, &s, 0);
 
                 if (!buffer ||
                     s != *uncompressed_size ||
@@ -144,49 +144,58 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 {
                     std::cerr << "ZIP file corrupted!" << std::endl;
                     mz_free(buffer);
-                    memmove(p_write, p_read, original_compressed_size);
-                    p_read += original_compressed_size;
-                    p_write += original_compressed_size;
+                    memmove(p_write, p_read, orig_comp_size);
+                    p_read += orig_comp_size;
+                    p_write += orig_comp_size;
                     continue;
                 }
 
                 // Leanify uncompressed file
-                uint32_t new_uncompressed_size = s;
+                uint32_t new_uncomp_size = s;
                 // workaround of TinyXML2 not supporting xml:space="preserve"
                 if (filename_length != 17 || filename != "word/document.xml")
                 {
-                    new_uncompressed_size = LeanifyFile(buffer, s, 0, filename);
+                    new_uncomp_size = LeanifyFile(buffer, s, 0, filename);
                 }
 
                 // recompress
                 unsigned char bp = 0, *out = NULL;
-                size_t outsize = 0;
-                ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncompressed_size, &bp, &out, &outsize);
+                size_t new_comp_size = 0;
+                ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
 
-
-                if (outsize < original_compressed_size)
+                // switch to store if deflate makes file larger
+                if (new_uncomp_size <= new_comp_size && new_uncomp_size <= orig_comp_size)
                 {
-                    p_read += original_compressed_size;
-                    *crc = mz_crc32(0, buffer, new_uncompressed_size);
-                    *compressed_size = outsize;
-                    *uncompressed_size = new_uncompressed_size;
-                    memcpy(p_write, out, outsize);
-                    p_write += outsize;
+                    *compression_method = 0;
+                    *crc = mz_crc32(0, buffer, new_uncomp_size);
+                    *compressed_size = new_uncomp_size;
+                    *uncompressed_size = new_uncomp_size;
+                    memcpy(p_write, buffer, new_uncomp_size);
+                    p_write += new_uncomp_size;
+                }
+                else if (new_comp_size < orig_comp_size)
+                {
+                    *crc = mz_crc32(0, buffer, new_uncomp_size);
+                    *compressed_size = new_comp_size;
+                    *uncompressed_size = new_uncomp_size;
+                    memcpy(p_write, out, new_comp_size);
+                    p_write += new_comp_size;
                 }
                 else
                 {
-                    memmove(p_write, p_read, original_compressed_size);
-                    p_write += original_compressed_size;
-                    p_read += original_compressed_size;
+                    memmove(p_write, p_read, orig_comp_size);
+                    p_write += orig_comp_size;
                 }
+                p_read += orig_comp_size;
+
                 mz_free(buffer);
                 delete[] out;
             }
             else
             {
-                memmove(p_write, p_read, original_compressed_size);
-                p_write += original_compressed_size;
-                p_read += original_compressed_size;
+                *compression_method = 0;
+                *compressed_size = 0;
+                p_read += orig_comp_size;
             }
         }
 
@@ -233,6 +242,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         // copy new CRC-32, Compressed size, Uncompressed size
         // from Local file header to Central directory file header
         memcpy(p_write + 16, local_header + 14, 12);
+
+        // update compression method
+        *(uint16_t *)(p_write + 10) = *(uint16_t *)(local_header + 8);
 
         // new Local file header offset
         *(uint32_t *)(p_write + 42) = vector_local_header_offset[i];
