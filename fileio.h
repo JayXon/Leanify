@@ -21,9 +21,9 @@ class File
 {
 public:
 #ifdef _WIN32
-    File(const wchar_t *filepath);
+    explicit File(const wchar_t *filepath);
 #else
-    File(const char *filepath);
+    explicit File(const char *filepath);
 #endif // _WIN32
 
     void *GetFilePionter() const
