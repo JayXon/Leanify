@@ -8,9 +8,7 @@
 class Rdb : public Format
 {
 public:
-    Rdb(void *p, size_t s = 0) : Format(p, s) {}
-    // using Format::Format;
-    // VS2013 does not support C++11 inheriting constructors
+    using Format::Format;
 
     size_t Leanify(size_t size_leanified = 0);
 
