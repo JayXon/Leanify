@@ -79,7 +79,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             const unsigned char dd_sign[] = { 0x50, 0x4B, 0x07, 0x08 };
             // search for signature
             char *dd = p_read + header_size;
-            while (*(uint32_t *)(dd + 8) != dd - p_read - header_size)
+            do
             {
                 dd = std::search(dd + 1, fp + size + size_leanified, dd_sign, dd_sign + 4);
                 if (dd == fp + size + size_leanified)
@@ -90,6 +90,8 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                     return size;
                 }
             }
+            while (*(uint32_t *)(dd + 8) != dd - p_read - header_size);
+
             *crc = *(uint32_t *)(dd + 4);
             *compressed_size = orig_comp_size = *(uint32_t *)(dd + 8);
             *uncompressed_size = *(uint32_t *)(dd + 12);
