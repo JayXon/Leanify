@@ -20,7 +20,7 @@ endif
 .PHONY:     leanify clean
 
 leanify:    lzma.a miniz.o mozjpeg.a tinyxml2.o zopfli.a zopflipng.a
-	$(CXX) $(CFLAGS) --std=c++0x $(LEANIFY_SRC) $^ $(LDFLAGS) -o $@
+	$(CXX) $(CFLAGS) --std=c++11 $(LEANIFY_SRC) $^ $(LDFLAGS) -o $@
 
 miniz.o:    $(MINIZ_SRC)
 	$(CC) $(CFLAGS) -Wno-strict-aliasing -c $?
