@@ -211,10 +211,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     char *central_directory = p_write;
     // Central directory file header
     const unsigned char cd_header_magic[] = { 0x50, 0x4B, 0x01, 0x02 };
-    int i = 0;
-    while (memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)) == 0)
+    
+    for (int i = 0; memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)) == 0; i++)
     {
-
         int header_size = 46 + *(uint16_t *)(p_read + 28);
         // move header
         if (p_read - p_write)
@@ -250,8 +249,6 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 
         // new Local file header offset
         *(uint32_t *)(p_write + 42) = vector_local_header_offset[i];
-
-        i++;
 
         p_read += header_size;
         p_write += header_size;
