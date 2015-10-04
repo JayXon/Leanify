@@ -480,7 +480,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
         {
             *(uint32_t *)(rsrc + entry[i].OffsetToData) -= move_size;
             // remember the address to Leanify resource file later
-            rsrc_data.push_back(make_pair((uint32_t *)(rsrc + entry[i].OffsetToData), new_name));
+            rsrc_data.emplace_back((uint32_t *)(rsrc + entry[i].OffsetToData), new_name);
         }
     }
 }
