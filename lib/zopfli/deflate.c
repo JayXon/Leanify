@@ -536,7 +536,7 @@ static void AddLZ77Block(const ZopfliOptions* options, int btype, int final,
   unsigned d_lengths[32];
   unsigned ll_symbols[288];
   unsigned d_symbols[32];
-  size_t detect_block_size = *outsize;
+  size_t detect_block_size;
   size_t compressed_size;
   size_t uncompressed_size = 0;
   size_t i;
@@ -844,6 +844,7 @@ void ZopfliDeflatePart(const ZopfliOptions* options, int btype, int final,
 void ZopfliDeflate(const ZopfliOptions* options, int btype, int final,
                    const unsigned char* in, size_t insize,
                    unsigned char* bp, unsigned char** out, size_t* outsize) {
+ size_t offset = *outsize;
 #if ZOPFLI_MASTER_BLOCK_SIZE == 0
   ZopfliDeflatePart(options, btype, final, in, 0, insize, bp, out, outsize);
 #else
@@ -860,7 +861,7 @@ void ZopfliDeflate(const ZopfliOptions* options, int btype, int final,
   if (options->verbose) {
     fprintf(stderr,
             "Original Size: %d, Deflate: %d, Compression: %f%% Removed\n",
-            (int)insize, (int)*outsize,
-            100.0 * (double)(insize - *outsize) / (double)insize);
+            (int)insize, (int)(*outsize - offset),
+            100.0 * (double)(insize - (*outsize - offset)) / (double)insize);
   }
 }

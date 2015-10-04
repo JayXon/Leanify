@@ -19,7 +19,10 @@
 
 #include "zopflipng_lib.h"
 
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <set>
 #include <vector>
 
@@ -29,6 +32,7 @@
 
 ZopfliPNGOptions::ZopfliPNGOptions()
   : lossy_transparent(false)
+  , verbose(false)
   , lossy_8bit(false)
   , auto_filter_strategy(true)
   , use_zopfli(true)
@@ -48,6 +52,7 @@ unsigned CustomPNGDeflate(unsigned char** out, size_t* outsize,
   ZopfliOptions options;
   ZopfliInitOptions(&options);
 
+  options.verbose = png_options->verbose;
   options.numiterations = insize < 200000
       ? png_options->num_iterations : png_options->num_iterations_large;
 
@@ -367,7 +372,7 @@ int ZopfliPNGOptimize(const std::vector<unsigned char>& origpng,
 
   if (error) {
     if (verbose) {
-      printf("Decoding error %i: %s\n", error, lodepng_error_text(error));
+      printf("Decoding error %u: %s\n", error, lodepng_error_text(error));
     }
     return error;
   }
@@ -423,4 +428,65 @@ int ZopfliPNGOptimize(const std::vector<unsigned char>& origpng,
   }
 
   return error;
+}
+
+extern "C" void CZopfliPNGSetDefaults(CZopfliPNGOptions* png_options) {
+    
+  memset(png_options, 0, sizeof(*png_options));
+  // Constructor sets the defaults
+  ZopfliPNGOptions opts;
+
+  png_options->lossy_transparent    = opts.lossy_transparent;
+  png_options->lossy_8bit           = opts.lossy_8bit;
+  png_options->auto_filter_strategy = opts.auto_filter_strategy;
+  png_options->use_zopfli           = opts.use_zopfli;
+  png_options->num_iterations       = opts.num_iterations;
+  png_options->num_iterations_large = opts.num_iterations_large;
+  png_options->block_split_strategy = opts.block_split_strategy;
+}
+
+extern "C" int CZopfliPNGOptimize(const unsigned char* origpng,
+                                  const size_t origpng_size,
+                                  const CZopfliPNGOptions* png_options,
+                                  int verbose,
+                                  unsigned char** resultpng,
+                                  size_t* resultpng_size) {
+  ZopfliPNGOptions opts;
+
+  // Copy over to the C++-style struct
+  opts.lossy_transparent    = !!png_options->lossy_transparent;
+  opts.lossy_8bit           = !!png_options->lossy_8bit;
+  opts.auto_filter_strategy = !!png_options->auto_filter_strategy;
+  opts.use_zopfli           = !!png_options->use_zopfli;
+  opts.num_iterations       = png_options->num_iterations;
+  opts.num_iterations_large = png_options->num_iterations_large;
+  opts.block_split_strategy = png_options->block_split_strategy;
+
+  for (int i = 0; i < png_options->num_filter_strategies; i++) {
+    opts.filter_strategies.push_back(png_options->filter_strategies[i]);
+  }
+
+  for (int i = 0; i < png_options->num_keepchunks; i++) {
+    opts.keepchunks.push_back(png_options->keepchunks[i]);
+  }
+
+  const std::vector<unsigned char> origpng_cc(origpng, origpng + origpng_size);
+  std::vector<unsigned char> resultpng_cc;
+
+  int ret = ZopfliPNGOptimize(origpng_cc, opts, !!verbose, &resultpng_cc);
+  if (ret) {
+    return ret;
+  }
+
+  *resultpng_size = resultpng_cc.size();
+  *resultpng      = (unsigned char*) malloc(resultpng_cc.size());
+  if (!(*resultpng)) {
+    return ENOMEM;
+  }
+
+  memcpy(*resultpng,
+         reinterpret_cast<unsigned char*>(&resultpng_cc[0]),
+         resultpng_cc.size());
+
+  return 0;
 }
