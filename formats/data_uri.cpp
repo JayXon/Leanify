@@ -12,7 +12,7 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/)
 
     while (p_read < fp + size)
     {
-        std::string magic = "data:image/";
+        const std::string magic = "data:image/";
         char *new_p_read = std::search(p_read, fp + size, magic.begin(), magic.end());
         // move anything in between
         memmove(p_write, p_read, new_p_read - p_read);
@@ -24,7 +24,7 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/)
             break;
         }
 
-        std::string base64_sign = ";base64,";
+        const std::string base64_sign = ";base64,";
         // data:image/png;base64,   data:image/jpeg;base64,
         // maximum gap is 4
         char *search_end = p_read + magic.size() + 4 + base64_sign.size();
@@ -39,7 +39,7 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/)
             continue;
         }
 
-        char quote[] = { '\'', '"', ')' };
+        const char quote[] = { '\'', '"', ')' };
         char *end = std::find_first_of(p_read, fp + size, quote, quote + sizeof(quote));
         if (end < fp + size)
         {
