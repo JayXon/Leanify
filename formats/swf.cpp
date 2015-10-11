@@ -9,6 +9,10 @@
 
 #include "../leanify.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
+
 const uint8_t Swf::header_magic[]         = { 'F', 'W', 'S' };
 const uint8_t Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
 const uint8_t Swf::header_magic_lzma[]    = { 'Z', 'W', 'S' };
@@ -30,13 +34,13 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         // deflate
         if (is_verbose)
         {
-            std::cout << "SWF is compressed with deflate." << std::endl;
+            cout << "SWF is compressed with deflate." << endl;
         }
         size_t s = 0;
         in_buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(in_buffer, size - 8, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
         if (!in_buffer || s != in_len)
         {
-            std::cerr << "SWF file corrupted!" << std::endl;
+            cerr << "SWF file corrupted!" << endl;
             mz_free(in_buffer);
             return Format::Leanify(size_leanified);
         }
@@ -46,7 +50,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         // LZMA
         if (is_verbose)
         {
-            std::cout << "SWF is compressed with LZMA." << std::endl;
+            cout << "SWF is compressed with LZMA." << endl;
         }
         // | 4 bytes         | 4 bytes   | 4 bytes       | 5 bytes    | n bytes   | 6 bytes         |
         // | 'ZWS' + version | scriptLen | compressedLen | LZMA props | LZMA data | LZMA end marker |
@@ -57,7 +61,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             LzmaUncompress(dst_buffer, &s, in_buffer + 4 + LZMA_PROPS_SIZE, &len, in_buffer + 4, LZMA_PROPS_SIZE) ||
             s != in_len)
         {
-            std::cerr << "SWF file corrupted!" << std::endl;
+            cerr << "SWF file corrupted!" << endl;
             delete[] dst_buffer;
             return Format::Leanify(size_leanified);
         }
@@ -65,7 +69,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     }
     else if (is_verbose)
     {
-        std::cout << "SWF is not compressed." << std::endl;
+        cout << "SWF is not compressed." << endl;
     }
 
     // parsing SWF tags
@@ -97,7 +101,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             size_t header_size = 7 + (p[3] == 3);
             if (is_verbose)
             {
-                std::cout << "DefineBitsLossless tag found." << std::endl;
+                cout << "DefineBitsLossless tag found." << endl;
             }
             if (tag_size_leanified)
             {
@@ -114,7 +118,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         {
             if (is_verbose)
             {
-                std::cout << "DefineBitsJPEG2 tag found." << std::endl;
+                cout << "DefineBitsJPEG2 tag found." << endl;
             }
             // copy id
             *(uint16_t *)(p - tag_size_leanified) = *(uint16_t *)p;
@@ -137,7 +141,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 
             if (is_verbose)
             {
-                std::cout << "DefineBitsJPEG" << header_size / 2 << " tag found." << std::endl;
+                cout << "DefineBitsJPEG" << header_size / 2 << " tag found." << endl;
             }
             // Leanify embedded image
             size_t new_img_size = LeanifyFile(p + header_size, img_size, tag_size_leanified);
@@ -154,7 +158,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         case 77:    // Metadata
             if (is_verbose)
             {
-                std::cout << "Metadata removed." << std::endl;
+                cout << "Metadata removed." << endl;
             }
             tag_size_leanified += tag_length + tag_header_length;
             break;
@@ -194,7 +198,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     // have to set writeEndMark to true
     if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, iterations < 9 ? iterations : 9, 1 << 24, -1, -1, -1, 128, -1))
     {
-        std::cerr << "LZMA compression failed." << std::endl;
+        cerr << "LZMA compression failed." << endl;
         s = size;
     }
 

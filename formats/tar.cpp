@@ -7,6 +7,10 @@
 
 #include "../leanify.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
 
 size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 {
@@ -35,7 +39,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         p_read += 512;
         if (checksum != strtol(reinterpret_cast<char *>(p_write) + 148, nullptr, 8))
         {
-            std::cerr << "Checksum does not match!" << std::endl;
+            cerr << "Checksum does not match!" << endl;
             p_write += 512;
             continue;
         }
@@ -50,11 +54,11 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
                 // normal file
                 for (int i = 1; i < depth; i++)
                 {
-                    std::cout << "-> ";
+                    cout << "-> ";
                 }
-                std::cout << p_write << std::endl;
+                cout << p_write << endl;
 
-                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, std::string(reinterpret_cast<char *>(p_write)));
+                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, string(reinterpret_cast<char *>(p_write)));
                 if (new_size < original_size)
                 {
                     // write new size

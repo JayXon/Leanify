@@ -9,6 +9,10 @@
 
 #include "../leanify.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
 
 // ID1 ID2 CM
 // CM = 8 is deflate
@@ -22,7 +26,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (size <= 18)
     {
-        std::cerr << "Not a valid GZ file." << std::endl;
+        cerr << "Not a valid GZ file." << endl;
         return Format::Leanify(size_leanified);
     }
 
@@ -41,15 +45,15 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         p_read += *(uint16_t *)p_read + 2;
     }
 
-    std::string filename;
+    string filename;
     if (flags & (1 << 3))   // FNAME
     {
         for (int i = 1; i < depth; i++)
         {
-            std::cout << "-> ";
+            cout << "-> ";
         }
-        std::cout << p_read << std::endl;
-        filename = std::string(reinterpret_cast<char *>(p_read));
+        cout << p_read << endl;
+        filename = string(reinterpret_cast<char *>(p_read));
         while (p_read < fp + size && *p_read++)
         {
             // skip string
@@ -96,7 +100,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         s != uncompressed_size ||
         crc != mz_crc32(0, buffer, uncompressed_size))
     {
-        std::cerr << "GZ corrupted!" << std::endl;
+        cerr << "GZ corrupted!" << endl;
         mz_free(buffer);
         memmove(p_write, p_read, original_size + 8);
         return size - (p_read - p_write);

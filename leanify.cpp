@@ -21,7 +21,12 @@
 #include "formats/xml.h"
 #include "formats/zip.h"
 
-Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
+
+Format *GetType(void *file_pointer, size_t file_size, string &filename)
 {
     if (depth > max_depth)
     {
@@ -31,9 +36,9 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     if (!filename.empty())
     {
         size_t dot = filename.find_last_of('.');
-        if (dot != std::string::npos)
+        if (dot != string::npos)
         {
-            std::string ext = filename.substr(dot + 1);
+            string ext = filename.substr(dot + 1);
             // toupper
             for (auto &c : ext)
                 c &= ~0x20;
@@ -45,7 +50,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
             {
                 if (is_verbose)
                 {
-                    std::cout << ext << " detected." << std::endl;
+                    cout << ext << " detected." << endl;
                 }
                 return new DataURI(file_pointer, file_size);
             }
@@ -56,7 +61,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "PNG detected." << std::endl;
+            cout << "PNG detected." << endl;
         }
         return new Png(file_pointer, file_size);
     }
@@ -64,7 +69,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "JPEG detected." << std::endl;
+            cout << "JPEG detected." << endl;
         }
         return new Jpeg(file_pointer, file_size);
     }
@@ -72,7 +77,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "Lua detected." << std::endl;
+            cout << "Lua detected." << endl;
         }
         return new Lua(file_pointer, file_size);
     }
@@ -80,7 +85,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "ZIP detected." << std::endl;
+            cout << "ZIP detected." << endl;
         }
         return new Zip(file_pointer, file_size);
     }
@@ -88,7 +93,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "PE detected." << std::endl;
+            cout << "PE detected." << endl;
         }
         return new Pe(file_pointer, file_size);
     }
@@ -96,7 +101,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "GZ detected." << std::endl;
+            cout << "GZ detected." << endl;
         }
         return new Gz(file_pointer, file_size);
     }
@@ -104,7 +109,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "ICO detected." << std::endl;
+            cout << "ICO detected." << endl;
         }
         return new Ico(file_pointer, file_size);
     }
@@ -112,7 +117,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "DWF detected." << std::endl;
+            cout << "DWF detected." << endl;
         }
         return new Dwf(file_pointer, file_size);
     }
@@ -120,7 +125,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "GFT detected." << std::endl;
+            cout << "GFT detected." << endl;
         }
         return new Gft(file_pointer, file_size);
     }
@@ -128,7 +133,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "RDB detected." << std::endl;
+            cout << "RDB detected." << endl;
         }
         return new Rdb(file_pointer, file_size);
     }
@@ -138,7 +143,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
     {
         if (is_verbose)
         {
-            std::cout << "SWF detected." << std::endl;
+            cout << "SWF detected." << endl;
         }
         return new Swf(file_pointer, file_size);
     }
@@ -153,7 +158,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
             {
                 if (is_verbose)
                 {
-                    std::cout << "tar detected." << std::endl;
+                    cout << "tar detected." << endl;
                 }
                 return t;
             }
@@ -168,7 +173,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
             {
                 if (is_verbose)
                 {
-                    std::cout << "XML detected." << std::endl;
+                    cout << "XML detected." << endl;
                 }
                 return x;
             }
@@ -178,7 +183,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
 
     if (is_verbose)
     {
-        std::cout << "Format not supported!" << std::endl;
+        cout << "Format not supported!" << endl;
     }
     // for unsupported format, just memmove it.
     return new Format(file_pointer, file_size);
@@ -190,7 +195,7 @@ Format *GetType(void *file_pointer, size_t file_size, std::string &filename)
 // the new location of the file will be file_pointer - size_leanified
 // it's designed this way to avoid extra memmove or memcpy
 // return new size
-size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/, std::string filename /*= ""*/)
+size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/, string filename /*= ""*/)
 {
     Format *f = GetType(file_pointer, file_size, filename);
     size_t r = f->Leanify(size_leanified);
@@ -207,7 +212,7 @@ size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
         uint8_t *buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
         if (!buffer)
         {
-            std::cerr << "Decompress Zlib data failed." << std::endl;
+            cerr << "Decompress Zlib data failed." << endl;
         }
         else
         {

@@ -8,12 +8,15 @@
 #include "../leanify.h"
 #include "../utils.h"
 
-
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
 
 const uint8_t Pe::header_magic[] = { 'M', 'Z' };
 
 
-const std::string Pe::resource_types[] =
+const string Pe::resource_types[] =
 {
     // 0 - 9
     "", "CURSOR", "BITMAP", "ICON", "MENU", "DIALOG", "STRING", "FONTDIR", "FONT", "ACCELERATOR",
@@ -43,7 +46,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         optional_header->FileAlignment == 0 ||
         optional_header->SectionAlignment == 0)
     {
-        std::cerr << "Not a valid PE file." << std::endl;
+        cerr << "Not a valid PE file." << endl;
         return Format::Leanify(size_leanified);
     }
 
@@ -51,7 +54,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
     {
         if (is_verbose)
         {
-            std::cout << ".sys (driver file) detected, skip." << std::endl;
+            cout << ".sys (driver file) detected, skip." << endl;
         }
         return Format::Leanify(size_leanified);
     }
@@ -82,7 +85,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         // this file probably already packed with some extreme packer
         if (is_verbose)
         {
-            std::cout << "PE Header already overlaps DOS Header." << std::endl;
+            cout << "PE Header already overlaps DOS Header." << endl;
         }
         if (size_leanified)
         {
@@ -150,7 +153,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
                 if (is_verbose)
                 {
-                    std::cout << "Relocation Table removed." << std::endl;
+                    cout << "Relocation Table removed." << endl;
                 }
             }
         }
@@ -220,10 +223,10 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
         if (is_verbose)
         {
-            std::cout << rsrc_data.size() << " embedded resources found." << std::endl;
+            cout << rsrc_data.size() << " embedded resources found." << endl;
         }
         // sort it according to it's data offset
-        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const std::pair<uint32_t *, std::string> &a, const std::pair<uint32_t *, std::string> &b)
+        std::sort(rsrc_data.begin(), rsrc_data.end(), [](const std::pair<uint32_t *, string> &a, const std::pair<uint32_t *, string> &b)
         {
             return *a.first < *b.first;
         });
@@ -234,7 +237,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
         {
             if (is_verbose)
             {
-                std::cout << "Non standard resource detected." << std::endl;
+                cout << "Non standard resource detected." << endl;
             }
             if (reloc_raw_size)
             {
@@ -282,9 +285,9 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                     // print resource name
                     for (int i = 1; i < depth; i++)
                     {
-                        std::cout << "-> ";
+                        cout << "-> ";
                     }
-                    std::cout << res.second << std::endl;
+                    cout << res.second << endl;
                 }
 
                 res.first = (uint32_t *)((char *)res.first - pe_size_leanified - size_leanified);
@@ -375,7 +378,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
     if (is_verbose)
     {
-        std::cout << "Update Section Table." << std::endl;
+        cout << "Update Section Table." << endl;
     }
     // update Section Table
     for (int i = 0; i < image_file_header->NumberOfSections; i++)
@@ -443,12 +446,12 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
 
 
 // decrease RVA inside rsrc section
-void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/, const uint32_t move_size /*= 0*/)
+void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, string name /*= ""*/, const uint32_t move_size /*= 0*/)
 {
     ImageResourceDirectoryEntry *entry = (ImageResourceDirectoryEntry *)((char *)res_dir + sizeof(ImageResourceDirectory));
     for (int i = 0; i < res_dir->NumberOfNamedEntries + res_dir->NumberOfIdEntries; i++)
     {
-        std::string new_name;
+        string new_name;
         if (entry[i].NameIsString)
         {
             // the name string has a 2 byte size preceding the UNICODE string
@@ -457,7 +460,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
             UTF16toMBS((wchar_t *)(rsrc + entry[i].NameOffset + 2), len * 2, mbs, sizeof(mbs));
             new_name = name + mbs;
         }
-        else if (name.empty() && entry[i].Name < sizeof(resource_types) / sizeof(std::string) && !resource_types[entry[i].Name].empty())
+        else if (name.empty() && entry[i].Name < sizeof(resource_types) / sizeof(string) && !resource_types[entry[i].Name].empty())
         {
             // use Predefined Resource Types string instead of an ID
             new_name = resource_types[entry[i].Name];
@@ -469,7 +472,7 @@ void Pe::TraverseRSRC(ImageResourceDirectory *res_dir, std::string name /*= ""*/
 
         if (entry[i].OffsetToDirectory > rsrc_raw_size)
         {
-            std::cerr << "Invalid resource address!" << std::endl;
+            cerr << "Invalid resource address!" << endl;
             return;
         }
         if (entry[i].DataIsDirectory)

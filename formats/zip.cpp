@@ -10,6 +10,11 @@
 
 #include "../leanify.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
 
 const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 
@@ -20,7 +25,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     fp -= size_leanified;
     uint8_t *p_write = fp;
 
-    std::vector<uint32_t> vector_local_header_offset;
+    vector<uint32_t> vector_local_header_offset;
     // Local file header
     while (memcmp(p_read, header_magic, sizeof(header_magic)) == 0)
     {
@@ -51,16 +56,16 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         uint16_t flag = *(uint16_t *)(p_write + 6);
         uint16_t *compression_method = (uint16_t *)(p_write + 8);
 
-        std::string filename(reinterpret_cast<char *>(p_write) + 30, filename_length);
+        string filename(reinterpret_cast<char *>(p_write) + 30, filename_length);
         // do not output filename if it is a directory
         if ((orig_comp_size || *compression_method || flag & 8) && depth <= max_depth)
         {
             // output filename
             for (int i = 1; i < depth; i++)
             {
-                std::cout << "-> ";
+                cout << "-> ";
             }
-            std::cout << filename << std::endl;
+            cout << filename << endl;
         }
 
 
@@ -84,7 +89,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 dd = std::search(dd + 1, fp + size + size_leanified, dd_sign, dd_sign + 4);
                 if (dd == fp + size + size_leanified)
                 {
-                    std::cerr << "data descriptor signature not found!" << std::endl;
+                    cerr << "data descriptor signature not found!" << endl;
                     // abort
                     // zip does not have 4-byte signature preceded
                     return size;
@@ -144,7 +149,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                     s != *uncompressed_size ||
                     *crc != mz_crc32(0, buffer, *uncompressed_size))
                 {
-                    std::cerr << "ZIP file corrupted!" << std::endl;
+                    cerr << "ZIP file corrupted!" << endl;
                     mz_free(buffer);
                     memmove(p_write, p_read, orig_comp_size);
                     p_read += orig_comp_size;
@@ -258,7 +263,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     const uint8_t eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
     if (memcmp(p_read, eocd_header_magic, sizeof(eocd_header_magic)))
     {
-        std::cerr << "EOCD not found!" << std::endl;
+        cerr << "EOCD not found!" << endl;
 
     }
     if (p_read - p_write)

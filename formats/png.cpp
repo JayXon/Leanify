@@ -17,6 +17,9 @@
 #   define bswap32(x) _bswap(x)
 #endif
 
+using std::cout;
+using std::endl;
+using std::vector;
 
 
 const uint8_t Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
@@ -83,9 +86,9 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                     // chunk name
                     for (int i = 4; i < 8; i++)
                     {
-                        std::cout << static_cast<char>(p_read[i]);
+                        cout << static_cast<char>(p_read[i]);
                     }
-                    std::cout << " chunk removed." << std::endl;
+                    cout << " chunk removed." << endl;
                 }
                 // remove this chunk
                 p_read += chunk_length;
@@ -130,8 +133,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     // zopflipng_options.block_split_strategy = 3;
 
 
-    const std::vector<uint8_t> origpng(fp, fp + png_size);
-    std::vector<uint8_t> resultpng;
+    const vector<uint8_t> origpng(fp, fp + png_size);
+    vector<uint8_t> resultpng;
 
     if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
     {

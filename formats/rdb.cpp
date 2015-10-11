@@ -7,6 +7,10 @@
 #include "../leanify.h"
 #include "../utils.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
 
 // 531E98204F8542F0
 const uint8_t Rdb::header_magic[] = { 0x35, 0x33, 0x31, 0x45, 0x39, 0x38, 0x32, 0x30, 0x34, 0x46, 0x38, 0x35, 0x34, 0x32, 0x46, 0x30 };
@@ -16,7 +20,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
 {
     if (size <= 0x20)
     {
-        std::cerr << "Not a valid RDB file." << std::endl;
+        cerr << "Not a valid RDB file." << endl;
         return Format::Leanify(size_leanified);
     }
 
@@ -75,15 +79,15 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
             // output filename
             for (int i = 1; i < depth; i++)
             {
-                std::cout << "-> ";
+                cout << "-> ";
             }
 
             char mbs[256] = { 0 };
             UTF16toMBS(file_name, p_index - reinterpret_cast<uint8_t *>(file_name), mbs, sizeof(mbs));
-            std::cout << mbs << std::endl;
+            cout << mbs << endl;
 
             // Leanify inner file
-            size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified, std::string(mbs));
+            size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified, string(mbs));
             if (new_size != file_size)
             {
                 // update the size in index

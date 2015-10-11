@@ -7,6 +7,9 @@
 #include "../leanify.h"
 #include "base64.h"
 
+using std::cout;
+using std::endl;
+using std::string;
 
 
 Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
@@ -59,7 +62,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
         {
             if (is_verbose)
             {
-                std::cout << "FB2 detected." << std::endl;
+                cout << "FB2 detected." << endl;
             }
             if (depth < max_depth)
             {
@@ -77,14 +80,14 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 
                     for (int i = 1; i < depth; i++)
                     {
-                        std::cout << "-> ";
+                        cout << "-> ";
                     }
-                    std::cout << id << std::endl;
+                    cout << id << endl;
 
                     const char *base64_data = e->GetText();
                     if (base64_data == nullptr)
                     {
-                        std::cout << "No data found." << std::endl;
+                        cout << "No data found." << endl;
                         continue;
                     }
                     size_t base64_len = strlen(base64_data);
@@ -110,7 +113,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
         {
             if (is_verbose)
             {
-                std::cout << "SVG detected." << std::endl;
+                cout << "SVG detected." << endl;
             }
 
             // remove XML declaration and doctype
@@ -135,7 +138,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                     }
 
                     // shrink spaces and newlines in attribute
-                    std::string s(value);
+                    string s(value);
                     size_t ssize = 0;
                     for (size_t i = 0; i < s.size(); i++)
                     {

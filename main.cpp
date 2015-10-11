@@ -15,19 +15,24 @@
 
 #include "formats/jpeg.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::string;
+
 void PrintSize(size_t size)
 {
     if (size < 1024)
     {
-        std::cout << size << " B";
+        cout << size << " B";
     }
     else if (size < 1024 * 1024)
     {
-        std::cout << size / 1024.0 << " KB";
+        cout << size / 1024.0 << " KB";
     }
     else
     {
-        std::cout << size / 1024.0 / 1024.0 << " MB";
+        cout << size / 1024.0 / 1024.0 << " MB";
     }
 }
 
@@ -37,8 +42,8 @@ int ProcessFile(const wchar_t *file_path)
 {
     char mbs[MAX_PATH] = { 0 };
     WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
-    std::cout << "Processing: " << mbs << std::endl;
-    std::string filename(mbs);
+    cout << "Processing: " << mbs << endl;
+    string filename(mbs);
 #else
 // written like this in order to be callback funtion of ftw()
 int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typeflag = FTW_F)
@@ -47,8 +52,8 @@ int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typ
     {
         return 0;
     }
-    std::cout << "Processing: " << file_path << std::endl;
-    std::string filename(file_path);
+    cout << "Processing: " << file_path << endl;
+    string filename(file_path);
 #endif // _WIN32
 
 
@@ -61,12 +66,12 @@ int ProcessFile(const char file_path[], const struct stat *sb = nullptr, int typ
         size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
 
         PrintSize(original_size);
-        std::cout << " -> ";
+        cout << " -> ";
         PrintSize(new_size);
-        std::cout << "\tLeanified: ";
+        cout << "\tLeanified: ";
         PrintSize(original_size - new_size);
 
-        std::cout << " (" << 100 - 100.0 * new_size / original_size << "%)" << std::endl;
+        cout << " (" << 100 - 100.0 * new_size / original_size << "%)" << endl;
 
         input_file.UnMapFile(new_size);
     }
@@ -91,17 +96,16 @@ void PauseIfNotTerminal()
 
 void PrintInfo()
 {
-    std::cerr << "Leanify\t" << VERSION_STR << std::endl << std::endl;
-    std::cerr <<
-        "Usage: leanify [options] paths\n"
-        "  -i, --iteration <iteration>   More iterations produce better result, but\n"
-        "                                  use more time, default is 15.\n"
-        "  -d, --max_depth <max depth>   Maximum recursive depth, unlimited by default.\n"
-        "                                  Set to 1 will disable recursive minifying.\n"
-        "  -f, --fastmode                Fast mode, no recompression.\n"
-        "  -q, --quiet                   No output to stdout.\n"
-        "  -v, --verbose                 Verbose output.\n"
-        "  --keep-exif                   Do not remove Exif.\n";
+    cerr << "Leanify\t" << VERSION_STR << endl << endl;
+    cerr << "Usage: leanify [options] paths\n"
+            "  -i, --iteration <iteration>   More iterations produce better result, but\n"
+            "                                  use more time, default is 15.\n"
+            "  -d, --max_depth <max depth>   Maximum recursive depth, unlimited by default.\n"
+            "                                  Set to 1 will disable recursive minifying.\n"
+            "  -f, --fastmode                Fast mode, no recompression.\n"
+            "  -q, --quiet                   No output to stdout.\n"
+            "  -v, --verbose                 Verbose output.\n"
+            "  --keep-exif                   Do not remove Exif.\n";
     PauseIfNotTerminal();
 }
 
@@ -148,7 +152,7 @@ int main(int argc, char *argv[])
                     // strtol will return 0 on fail
                     if (iterations == 0)
                     {
-                        std::cerr << "There should be a positive number after -i option." << std::endl;
+                        cerr << "There should be a positive number after -i option." << endl;
                         PrintInfo();
                         return 1;
                     }
@@ -161,18 +165,18 @@ int main(int argc, char *argv[])
                     // strtol will return 0 on fail
                     if (max_depth == 0)
                     {
-                        std::cerr << "There should be a positive number after -d option." << std::endl;
+                        cerr << "There should be a positive number after -d option." << endl;
                         PrintInfo();
                         return 1;
                     }
                 }
                 break;
             case 'q':
-                std::cout.setstate(std::ios::failbit);
+                cout.setstate(std::ios::failbit);
                 is_verbose = false;
                 break;
             case 'v':
-                std::cout.clear();
+                cout.clear();
                 is_verbose = true;
                 break;
             case '-':
@@ -211,16 +215,16 @@ int main(int argc, char *argv[])
 #ifdef _WIN32
                     char mbs[64] = { 0 };
                     WideCharToMultiByte(CP_ACP, 0, argv[i] + j + 1, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
-                    std::cerr << "Unknown option: " << mbs << std::endl;
+                    cerr << "Unknown option: " << mbs << endl;
 #else
-                    std::cerr << "Unknown option: " << argv[i] + j + 1 << std::endl;
+                    cerr << "Unknown option: " << argv[i] + j + 1 << endl;
 #endif // _WIN32
                     PrintInfo();
                     return 1;
                 }
                 break;
             default:
-                std::cerr << "Unknown option: " << (char)argv[i][j] << std::endl;
+                cerr << "Unknown option: " << (char)argv[i][j] << endl;
                 PrintInfo();
                 return 1;
             }
@@ -230,14 +234,14 @@ int main(int argc, char *argv[])
 
     if (i == argc)
     {
-        std::cerr << "No file path provided." << std::endl;
+        cerr << "No file path provided." << endl;
         PrintInfo();
         return 1;
     }
 
 
-    std::cout << std::fixed;
-    std::cout.precision(2);
+    cout << std::fixed;
+    cout.precision(2);
 
     // support multiple input file
     do

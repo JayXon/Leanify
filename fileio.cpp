@@ -11,6 +11,8 @@
 #include <unistd.h>
 #endif
 
+using std::cerr;
+using std::endl;
 
 // traverse directory and call Callback() for each file
 #ifdef _WIN32
@@ -144,10 +146,10 @@ void File::PrintErrorMessage(const char *msg)
 {
     char *error_msg = NULL;
     FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, GetLastError(), 0, (char *)&error_msg, 0, NULL);
-    std::cerr << msg << std::endl;
+    cerr << msg << endl;
     if (error_msg)
     {
-        std::cerr << error_msg << std::endl;
+        cerr << error_msg << endl;
         LocalFree(error_msg);
     }
 }
