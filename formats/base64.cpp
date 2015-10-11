@@ -5,7 +5,7 @@
 
 #include "../leanify.h"
 
-int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
+int Base64Decode(const uint8_t *in, size_t in_len, uint8_t *out, size_t *out_len)
 {
     static const uint8_t d[] =
     {
@@ -27,7 +27,7 @@ int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
 
     for (size_t i = 0; i < in_len; i++)
     {
-        uint8_t c = d[(uint8_t)in[i]];
+        uint8_t c = d[in[i]];
 
         switch (c)
         {
@@ -68,25 +68,24 @@ int Base64Decode(const char *in, size_t in_len, uint8_t *out, size_t *out_len)
     return 0;
 }
 
-size_t Base64Encode(const void *in, size_t in_len, char *out)
+size_t Base64Encode(const uint8_t *in, size_t in_len, uint8_t *out)
 {
     static const char base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    const uint8_t *data = (const uint8_t *)in;
     size_t resultIndex = 0;
 
     /* increment over the length of the string, three characters at a time */
     for (size_t x = 0; x < in_len; x += 3)
     {
         /* these three 8-bit (ASCII) characters become one 24-bit number */
-        uint32_t n = data[x] << 16;
+        uint32_t n = in[x] << 16;
 
         if ((x + 2) < in_len)
         {
-            n += (data[x + 1] << 8) + data[x + 2];
+            n += (in[x + 1] << 8) + in[x + 2];
         }
         else if ((x + 1) < in_len)
         {
-            n += data[x + 1] << 8;
+            n += in[x + 1] << 8;
         }
 
         /*
@@ -123,7 +122,7 @@ size_t Base64::Leanify(size_t size_leanified /*= 0*/)
 {
     // 4 base64 character contains information of 3 bytes
     size_t binary_len = size * 3 / 4;
-    unsigned char *binary_data = new unsigned char[binary_len];
+    uint8_t *binary_data = new uint8_t[binary_len];
 
     if (Base64Decode(fp, size, binary_data, &binary_len))
     {

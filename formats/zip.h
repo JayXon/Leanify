@@ -27,7 +27,7 @@ public:
 
     size_t Leanify(size_t size_leanified = 0);
 
-    static const unsigned char header_magic[4];
+    static const uint8_t header_magic[4];
 
 private:
     ZopfliOptions zopfli_options;

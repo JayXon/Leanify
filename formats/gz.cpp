@@ -12,7 +12,7 @@
 
 // ID1 ID2 CM
 // CM = 8 is deflate
-const unsigned char Gz::header_magic[] = { 0x1F, 0x8B, 0x08 };
+const uint8_t Gz::header_magic[] = { 0x1F, 0x8B, 0x08 };
 
 
 size_t Gz::Leanify(size_t size_leanified /*= 0*/)
@@ -27,12 +27,12 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     }
 
     depth++;
-    char flags = *(fp + 3);
+    uint8_t flags = *(fp + 3);
     // set the flags to 0, remove all unnecessary section
     *(fp + 3 - size_leanified) = 0;
 
-    char *p_read = fp + 10;
-    char *p_write = p_read - size_leanified;
+    uint8_t *p_read = fp + 10;
+    uint8_t *p_write = p_read - size_leanified;
 
     *(p_write - 2) = 2;     // XFL
 
@@ -49,7 +49,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
             std::cout << "-> ";
         }
         std::cout << p_read << std::endl;
-        filename = std::string(p_read);
+        filename = std::string(reinterpret_cast<char *>(p_read));
         while (p_read < fp + size && *p_read++)
         {
             // skip string
@@ -90,7 +90,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     size_t original_size = fp + size - 8 - p_read;
 
     size_t s = 0;
-    unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(p_read, original_size, &s, 0);
+    uint8_t *buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(p_read, original_size, &s, 0));
 
     if (!buffer ||
         s != uncompressed_size ||
@@ -108,7 +108,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     ZopfliInitOptions(&options);
     options.numiterations = iterations;
 
-    unsigned char bp = 0, *out = NULL;
+    uint8_t bp = 0, *out = NULL;
     size_t outsize = 0;
     ZopfliDeflate(&options, 2, 1, buffer, uncompressed_size, &bp, &out, &outsize);
 

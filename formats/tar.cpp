@@ -15,14 +15,14 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         return Format::Leanify(size_leanified);
     }
 
-    char *p_read = fp;
+    uint8_t *p_read = fp;
     fp -= size_leanified;
-    char *p_write = fp;
+    uint8_t *p_write = fp;
     depth++;
 
     do
     {
-        int checksum = CalcChecksum((unsigned char *)p_read);
+        int checksum = CalcChecksum(p_read);
         // 256 means the record is all 0
         if (checksum == 256)
         {
@@ -33,14 +33,14 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
             memmove(p_write, p_read, 512);
         }
         p_read += 512;
-        if (checksum != strtol(p_write + 148, nullptr, 8))
+        if (checksum != strtol(reinterpret_cast<char *>(p_write) + 148, nullptr, 8))
         {
             std::cerr << "Checksum does not match!" << std::endl;
             p_write += 512;
             continue;
         }
         char type = *(p_write + 156);
-        size_t original_size = strtol(p_write + 124, nullptr, 8);
+        size_t original_size = strtol(reinterpret_cast<char *>(p_write) + 124, nullptr, 8);
         // align to 512
         size_t size_aligned = (original_size + 0x1FF) & ~0x1FF;
         if (original_size)
@@ -54,14 +54,14 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
                 }
                 std::cout << p_write << std::endl;
 
-                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, std::string(p_write));
+                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, std::string(reinterpret_cast<char *>(p_write)));
                 if (new_size < original_size)
                 {
                     // write new size
-                    sprintf(p_write + 124, "%011o", (unsigned int)new_size);
+                    sprintf(reinterpret_cast<char *>(p_write) + 124, "%011o", (unsigned int)new_size);
 
                     // update checksum
-                    sprintf(p_write + 148, "%06o", CalcChecksum((unsigned char *)p_write));
+                    sprintf(reinterpret_cast<char *>(p_write) + 148, "%06o", CalcChecksum(p_write));
                     p_write[155] = ' ';
 
                     // align to 512
@@ -79,7 +79,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
                 else
                 {
                     // update checksum
-                    sprintf(p_write + 148, "%06o", CalcChecksum((unsigned char *)p_write));
+                    sprintf(reinterpret_cast<char *>(p_write) + 148, "%06o", CalcChecksum(p_write));
                     p_write[155] = ' ';
 
                     // make sure the rest space is all 0
@@ -109,7 +109,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 }
 
 
-int Tar::CalcChecksum(unsigned char *header) const
+int Tar::CalcChecksum(uint8_t *header) const
 {
     // checksum bytes are taken to be spaces
     // ' ' = 32, 32x8 = 256

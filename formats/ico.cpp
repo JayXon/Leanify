@@ -5,14 +5,14 @@
 #include "png.h"
 
 
-const unsigned char Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
+const uint8_t Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
 
 
 size_t Ico::Leanify(size_t size_leanified /*= 0*/)
 {
     // number of images inside ico file
     uint16_t n = *(uint16_t *)(fp + 4);
-    char *p_index = fp - size_leanified + 6;
+    uint8_t *p_index = fp - size_leanified + 6;
 
     // invalid Icon file
     if (6 + n * 16U >= size || *(uint32_t *)(fp + 6 + 8) + *(uint32_t *)(fp + 6 + 12) > size)

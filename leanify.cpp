@@ -204,7 +204,7 @@ size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
     if (!is_fast)
     {
         size_t s = 0;
-        unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
+        uint8_t *buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
         if (!buffer)
         {
             std::cerr << "Decompress Zlib data failed." << std::endl;
@@ -216,12 +216,12 @@ size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
             zopfli_options.numiterations = iterations;
 
             size_t new_size = 0;
-            unsigned char *out_buffer = NULL;
+            uint8_t *out_buffer = NULL;
             ZopfliZlibCompress(&zopfli_options, buffer, s, &out_buffer, &new_size);
             mz_free(buffer);
             if (new_size < src_len)
             {
-                memcpy((char *)src - size_leanified, out_buffer, new_size);
+                memcpy(static_cast<uint8_t *>(src) - size_leanified, out_buffer, new_size);
                 delete[] out_buffer;
                 return new_size;
             }
@@ -229,6 +229,6 @@ size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
         }
     }
 
-    memmove((char *)src - size_leanified, src, src_len);
+    memmove(static_cast<uint8_t *>(src) - size_leanified, src, src_len);
     return src_len;
 }

@@ -19,15 +19,15 @@
 
 
 
-const unsigned char Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+const uint8_t Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
 
 
 size_t Png::Leanify(size_t size_leanified /*= 0*/)
 {
     // header
-    char *p_read = fp;
-    char *p_write = p_read - size_leanified;
+    uint8_t *p_read = fp;
+    uint8_t *p_write = p_read - size_leanified;
 
     if (size_leanified)
     {
@@ -40,7 +40,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     // chunk
     uint32_t chunk_type;
 
-    char *idat_addr = nullptr;
+    uint8_t *idat_addr = nullptr;
 
     do
     {
@@ -83,7 +83,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                     // chunk name
                     for (int i = 4; i < 8; i++)
                     {
-                        std::cout << p_read[i];
+                        std::cout << static_cast<char>(p_read[i]);
                     }
                     std::cout << " chunk removed." << std::endl;
                 }
@@ -130,8 +130,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     // zopflipng_options.block_split_strategy = 3;
 
 
-    const std::vector<unsigned char> origpng(fp, fp + png_size);
-    std::vector<unsigned char> resultpng;
+    const std::vector<uint8_t> origpng(fp, fp + png_size);
+    std::vector<uint8_t> resultpng;
 
     if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
     {
@@ -157,8 +157,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     if (idat_length != new_idat_length)
     {
         *(uint32_t *)idat_addr = bswap32(new_idat_length);
-        *(uint32_t *)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, (unsigned char *)idat_addr + 4, new_idat_length + 4));
-        char *idat_end = idat_addr + idat_length + 12;
+        *(uint32_t *)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
+        uint8_t *idat_end = idat_addr + idat_length + 12;
         memmove(idat_addr + new_idat_length + 12, idat_end, fp + png_size - idat_end);
         png_size -= idat_length - new_idat_length;
     }

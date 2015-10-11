@@ -10,7 +10,7 @@
 
 
 
-const unsigned char Pe::header_magic[] = { 'M', 'Z' };
+const uint8_t Pe::header_magic[] = { 'M', 'Z' };
 
 
 const std::string Pe::resource_types[] =

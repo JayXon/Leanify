@@ -1,7 +1,7 @@
 #include "jpeg.h"
 
 
-const unsigned char Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
+const uint8_t Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
 bool Jpeg::keep_exif = false;
 
 jmp_buf Jpeg::setjmp_buffer;
@@ -49,7 +49,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     }
 
     /* Specify data source for decompression */
-    jpeg_mem_src(&srcinfo, (unsigned char *)fp, size);
+    jpeg_mem_src(&srcinfo, fp, size);
 
     if (keep_exif)
     {
@@ -75,7 +75,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
         dstinfo.optimize_coding = true;
     }
 
-    unsigned char *outbuffer = nullptr;
+    uint8_t *outbuffer = nullptr;
     unsigned long outsize = 0;
     /* Specify data destination for compression */
     jpeg_mem_dest(&dstinfo, &outbuffer, &outsize);

@@ -4,7 +4,7 @@
 #include <cstring>
 
 
-const unsigned char Lua::header_magic[] = { 0x1B, 0x4C, 0x75, 0x61 };
+const uint8_t Lua::header_magic[] = { 0x1B, 0x4C, 0x75, 0x61 };
 
 
 // copied from an old code, need to refactor someday
@@ -12,7 +12,7 @@ void Lua::FunctionParser()
 {
 
     uint32_t i;
-    char *oldp;
+    uint8_t *oldp;
 
     // Function header
     i = *(uint32_t *)p_read;

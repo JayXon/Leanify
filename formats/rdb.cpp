@@ -9,7 +9,7 @@
 
 
 // 531E98204F8542F0
-const unsigned char Rdb::header_magic[] = { 0x35, 0x33, 0x31, 0x45, 0x39, 0x38, 0x32, 0x30, 0x34, 0x46, 0x38, 0x35, 0x34, 0x32, 0x46, 0x30 };
+const uint8_t Rdb::header_magic[] = { 0x35, 0x33, 0x31, 0x45, 0x39, 0x38, 0x32, 0x30, 0x34, 0x46, 0x38, 0x35, 0x34, 0x32, 0x46, 0x30 };
 
 
 size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
@@ -21,7 +21,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
     }
 
     depth++;
-    char *p_read;
+    uint8_t *p_read;
     size_t rdb_size_leanified = 0;
 
     // header
@@ -41,7 +41,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         memmove(fp, p_read, (size_t)content_offset);
     }
 
-    char *p_index = fp + index_offset;
+    uint8_t *p_index = fp + index_offset;
     p_read += content_offset;
 
 
@@ -79,7 +79,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
             }
 
             char mbs[256] = { 0 };
-            UTF16toMBS(file_name, p_index - (char *)file_name, mbs, sizeof(mbs));
+            UTF16toMBS(file_name, p_index - reinterpret_cast<uint8_t *>(file_name), mbs, sizeof(mbs));
             std::cout << mbs << std::endl;
 
             // Leanify inner file

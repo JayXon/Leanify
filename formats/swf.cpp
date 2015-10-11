@@ -9,9 +9,9 @@
 
 #include "../leanify.h"
 
-const unsigned char Swf::header_magic[]         = { 'F', 'W', 'S' };
-const unsigned char Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
-const unsigned char Swf::header_magic_lzma[]    = { 'Z', 'W', 'S' };
+const uint8_t Swf::header_magic[]         = { 'F', 'W', 'S' };
+const uint8_t Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
+const uint8_t Swf::header_magic_lzma[]    = { 'Z', 'W', 'S' };
 
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/)
@@ -21,7 +21,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         return Format::Leanify(size_leanified);
     }
 
-    unsigned char *in_buffer = (unsigned char *)fp + 8;
+    uint8_t *in_buffer = fp + 8;
     uint32_t in_len = *(uint32_t *)(fp + 4) - 8;
 
     // if SWF is compressed, decompress it first
@@ -33,7 +33,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
             std::cout << "SWF is compressed with deflate." << std::endl;
         }
         size_t s = 0;
-        in_buffer = (unsigned char *)tinfl_decompress_mem_to_heap(in_buffer, size - 8, &s, TINFL_FLAG_PARSE_ZLIB_HEADER);
+        in_buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(in_buffer, size - 8, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
         if (!in_buffer || s != in_len)
         {
             std::cerr << "SWF file corrupted!" << std::endl;
@@ -50,7 +50,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
         }
         // | 4 bytes         | 4 bytes   | 4 bytes       | 5 bytes    | n bytes   | 6 bytes         |
         // | 'ZWS' + version | scriptLen | compressedLen | LZMA props | LZMA data | LZMA end marker |
-        unsigned char *dst_buffer = new unsigned char[in_len];
+        uint8_t *dst_buffer = new uint8_t[in_len];
         size_t s = in_len, len = size - 12 - LZMA_PROPS_SIZE;
         // check compressed length
         if (*(uint32_t *)in_buffer != len ||
@@ -69,7 +69,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     }
 
     // parsing SWF tags
-    unsigned char *p = in_buffer + 13;      // skip FrameSize(9B) + FrameRate(2B) + FrameCount(2B) = 13B
+    uint8_t *p = in_buffer + 13;      // skip FrameSize(9B) + FrameRate(2B) + FrameCount(2B) = 13B
     size_t tag_size_leanified = 0;
     do
     {
@@ -190,7 +190,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 
     // compress with LZMA
     size_t s = in_len + in_len / 4, props = LZMA_PROPS_SIZE;
-    unsigned char *dst = new unsigned char[s + LZMA_PROPS_SIZE];
+    uint8_t *dst = new uint8_t[s + LZMA_PROPS_SIZE];
     // have to set writeEndMark to true
     if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, iterations < 9 ? iterations : 9, 1 << 24, -1, -1, -1, 128, -1))
     {
@@ -248,7 +248,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 
 
 
-void Swf::UpdateTagLength(unsigned char *tag_content, size_t header_length, size_t new_length)
+void Swf::UpdateTagLength(uint8_t *tag_content, size_t header_length, size_t new_length)
 {
     if (header_length == 6)
     {

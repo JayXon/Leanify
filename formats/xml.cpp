@@ -11,14 +11,14 @@
 
 Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
 {
-    unsigned char *q = (unsigned char *)p;
+    uint8_t *q = static_cast<uint8_t *>(p);
 
-    const unsigned char utf8_bom[] = { 0xEF, 0xBB, 0xBF };
+    const uint8_t utf8_bom[] = { 0xEF, 0xBB, 0xBF };
 
     // tinyxml2 does not support utf16
     /*
-    const unsigned char utf16be_bom[] = { 0xFE, 0xFF };
-    const unsigned char utf16le_bom[] = { 0xFF, 0xFE };
+    const uint8_t utf16be_bom[] = { 0xFE, 0xFF };
+    const uint8_t utf16le_bom[] = { 0xFF, 0xFE };
     */
     // skip utf8 bom
     if (memcmp(q, utf8_bom, sizeof(utf8_bom)) == 0)
@@ -31,14 +31,14 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
     }
     */
     // skip spaces
-    while (isspace(*q) && q < (unsigned char *)p + s)
+    while (isspace(*q) && q < static_cast<uint8_t *>(p) + s)
     {
         q++;
     }
     // only parse the file if it starts with '<'
     if (*q == '<')
     {
-        is_valid = (doc.Parse(fp, size) == 0);
+        is_valid = (doc.Parse(reinterpret_cast<char *>(fp), size) == 0);
     }
     else
     {

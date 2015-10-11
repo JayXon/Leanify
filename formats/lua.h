@@ -8,14 +8,14 @@
 class Lua : public Format
 {
 public:
-    Lua(void *p, size_t s = 0) : Format(p, s), p_read((char *)p), p_write((char *)p) {}
+    Lua(void *p, size_t s = 0) : Format(p, s), p_read(static_cast<uint8_t *>(p)), p_write(static_cast<uint8_t *>(p)) {}
 
     size_t Leanify(size_t size_leanified = 0);
 
-    static const unsigned char header_magic[4];
+    static const uint8_t header_magic[4];
 private:
     void FunctionParser();
-    char *p_read, *p_write;
+    uint8_t *p_read, *p_write;
 };
 
 

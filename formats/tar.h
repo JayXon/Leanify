@@ -16,7 +16,7 @@ public:
     {
         // check file size first
         is_valid = s > 512 && s % 512 == 0 &&
-                   CalcChecksum((unsigned char *)p) == strtol(fp + 148, nullptr, 8);
+                   CalcChecksum(fp) == strtol(static_cast<char *>(p) + 148, nullptr, 8);
     }
 
     size_t Leanify(size_t size_leanified = 0);
@@ -27,7 +27,7 @@ public:
     }
 
 private:
-    int CalcChecksum(unsigned char *header) const;
+    int CalcChecksum(uint8_t *header) const;
 
     bool is_valid;
 

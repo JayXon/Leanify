@@ -11,14 +11,14 @@
 #include "../leanify.h"
 
 
-const unsigned char Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
+const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 
 size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 {
     depth++;
-    char *p_read = fp;
+    uint8_t *p_read = fp;
     fp -= size_leanified;
-    char *p_write = fp;
+    uint8_t *p_write = fp;
 
     std::vector<uint32_t> vector_local_header_offset;
     // Local file header
@@ -51,7 +51,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         uint16_t flag = *(uint16_t *)(p_write + 6);
         uint16_t *compression_method = (uint16_t *)(p_write + 8);
 
-        std::string filename(p_write + 30, filename_length);
+        std::string filename(reinterpret_cast<char *>(p_write) + 30, filename_length);
         // do not output filename if it is a directory
         if ((orig_comp_size || *compression_method || flag & 8) && depth <= max_depth)
         {
@@ -76,9 +76,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             *(uint16_t *)(p_write + 6) &= ~8;
 
             // data descriptor signature
-            const unsigned char dd_sign[] = { 0x50, 0x4B, 0x07, 0x08 };
+            const uint8_t dd_sign[] = { 0x50, 0x4B, 0x07, 0x08 };
             // search for signature
-            char *dd = p_read + header_size;
+            uint8_t *dd = p_read + header_size;
             do
             {
                 dd = std::search(dd + 1, fp + size + size_leanified, dd_sign, dd_sign + 4);
@@ -110,7 +110,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                     uint32_t new_size = LeanifyFile(p_read + header_size, orig_comp_size, p_read - p_write, filename);
                     p_read += header_size + orig_comp_size;
                     *compressed_size = *uncompressed_size = new_size;
-                    *crc = mz_crc32(0, (unsigned char *)p_write + header_size, new_size);
+                    *crc = mz_crc32(0, p_write + header_size, new_size);
                 }
                 else
                 {
@@ -138,7 +138,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             {
                 // uncompress
                 size_t s = 0;
-                unsigned char *buffer = (unsigned char *)tinfl_decompress_mem_to_heap(p_read, orig_comp_size, &s, 0);
+                uint8_t *buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(p_read, orig_comp_size, &s, 0));
 
                 if (!buffer ||
                     s != *uncompressed_size ||
@@ -161,7 +161,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 }
 
                 // recompress
-                unsigned char bp = 0, *out = NULL;
+                uint8_t bp = 0, *out = NULL;
                 size_t new_comp_size = 0;
                 ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
 
@@ -208,9 +208,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         }
     }
 
-    char *central_directory = p_write;
+    uint8_t *central_directory = p_write;
     // Central directory file header
-    const unsigned char cd_header_magic[] = { 0x50, 0x4B, 0x01, 0x02 };
+    const uint8_t cd_header_magic[] = { 0x50, 0x4B, 0x01, 0x02 };
     
     for (int i = 0; memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)) == 0; i++)
     {
@@ -238,7 +238,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             *(uint16_t *)(p_write + 32) = 0;
         }
 
-        char *local_header = fp + vector_local_header_offset[i];
+        uint8_t *local_header = fp + vector_local_header_offset[i];
 
         // copy new CRC-32, Compressed size, Uncompressed size
         // from Local file header to Central directory file header
@@ -255,7 +255,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     }
 
     // End of central directory record
-    const unsigned char eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
+    const uint8_t eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
     if (memcmp(p_read, eocd_header_magic, sizeof(eocd_header_magic)))
     {
         std::cerr << "EOCD not found!" << std::endl;

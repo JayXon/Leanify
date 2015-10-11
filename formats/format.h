@@ -3,13 +3,14 @@
 
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>  // memmove
 
 
 class Format
 {
 public:
-    Format(void *p, size_t s = 0) : fp((char *)p), size(s) {};
+    Format(void *p, size_t s = 0) : fp(static_cast<uint8_t *>(p)), size(s) {};
 
     virtual ~Format() {};
 
@@ -26,7 +27,7 @@ public:
 
 protected:
     // pointer to the file content
-    char *fp;
+    uint8_t *fp;
     // size of the file
     size_t size;
 };

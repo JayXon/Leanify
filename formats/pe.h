@@ -23,7 +23,7 @@ public:
 
     size_t Leanify(size_t size_leanified = 0);
 
-    static const unsigned char header_magic[2];
+    static const uint8_t header_magic[2];
 
 private:
 
@@ -135,7 +135,7 @@ private:
     // decrease RVA inside rsrc section
     void TraverseRSRC(ImageResourceDirectory *res_dir, std::string name = "", const uint32_t move_size = 0);
 
-    char *rsrc;
+    uint8_t *rsrc;
     uint32_t rsrc_raw_size;
 
     std::vector<std::pair<uint32_t *, std::string> > rsrc_data;
