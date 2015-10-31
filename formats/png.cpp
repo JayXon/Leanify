@@ -76,7 +76,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             case 0x534E5274:    // tRNS     transparent
             case 0x4C546361:    // acTL     APNG
             case 0x4C546366:    // fcTL     APNG
-            case 0x54416466:    // fdAT     APNG    TODO: use zopfli to recompress fdAT
+            case 0x54416466:    // fdAT     APNG    TODO: use Zopfli to recompress fdAT
             case 0x6354706E:    // npTc     Android 9Patch images (*.9.png)
                 break;
 
@@ -88,7 +88,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
                     {
                         cout << static_cast<char>(p_read[i]);
                     }
-                    cout << " chunk removed." << endl;
+                    cout << " chunk removed, " << chunk_length << " bytes." << endl;
                 }
                 // remove this chunk
                 p_read += chunk_length;
@@ -128,10 +128,6 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
     zopflipng_options.num_iterations = iterations;
     zopflipng_options.num_iterations_large = iterations / 3 + 1;
-    // trying both methods does not worth the time it spend
-    // it's better to use the time for more iterations.
-    // zopflipng_options.block_split_strategy = 3;
-
 
     const vector<uint8_t> origpng(fp, fp + png_size);
     vector<uint8_t> resultpng;
@@ -154,7 +150,11 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     }
 
     // sometimes the strategy chosen by ZopfliPNG is worse than original
-    // then try to recompress IDAT chunk using only zopfli
+    // then try to recompress IDAT chunk using only Zopfli
+    if (is_verbose)
+    {
+        cout << "ZopfliPNG failed to reduce size, try Zopfli only." << endl;
+    }
     uint32_t idat_length = bswap32(*(uint32_t *)idat_addr);
     uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
     if (idat_length != new_idat_length)
