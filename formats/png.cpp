@@ -17,6 +17,7 @@
 #   define bswap32(x) _bswap(x)
 #endif
 
+using std::cerr;
 using std::cout;
 using std::endl;
 using std::vector;
@@ -47,7 +48,6 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
 
     do
     {
-
         // read chunk length
         // use bswap to convert Big-Endian to Little-Endian
         // 12 = length: 4 + type: 4 + crc: 4
@@ -57,9 +57,10 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         if (p_read + chunk_length > fp + size)
         {
             memmove(p_write, p_read, fp + size - p_read);
-            p_write += fp + size - p_read;
-            p_read = fp + size;
-            break;
+            cerr << "PNG file corrupted!" << endl;
+            fp -= size_leanified;
+            size -= p_read - p_write - size_leanified;
+            return size;
         }
 
         // read chunk type
@@ -96,6 +97,11 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             }
 
         }
+        else if (chunk_type == 0x54414449)
+        {
+            // save IDAT chunk address
+            idat_addr = p_write;
+        }
 
         // move this chunk
         if (p_write != p_read)
@@ -103,22 +109,15 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             memmove(p_write, p_read, chunk_length);
         }
 
-        // save IDAT chunk address
-        if (chunk_type == 0x54414449)
-        {
-            idat_addr = p_write;
-        }
-
         // skip whole chunk
         p_write += chunk_length;
         p_read += chunk_length;
-
 
     }
     while (chunk_type != 0x444E4549);       // IEND
 
     fp -= size_leanified;
-    uint32_t png_size = p_write - fp;
+    size = p_write - fp;
 
 
     ZopfliPNGOptions zopflipng_options;
@@ -129,7 +128,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     zopflipng_options.num_iterations = iterations;
     zopflipng_options.num_iterations_large = iterations / 3 + 1;
 
-    const vector<uint8_t> origpng(fp, fp + png_size);
+    const vector<uint8_t> origpng(fp, fp + size);
     vector<uint8_t> resultpng;
 
     if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
@@ -137,34 +136,32 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         // only use the result PNG if it is smaller
         // sometimes the original PNG is already highly optimized
         // then maybe ZopfliPNG will produce bigger file
-        if (resultpng.size() < png_size)
+        if (resultpng.size() < size)
         {
             memcpy(fp, resultpng.data(), resultpng.size());
             return resultpng.size();
         }
     }
 
-    if (idat_addr == nullptr)
+    if (idat_addr)
     {
-        return png_size;
+        // sometimes the strategy chosen by ZopfliPNG is worse than original
+        // then try to recompress IDAT chunk using only Zopfli
+        if (is_verbose)
+        {
+            cout << "ZopfliPNG failed to reduce size, try Zopfli only." << endl;
+        }
+        uint32_t idat_length = bswap32(*(uint32_t *)idat_addr);
+        uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
+        if (idat_length != new_idat_length)
+        {
+            *(uint32_t *)idat_addr = bswap32(new_idat_length);
+            *(uint32_t *)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
+            uint8_t *idat_end = idat_addr + idat_length + 12;
+            memmove(idat_addr + new_idat_length + 12, idat_end, fp + size - idat_end);
+            size -= idat_length - new_idat_length;
+        }
     }
 
-    // sometimes the strategy chosen by ZopfliPNG is worse than original
-    // then try to recompress IDAT chunk using only Zopfli
-    if (is_verbose)
-    {
-        cout << "ZopfliPNG failed to reduce size, try Zopfli only." << endl;
-    }
-    uint32_t idat_length = bswap32(*(uint32_t *)idat_addr);
-    uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
-    if (idat_length != new_idat_length)
-    {
-        *(uint32_t *)idat_addr = bswap32(new_idat_length);
-        *(uint32_t *)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
-        uint8_t *idat_end = idat_addr + idat_length + 12;
-        memmove(idat_addr + new_idat_length + 12, idat_end, fp + png_size - idat_end);
-        png_size -= idat_length - new_idat_length;
-    }
-
-    return png_size;
+    return size;
 }
