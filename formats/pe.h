@@ -138,9 +138,7 @@ private:
     uint8_t *rsrc;
     uint32_t rsrc_raw_size;
 
-    std::vector<std::pair<uint32_t *, std::string> > rsrc_data;
-
-    static const std::string resource_types[];
+    std::vector<std::pair<uint32_t *, std::string>> rsrc_data;
 };
 
 #endif

@@ -16,7 +16,10 @@ using std::string;
 const uint8_t Pe::header_magic[] = { 'M', 'Z' };
 
 
-const string Pe::resource_types[] =
+namespace
+{
+
+const string resource_types[] =
 {
     // 0 - 9
     "", "CURSOR", "BITMAP", "ICON", "MENU", "DIALOG", "STRING", "FONTDIR", "FONT", "ACCELERATOR",
@@ -25,6 +28,8 @@ const string Pe::resource_types[] =
     // 20 - 24
     "VXD", "ANICURSOR", "ANIICON", "HTML", "MANIFEST"
 };
+
+} // namespace
 
 
 size_t Pe::Leanify(size_t size_leanified /*= 0*/)

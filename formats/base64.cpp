@@ -5,6 +5,9 @@
 
 #include "../leanify.h"
 
+namespace
+{
+
 int Base64Decode(const uint8_t *in, size_t in_len, uint8_t *out, size_t *out_len)
 {
     static const uint8_t d[] =
@@ -117,6 +120,7 @@ size_t Base64Encode(const uint8_t *in, size_t in_len, uint8_t *out)
     return resultIndex;
 }
 
+} // namespace
 
 size_t Base64::Leanify(size_t size_leanified /*= 0*/)
 {
