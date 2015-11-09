@@ -29,7 +29,7 @@ tinyxml2.o: $(TINYXML_SRC)
 	$(CXX) $(CFLAGS) -c $?
 
 lzma.a:     $(LZMA_SRC)
-	$(CC) $(CFLAGS) -D _7ZIP_ST -Wno-unused-but-set-variable -Wno-self-assign -Wno-unknown-warning-option -c $?
+	$(CC) $(CFLAGS) -D _7ZIP_ST -c $?
 	ar rcs $@ $(patsubst lib/LZMA/%.c,%.o,$^)
 
 mozjpeg.a:  $(MOZJPEG_SRC)
