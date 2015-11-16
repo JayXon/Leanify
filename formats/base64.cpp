@@ -35,18 +35,18 @@ int Base64Decode(const uint8_t *in, size_t in_len, uint8_t *out, size_t *out_len
         switch (c)
         {
         case 66:
-            return 2;   /* invalid input, return error */
+            return 2;   // invalid input, return error
         case 65:
-            i = in_len; /* pad character, end of data */
+            i = in_len; // pad character, end of data
         case 64:
-            continue;   /* skip whitespace */
+            continue;   // skip whitespace
         default:
             buf = buf << 6 | c;
 
-            /* If the buffer is full, split it into bytes */
+            // If the buffer is full, split it into bytes
             if (buf & 0x1000000)
             {
-                if ((len += 3) > *out_len) return 1; /* buffer overflow */
+                if ((len += 3) > *out_len) return 1;
                 *out++ = buf >> 16;
                 *out++ = buf >> 8;
                 *out++ = buf;
@@ -57,17 +57,17 @@ int Base64Decode(const uint8_t *in, size_t in_len, uint8_t *out, size_t *out_len
 
     if (buf & 0x40000)
     {
-        if ((len += 2) > *out_len) return 1; /* buffer overflow */
+        if ((len += 2) > *out_len) return 1;
         *out++ = buf >> 10;
-        *out++ = buf >> 2;
+        *out = buf >> 2;
     }
     else if (buf & 0x1000)
     {
-        if (++len > *out_len) return 1; /* buffer overflow */
-        *out++ = buf >> 4;
+        if (++len > *out_len) return 1;
+        *out = buf >> 4;
     }
 
-    *out_len = len; /* modify to reflect the actual output size */
+    *out_len = len;
     return 0;
 }
 
@@ -76,10 +76,10 @@ size_t Base64Encode(const uint8_t *in, size_t in_len, uint8_t *out)
     static const char base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     size_t resultIndex = 0;
 
-    /* increment over the length of the string, three characters at a time */
+    // increment over the length of the string, three characters at a time
     for (size_t x = 0; x < in_len; x += 3)
     {
-        /* these three 8-bit (ASCII) characters become one 24-bit number */
+        // these three 8-bit (ASCII) characters become one 24-bit number
         uint32_t n = in[x] << 16;
 
         if ((x + 2) < in_len)
@@ -91,23 +91,20 @@ size_t Base64Encode(const uint8_t *in, size_t in_len, uint8_t *out)
             n += in[x + 1] << 8;
         }
 
-        /*
-        * if we have one byte available, then its encoding is spread
-        * out over two characters
-        */
-        out[resultIndex++] = base64chars[(uint8_t)(n >> 18) & 63];
-        out[resultIndex++] = base64chars[(uint8_t)(n >> 12) & 63];
+        // if we have one byte available, then its encoding is spread out over two characters
+        out[resultIndex++] = base64chars[(n >> 18) & 63];
+        out[resultIndex++] = base64chars[(n >> 12) & 63];
 
         if ((x + 2) < in_len)
         {
-            out[resultIndex++] = base64chars[(uint8_t)(n >> 6) & 63];
-            out[resultIndex++] = base64chars[(uint8_t)n & 63];
+            out[resultIndex++] = base64chars[(n >> 6) & 63];
+            out[resultIndex++] = base64chars[n & 63];
         }
         else
         {
             if ((x + 1) < in_len)
             {
-                out[resultIndex++] = base64chars[(uint8_t)(n >> 6) & 63];
+                out[resultIndex++] = base64chars[(n >> 6) & 63];
             }
             else
             {
