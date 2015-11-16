@@ -26,7 +26,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-Format *GetType(void *file_pointer, size_t file_size, string &filename)
+Format *GetType(void *file_pointer, size_t file_size, const string& filename)
 {
     if (depth > max_depth)
     {
@@ -195,7 +195,7 @@ Format *GetType(void *file_pointer, size_t file_size, string &filename)
 // the new location of the file will be file_pointer - size_leanified
 // it's designed this way to avoid extra memmove or memcpy
 // return new size
-size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/, string filename /*= ""*/)
+size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified /*= 0*/, const string& filename /*= ""*/)
 {
     Format *f = GetType(file_pointer, file_size, filename);
     size_t r = f->Leanify(size_leanified);

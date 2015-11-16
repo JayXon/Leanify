@@ -12,6 +12,7 @@
 
 using std::cout;
 using std::endl;
+using std::string;
 
 // convert UNICODE string aka UTF16 string
 // to multi byte string aka UTF8 string
@@ -39,7 +40,7 @@ void PrintFileName(const char *name)
     cout << name << endl;
 }
 
-void PrintFileName(const std::string name)
+void PrintFileName(const string& name)
 {
     PrintFileName(name.c_str());
 }
