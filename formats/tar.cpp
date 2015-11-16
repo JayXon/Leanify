@@ -6,9 +6,9 @@
 #include <iostream>
 
 #include "../leanify.h"
+#include "../utils.h"
 
 using std::cerr;
-using std::cout;
 using std::endl;
 using std::string;
 
@@ -52,13 +52,10 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
             if ((type == 0 || type == '0') && depth <= max_depth)
             {
                 // normal file
-                for (int i = 1; i < depth; i++)
-                {
-                    cout << "-> ";
-                }
-                cout << p_write << endl;
+                char *filename = reinterpret_cast<char *>(p_write);
+                PrintFileName(filename);
 
-                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, string(reinterpret_cast<char *>(p_write)));
+                size_t new_size = LeanifyFile(p_read, original_size, size_leanified, string(filename));
                 if (new_size < original_size)
                 {
                     // write new size

@@ -288,11 +288,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/)
                 if (depth <= max_depth)
                 {
                     // print resource name
-                    for (int i = 1; i < depth; i++)
-                    {
-                        cout << "-> ";
-                    }
-                    cout << res.second << endl;
+                    PrintFileName(res.second);
                 }
 
                 res.first = (uint32_t *)((char *)res.first - pe_size_leanified - size_leanified);

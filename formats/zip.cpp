@@ -9,9 +9,9 @@
 #include "../lib/miniz/miniz.h"
 
 #include "../leanify.h"
+#include "../utils.h"
 
 using std::cerr;
-using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
@@ -60,12 +60,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         // do not output filename if it is a directory
         if ((orig_comp_size || *compression_method || flag & 8) && depth <= max_depth)
         {
-            // output filename
-            for (int i = 1; i < depth; i++)
-            {
-                cout << "-> ";
-            }
-            cout << filename << endl;
+            PrintFileName(filename);
         }
 
 

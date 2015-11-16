@@ -8,9 +8,9 @@
 #include "../lib/zopfli/deflate.h"
 
 #include "../leanify.h"
+#include "../utils.h"
 
 using std::cerr;
-using std::cout;
 using std::endl;
 using std::string;
 
@@ -48,12 +48,8 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     string filename;
     if (flags & (1 << 3))   // FNAME
     {
-        for (int i = 1; i < depth; i++)
-        {
-            cout << "-> ";
-        }
-        cout << p_read << endl;
-        filename = string(reinterpret_cast<char *>(p_read));
+        filename.assign(reinterpret_cast<char *>(p_read));
+        PrintFileName(filename);
         while (p_read < fp + size && *p_read++)
         {
             // skip string

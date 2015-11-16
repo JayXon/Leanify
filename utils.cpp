@@ -1,5 +1,8 @@
 #include "utils.h"
 
+
+#include <iostream>
+
 #ifdef _WIN32
 #include <Windows.h>    // WideCharToMultiByte
 #else
@@ -7,6 +10,8 @@
 #include <iconv.h>      // convert UTF16 to UTF8 on non Windows
 #endif
 
+using std::cout;
+using std::endl;
 
 // convert UNICODE string aka UTF16 string
 // to multi byte string aka UTF8 string
@@ -25,3 +30,16 @@ void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen)
 }
 
 
+void PrintFileName(const char *name)
+{
+    for (int i = 1; i < depth; i++)
+    {
+        cout << "-> ";
+    }
+    cout << name << endl;
+}
+
+void PrintFileName(const std::string name)
+{
+    PrintFileName(name.c_str());
+}

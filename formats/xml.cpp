@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../leanify.h"
+#include "../utils.h"
 #include "base64.h"
 
 using std::cout;
@@ -78,11 +79,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                         continue;
                     }
 
-                    for (int i = 1; i < depth; i++)
-                    {
-                        cout << "-> ";
-                    }
-                    cout << id << endl;
+                    PrintFileName(id);
 
                     const char *base64_data = e->GetText();
                     if (base64_data == nullptr)

@@ -77,14 +77,9 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
         if (depth <= max_depth)
         {
             // output filename
-            for (int i = 1; i < depth; i++)
-            {
-                cout << "-> ";
-            }
-
             char mbs[256] = { 0 };
             UTF16toMBS(file_name, p_index - reinterpret_cast<uint8_t *>(file_name), mbs, sizeof(mbs));
-            cout << mbs << endl;
+            PrintFileName(mbs);
 
             // Leanify inner file
             size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified, string(mbs));
