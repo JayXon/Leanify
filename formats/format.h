@@ -10,7 +10,7 @@
 class Format
 {
 public:
-    Format(void *p, size_t s = 0) : fp(static_cast<uint8_t *>(p)), size(s) {};
+    explicit Format(void *p, size_t s = 0) : fp(static_cast<uint8_t *>(p)), size(s) {};
 
     virtual ~Format() {};
 

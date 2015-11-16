@@ -12,14 +12,14 @@ extern bool is_verbose;
 class Tar : public Format
 {
 public:
-    Tar(void *p, size_t s = 0) : Format(p, s)
+    explicit Tar(void *p, size_t s = 0) : Format(p, s)
     {
         // check file size first
         is_valid = s > 512 && s % 512 == 0 &&
                    CalcChecksum(fp) == strtol(static_cast<char *>(p) + 148, nullptr, 8);
     }
 
-    size_t Leanify(size_t size_leanified = 0);
+    size_t Leanify(size_t size_leanified = 0) override;
 
     bool IsValid() const
     {

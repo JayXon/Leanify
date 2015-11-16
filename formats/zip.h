@@ -15,7 +15,7 @@ extern int depth;
 class Zip : public Format
 {
 public:
-    Zip(void *p, size_t s = 0) : Format(p, s)
+    explicit Zip(void *p, size_t s = 0) : Format(p, s)
     {
         ZopfliInitOptions(&zopfli_options);
         zopfli_options.numiterations = iterations;
@@ -25,7 +25,7 @@ public:
         depth--;
     }
 
-    size_t Leanify(size_t size_leanified = 0);
+    size_t Leanify(size_t size_leanified = 0) override;
 
     static const uint8_t header_magic[4];
 

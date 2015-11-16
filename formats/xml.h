@@ -15,14 +15,14 @@ extern bool is_verbose;
 class Xml : public Format
 {
 public:
-    Xml(void *p, size_t s = 0);
+    explicit Xml(void *p, size_t s = 0);
 
     bool IsValid() const
     {
         return is_valid;
     }
 
-    size_t Leanify(size_t size_leanified = 0);
+    size_t Leanify(size_t size_leanified = 0) override;
 
 private:
     bool is_valid;

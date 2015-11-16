@@ -18,10 +18,9 @@ class Pe : public Format
 
 public:
 
-    Pe(void *p, size_t s = 0) : Format(p, s), rsrc(nullptr), rsrc_raw_size(0) {}
+    explicit Pe(void *p, size_t s = 0) : Format(p, s), rsrc(nullptr), rsrc_raw_size(0) {}
 
-
-    size_t Leanify(size_t size_leanified = 0);
+    size_t Leanify(size_t size_leanified = 0) override;
 
     static const uint8_t header_magic[2];
 
