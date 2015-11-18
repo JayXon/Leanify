@@ -161,7 +161,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 }
 
                 // recompress
-                uint8_t bp = 0, *out = NULL;
+                uint8_t bp = 0, *out = nullptr;
                 size_t new_comp_size = 0;
                 ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
 

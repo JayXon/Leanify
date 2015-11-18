@@ -221,7 +221,7 @@ size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
             zopfli_options.numiterations = iterations;
 
             size_t new_size = 0;
-            uint8_t *out_buffer = NULL;
+            uint8_t *out_buffer = nullptr;
             ZopfliZlibCompress(&zopfli_options, buffer, s, &out_buffer, &new_size);
             mz_free(buffer);
             if (new_size < src_len)

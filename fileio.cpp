@@ -100,15 +100,15 @@ bool IsDirectory(const char path[])
 File::File(const wchar_t *filepath)
 {
     fp = nullptr;
-    hFile = CreateFile(filepath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_WRITE_THROUGH, NULL);
+    hFile = CreateFile(filepath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_WRITE_THROUGH, nullptr);
     if (hFile == INVALID_HANDLE_VALUE)
     {
         PrintErrorMessage("Open file error!");
         size = 0;
         return;
     }
-    size = GetFileSize(hFile, NULL);
-    hMap = CreateFileMapping(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
+    size = GetFileSize(hFile, nullptr);
+    hMap = CreateFileMapping(hFile, nullptr, PAGE_READWRITE, 0, 0, nullptr);
     if (hMap == INVALID_HANDLE_VALUE)
     {
         PrintErrorMessage("Map file error!");
@@ -134,7 +134,7 @@ void File::UnMapFile(size_t new_size)
     CloseHandle(hMap);
     if (new_size)
     {
-        SetFilePointer(hFile, new_size, NULL, FILE_BEGIN);
+        SetFilePointer(hFile, new_size, nullptr, FILE_BEGIN);
         if (!SetEndOfFile(hFile))
         {
             PrintErrorMessage("SetEndOfFile error!");
@@ -144,8 +144,8 @@ void File::UnMapFile(size_t new_size)
 }
 void File::PrintErrorMessage(const char *msg)
 {
-    char *error_msg = NULL;
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, GetLastError(), 0, (char *)&error_msg, 0, NULL);
+    char *error_msg = nullptr;
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr, GetLastError(), 0, (char *)&error_msg, 0, nullptr);
     cerr << msg << endl;
     if (error_msg)
     {

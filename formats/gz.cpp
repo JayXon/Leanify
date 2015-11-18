@@ -108,7 +108,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     ZopfliInitOptions(&options);
     options.numiterations = iterations;
 
-    uint8_t bp = 0, *out = NULL;
+    uint8_t bp = 0, *out = nullptr;
     size_t outsize = 0;
     ZopfliDeflate(&options, 2, 1, buffer, uncompressed_size, &bp, &out, &outsize);
 
