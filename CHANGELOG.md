@@ -1,3 +1,28 @@
+# 0.4.3 (2015-11-25)
+
++ Added support for Data URI #14.
+
++ Added support for DWF format.
+
++ Updated zopfli to 1.0.1.
+
++ Updated LZMA to 15.12.
+
++ Updated mozjpeg to 3.1.
+
++ Updated TinyXML2 to 3.0.0.
+
++ Improved PNG optimization for some cases.
+
++ Improved ZIP optimization for some cases.
+
++ Improved SVG minifying.
+
++ Added option `--keep-exif`.
+
++ Bug fixes and optimizations.
+
+
 # 0.4.2 (2014-11-07)
 
 + Added support for PE.
