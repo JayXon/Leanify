@@ -10,9 +10,9 @@ Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessar
 * Support a wide variety of [file formats](#file-formats).
 * Lightweight, one file, under 1MB, no external dependency.
 * Everything is done in memory, no temporary files.
-* Cross-Platform, support Windows, Mac, Linux.
+* Cross-Platform, support Windows, Linux, Mac.
 * Support traverse directory recursively.
-* Identify file format by its data instead of name.
+* Ability to identify file format by its data instead of name.
 
 
 ##Disclaimer
@@ -213,6 +213,8 @@ Remove comment in `End of central directory record`.
 
 [Stable Releases](https://github.com/JayXon/Leanify/releases/)
 
+[Windows Nightly Build](https://ci.appveyor.com/project/JayXon/leanify)
+
 [Linux Nightly Build](https://drone.io/github.com/JayXon/Leanify/files)
 
 
@@ -236,16 +238,16 @@ Usage: leanify [options] paths
 
 ####Windows
 
-* Visual Studio
+* Visual Studio 2015 or up
 
   Use Leanify.vcxproj
 
-* gcc
+* gcc 4.7 or up
 
   run build_gcc.bat
 
 
-####Mac, Linux
+####Linux, Mac
 
 ```
 make
