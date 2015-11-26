@@ -97,6 +97,23 @@ bool IsDirectory(const char path[])
 
 
 #ifdef _WIN32
+namespace
+{
+
+void PrintErrorMessage(const char *msg)
+{
+    char *error_msg = nullptr;
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr, GetLastError(), 0, reinterpret_cast<char *>(&error_msg), 0, nullptr);
+    cerr << msg << endl;
+    if (error_msg)
+    {
+        cerr << error_msg << endl;
+        LocalFree(error_msg);
+    }
+}
+
+} // namespace
+
 File::File(const wchar_t *filepath)
 {
     fp_ = nullptr;
@@ -116,7 +133,6 @@ File::File(const wchar_t *filepath)
     }
     fp_ = MapViewOfFile(hMap_, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 }
-
 
 void File::UnMapFile(size_t new_size)
 {
@@ -141,17 +157,7 @@ void File::UnMapFile(size_t new_size)
         }
     }
     CloseHandle(hFile_);
-}
-void File::PrintErrorMessage(const char *msg)
-{
-    char *error_msg = nullptr;
-    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr, GetLastError(), 0, (char *)&error_msg, 0, nullptr);
-    cerr << msg << endl;
-    if (error_msg)
-    {
-        cerr << error_msg << endl;
-        LocalFree(error_msg);
-    }
+    fp_ = nullptr;
 }
 #else
 File::File(const char *filepath)
@@ -182,7 +188,6 @@ File::File(const char *filepath)
     }
 }
 
-
 void File::UnMapFile(size_t new_size)
 {
     if (munmap(fp_, size_) == -1)
@@ -198,6 +203,7 @@ void File::UnMapFile(size_t new_size)
     }
 
     close(fd_);
+    fp_ = nullptr;
 }
 
 

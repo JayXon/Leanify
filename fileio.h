@@ -45,7 +45,6 @@ public:
 
 private:
 #ifdef _WIN32
-    void PrintErrorMessage(const char *msg);
     HANDLE hFile_, hMap_;
 #else
     int fd_;
