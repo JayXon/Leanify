@@ -10,7 +10,7 @@
 class Format
 {
 public:
-    explicit Format(void *p, size_t s = 0) : fp(static_cast<uint8_t *>(p)), size(s) {};
+    explicit Format(void *p, size_t s = 0) : fp_(static_cast<uint8_t *>(p)), size_(s) {};
 
     virtual ~Format() {};
 
@@ -18,18 +18,18 @@ public:
     {
         if (size_leanified)
         {
-            memmove(fp - size_leanified, fp, size);
-            fp -= size_leanified;
+            memmove(fp_ - size_leanified, fp_, size_);
+            fp_ -= size_leanified;
         }
 
-        return size;
+        return size_;
     }
 
 protected:
     // pointer to the file content
-    uint8_t *fp;
+    uint8_t *fp_;
     // size of the file
-    size_t size;
+    size_t size_;
 };
 
 

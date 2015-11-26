@@ -30,7 +30,7 @@ const uint8_t Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 
 size_t Png::Leanify(size_t size_leanified /*= 0*/)
 {
     // header
-    uint8_t *p_read = fp;
+    uint8_t *p_read = fp_;
     uint8_t *p_write = p_read - size_leanified;
 
     if (size_leanified)
@@ -54,13 +54,13 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         uint32_t chunk_length = bswap32(*(uint32_t *)p_read) + 12;
 
         // detect truncated file
-        if (p_read + chunk_length > fp + size)
+        if (p_read + chunk_length > fp_ + size_)
         {
-            memmove(p_write, p_read, fp + size - p_read);
+            memmove(p_write, p_read, fp_ + size_ - p_read);
             cerr << "PNG file corrupted!" << endl;
-            fp -= size_leanified;
-            size -= p_read - p_write - size_leanified;
-            return size;
+            fp_ -= size_leanified;
+            size_ -= p_read - p_write - size_leanified;
+            return size_;
         }
 
         // read chunk type
@@ -116,8 +116,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     }
     while (chunk_type != 0x444E4549);       // IEND
 
-    fp -= size_leanified;
-    size = p_write - fp;
+    fp_ -= size_leanified;
+    size_ = p_write - fp_;
 
 
     ZopfliPNGOptions zopflipng_options;
@@ -128,7 +128,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     zopflipng_options.num_iterations = iterations;
     zopflipng_options.num_iterations_large = iterations / 3 + 1;
 
-    const vector<uint8_t> origpng(fp, fp + size);
+    const vector<uint8_t> origpng(fp_, fp_ + size_);
     vector<uint8_t> resultpng;
 
     if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
@@ -136,9 +136,9 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
         // only use the result PNG if it is smaller
         // sometimes the original PNG is already highly optimized
         // then maybe ZopfliPNG will produce bigger file
-        if (resultpng.size() < size)
+        if (resultpng.size() < size_)
         {
-            memcpy(fp, resultpng.data(), resultpng.size());
+            memcpy(fp_, resultpng.data(), resultpng.size());
             return resultpng.size();
         }
     }
@@ -158,10 +158,10 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
             *(uint32_t *)idat_addr = bswap32(new_idat_length);
             *(uint32_t *)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
             uint8_t *idat_end = idat_addr + idat_length + 12;
-            memmove(idat_addr + new_idat_length + 12, idat_end, fp + size - idat_end);
-            size -= idat_length - new_idat_length;
+            memmove(idat_addr + new_idat_length + 12, idat_end, fp_ + size_ - idat_end);
+            size_ -= idat_length - new_idat_length;
         }
     }
 
-    return size;
+    return size_;
 }

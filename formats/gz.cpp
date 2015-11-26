@@ -24,18 +24,18 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     // written according to this specification
     // http://www.gzip.org/zlib/rfc-gzip.html
 
-    if (size <= 18)
+    if (size_ <= 18)
     {
         cerr << "Not a valid GZ file." << endl;
         return Format::Leanify(size_leanified);
     }
 
     depth++;
-    uint8_t flags = *(fp + 3);
+    uint8_t flags = *(fp_ + 3);
     // set the flags to 0, remove all unnecessary section
-    *(fp + 3 - size_leanified) = 0;
+    *(fp_ + 3 - size_leanified) = 0;
 
-    uint8_t *p_read = fp + 10;
+    uint8_t *p_read = fp_ + 10;
     uint8_t *p_write = p_read - size_leanified;
 
     *(p_write - 2) = 2;     // XFL
@@ -50,7 +50,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     {
         filename.assign(reinterpret_cast<char *>(p_read));
         PrintFileName(filename);
-        while (p_read < fp + size && *p_read++)
+        while (p_read < fp_ + size_ && *p_read++)
         {
             // skip string
         }
@@ -58,7 +58,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (flags & (1 << 4))   // FCOMMENT
     {
-        while (p_read < fp + size && *p_read++)
+        while (p_read < fp_ + size_ && *p_read++)
         {
             // skip string
         }
@@ -69,25 +69,25 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         p_read += 2;
     }
 
-    if (p_read >= fp + size)
+    if (p_read >= fp_ + size_)
     {
         return Format::Leanify(size_leanified);
     }
 
     if (size_leanified)
     {
-        memmove(fp - size_leanified, fp, 10);
+        memmove(fp_ - size_leanified, fp_, 10);
     }
 
     if (is_fast)
     {
-        memmove(p_write, p_read, fp + size - p_read);
-        return size - (p_read - p_write);
+        memmove(p_write, p_read, fp_ + size_ - p_read);
+        return size_ - (p_read - p_write);
     }
 
-    uint32_t uncompressed_size = *(uint32_t *)(fp + size - 4);
-    uint32_t crc = *(uint32_t *)(fp + size - 8);
-    size_t original_size = fp + size - 8 - p_read;
+    uint32_t uncompressed_size = *(uint32_t *)(fp_ + size_ - 4);
+    uint32_t crc = *(uint32_t *)(fp_ + size_ - 8);
+    size_t original_size = fp_ + size_ - 8 - p_read;
 
     size_t s = 0;
     uint8_t *buffer = static_cast<uint8_t *>(tinfl_decompress_mem_to_heap(p_read, original_size, &s, 0));
@@ -99,7 +99,7 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
         cerr << "GZ corrupted!" << endl;
         mz_free(buffer);
         memmove(p_write, p_read, original_size + 8);
-        return size - (p_read - p_write);
+        return size_ - (p_read - p_write);
     }
 
     uncompressed_size = LeanifyFile(buffer, uncompressed_size, 0, filename);
@@ -128,6 +128,6 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
     mz_free(buffer);
     delete[] out;
     depth--;
-    fp -= size_leanified;
-    return p_write + 8 - fp;
+    fp_ -= size_leanified;
+    return p_write + 8 - fp_;
 }

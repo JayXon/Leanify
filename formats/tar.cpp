@@ -14,14 +14,14 @@ using std::string;
 
 size_t Tar::Leanify(size_t size_leanified /*= 0*/)
 {
-    if (!is_valid)
+    if (!is_valid_)
     {
         return Format::Leanify(size_leanified);
     }
 
-    uint8_t *p_read = fp;
-    fp -= size_leanified;
-    uint8_t *p_write = fp;
+    uint8_t *p_read = fp_;
+    fp_ -= size_leanified;
+    uint8_t *p_write = fp_;
     depth++;
 
     do
@@ -99,14 +99,14 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/)
         p_write += 512;
 
     }
-    while (p_write < fp + size);
+    while (p_write < fp_ + size_);
 
     depth--;
 
     // write 2 more zero-filled records
     memset(p_write, 0, 1024);
-    size  = p_write + 1024 - fp;
-    return size;
+    size_  = p_write + 1024 - fp_;
+    return size_;
 }
 
 

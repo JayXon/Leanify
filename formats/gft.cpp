@@ -13,7 +13,7 @@ size_t Gft::Leanify(size_t size_leanified /*= 0*/)
 {
     // header
     uint32_t header_size;
-    if (size < 0x14 || size <= (header_size = *(uint32_t *)(fp + 0x10)))
+    if (size_ < 0x14 || size_ <= (header_size = *(uint32_t *)(fp_ + 0x10)))
     {
         std::cerr << "Not a valid GFT file." << std::endl;
         return Format::Leanify(size_leanified);
@@ -23,10 +23,10 @@ size_t Gft::Leanify(size_t size_leanified /*= 0*/)
     // move header
     if (size_leanified)
     {
-        memmove(fp - size_leanified, fp, header_size);
-        fp -= size_leanified;
+        memmove(fp_ - size_leanified, fp_, header_size);
+        fp_ -= size_leanified;
     }
 
 
-    return header_size + LeanifyFile(fp + size_leanified + header_size, size - header_size, size_leanified);
+    return header_size + LeanifyFile(fp_ + size_leanified + header_size, size_ - header_size, size_leanified);
 }

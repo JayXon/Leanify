@@ -28,17 +28,17 @@ public:
 
     void *GetFilePionter() const
     {
-        return fp;
+        return fp_;
     }
 
     unsigned int GetSize() const
     {
-        return size;
+        return size_;
     }
 
     bool IsOK() const
     {
-        return fp != nullptr;
+        return fp_ != nullptr;
     }
 
     void UnMapFile(size_t new_size);
@@ -46,12 +46,12 @@ public:
 private:
 #ifdef _WIN32
     void PrintErrorMessage(const char *msg);
-    HANDLE hFile, hMap;
+    HANDLE hFile_, hMap_;
 #else
-    int fd;
+    int fd_;
 #endif // _WIN32
-    void *fp;
-    size_t size;
+    void *fp_;
+    size_t size_;
 };
 
 

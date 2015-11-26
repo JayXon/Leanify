@@ -10,11 +10,11 @@ size_t Dwf::Leanify(size_t size_leanified /*= 0*/)
     const size_t dwf_magic_len = 12;
     if (size_leanified)
     {
-        memmove(fp - size_leanified, fp, dwf_magic_len);
+        memmove(fp_ - size_leanified, fp_, dwf_magic_len);
     }
-    Zip zip(fp + dwf_magic_len, size - dwf_magic_len);
-    size = zip.Leanify(size_leanified) + dwf_magic_len;
-    fp -= size_leanified;
-    return size;
+    Zip zip(fp_ + dwf_magic_len, size_ - dwf_magic_len);
+    size_ = zip.Leanify(size_leanified) + dwf_magic_len;
+    fp_ -= size_leanified;
+    return size_;
 }
 

@@ -99,48 +99,48 @@ bool IsDirectory(const char path[])
 #ifdef _WIN32
 File::File(const wchar_t *filepath)
 {
-    fp = nullptr;
-    hFile = CreateFile(filepath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_WRITE_THROUGH, nullptr);
-    if (hFile == INVALID_HANDLE_VALUE)
+    fp_ = nullptr;
+    hFile_ = CreateFile(filepath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_WRITE_THROUGH, nullptr);
+    if (hFile_ == INVALID_HANDLE_VALUE)
     {
         PrintErrorMessage("Open file error!");
-        size = 0;
+        size_ = 0;
         return;
     }
-    size = GetFileSize(hFile, nullptr);
-    hMap = CreateFileMapping(hFile, nullptr, PAGE_READWRITE, 0, 0, nullptr);
-    if (hMap == INVALID_HANDLE_VALUE)
+    size_ = GetFileSize(hFile_, nullptr);
+    hMap_ = CreateFileMapping(hFile_, nullptr, PAGE_READWRITE, 0, 0, nullptr);
+    if (hMap_ == INVALID_HANDLE_VALUE)
     {
         PrintErrorMessage("Map file error!");
         return;
     }
-    fp = MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+    fp_ = MapViewOfFile(hMap_, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 }
 
 
 void File::UnMapFile(size_t new_size)
 {
-    if (new_size < size)
+    if (new_size < size_)
     {
-        if (!FlushViewOfFile(fp, 0))
+        if (!FlushViewOfFile(fp_, 0))
         {
             PrintErrorMessage("Write file error!");
         }
     }
-    if (!UnmapViewOfFile(fp))
+    if (!UnmapViewOfFile(fp_))
     {
         PrintErrorMessage("UnmapViewOfFile error!");
     }
-    CloseHandle(hMap);
+    CloseHandle(hMap_);
     if (new_size)
     {
-        SetFilePointer(hFile, new_size, nullptr, FILE_BEGIN);
-        if (!SetEndOfFile(hFile))
+        SetFilePointer(hFile_, new_size, nullptr, FILE_BEGIN);
+        if (!SetEndOfFile(hFile_))
         {
             PrintErrorMessage("SetEndOfFile error!");
         }
     }
-    CloseHandle(hFile);
+    CloseHandle(hFile_);
 }
 void File::PrintErrorMessage(const char *msg)
 {
@@ -156,48 +156,48 @@ void File::PrintErrorMessage(const char *msg)
 #else
 File::File(const char *filepath)
 {
-    fp = nullptr;
-    fd = open(filepath, O_RDWR);
+    fp_ = nullptr;
+    fd_ = open(filepath, O_RDWR);
 
-    if (fd == -1)
+    if (fd_ == -1)
     {
         perror("Open file error");
         return;
     }
 
     struct stat sb;
-    if (fstat(fd, &sb) == -1)
+    if (fstat(fd_, &sb) == -1)
     {
         perror("fstat");
         return;
     }
-    size = sb.st_size;
+    size_ = sb.st_size;
 
     // map the file into memory
-    fp = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (fp == MAP_FAILED)
+    fp_ = mmap(nullptr, size_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
+    if (fp_ == MAP_FAILED)
     {
         perror("Map file error");
-        fp = nullptr;
+        fp_ = nullptr;
     }
 }
 
 
 void File::UnMapFile(size_t new_size)
 {
-    if (munmap(fp, size) == -1)
+    if (munmap(fp_, size_) == -1)
     {
         perror("munmap");
     }
     if (new_size)
     {
-        if (ftruncate(fd, new_size) == -1)
+        if (ftruncate(fd_, new_size) == -1)
         {
             perror("ftruncate");
         }
     }
 
-    close(fd);
+    close(fd_);
 }
 
 

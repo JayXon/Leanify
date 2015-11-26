@@ -19,14 +19,14 @@ public:
 
     bool IsValid() const
     {
-        return is_valid;
+        return is_valid_;
     }
 
     size_t Leanify(size_t size_leanified = 0) override;
 
 private:
-    bool is_valid;
-    tinyxml2::XMLDocument doc;
+    bool is_valid_;
+    tinyxml2::XMLDocument doc_;
 
     void TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement *)> callback);
 };

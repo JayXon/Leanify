@@ -2,15 +2,15 @@
 
 
 const uint8_t Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
-bool Jpeg::keep_exif = false;
+bool Jpeg::keep_exif_ = false;
 
-jmp_buf Jpeg::setjmp_buffer;
+jmp_buf Jpeg::setjmp_buffer_;
 
 void Jpeg::mozjpeg_error_handler(j_common_ptr cinfo)
 {
     (*cinfo->err->output_message)(cinfo);
 
-    longjmp(setjmp_buffer, 1);
+    longjmp(setjmp_buffer_, 1);
 }
 
 
@@ -24,7 +24,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 
     srcinfo.err = jpeg_std_error(&jsrcerr);
     jsrcerr.error_exit = mozjpeg_error_handler;
-    if (setjmp(setjmp_buffer))
+    if (setjmp(setjmp_buffer_))
     {
         jpeg_destroy_compress(&dstinfo);
         jpeg_destroy_decompress(&srcinfo);
@@ -49,9 +49,9 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     }
 
     /* Specify data source for decompression */
-    jpeg_mem_src(&srcinfo, fp, size);
+    jpeg_mem_src(&srcinfo, fp_, size_);
 
-    if (keep_exif)
+    if (keep_exif_)
     {
         jpeg_save_markers(&srcinfo, JPEG_APP0 + 1, 0xFFFF);
     }
@@ -83,7 +83,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     /* Start compressor (note no image data is actually written here) */
     jpeg_write_coefficients(&dstinfo, coef_arrays);
 
-    if (keep_exif)
+    if (keep_exif_)
     {
         for (auto marker = srcinfo.marker_list; marker; marker = marker->next)
         {
@@ -100,19 +100,19 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
     (void)jpeg_finish_decompress(&srcinfo);
     jpeg_destroy_decompress(&srcinfo);
 
-    fp -= size_leanified;
+    fp_ -= size_leanified;
     // use mozjpeg result if it's smaller than original
-    if (outsize < size)
+    if (outsize < size_)
     {
-        memcpy(fp, outbuffer, outsize);
-        size = outsize;
+        memcpy(fp_, outbuffer, outsize);
+        size_ = outsize;
     }
     else if (size_leanified)
     {
-        memmove(fp, fp + size_leanified, size);
+        memmove(fp_, fp_ + size_leanified, size_);
     }
 
     jpeg_destroy_compress(&dstinfo);
 
-    return size;
+    return size_;
 }

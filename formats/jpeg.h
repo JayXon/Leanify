@@ -23,10 +23,10 @@ public:
     size_t Leanify(size_t size_leanified = 0) override;
 
     static const uint8_t header_magic[3];
-    static bool keep_exif;
+    static bool keep_exif_;
 
 private:
-    static jmp_buf setjmp_buffer;
+    static jmp_buf setjmp_buffer_;
 
     static void mozjpeg_error_handler(j_common_ptr cinfo);
 };

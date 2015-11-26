@@ -17,8 +17,8 @@ class Zip : public Format
 public:
     explicit Zip(void *p, size_t s = 0) : Format(p, s)
     {
-        ZopfliInitOptions(&zopfli_options);
-        zopfli_options.numiterations = iterations;
+        ZopfliInitOptions(&zopfli_options_);
+        zopfli_options_.numiterations = iterations;
     }
     ~Zip()
     {
@@ -30,7 +30,7 @@ public:
     static const uint8_t header_magic[4];
 
 private:
-    ZopfliOptions zopfli_options;
+    ZopfliOptions zopfli_options_;
 };
 
 

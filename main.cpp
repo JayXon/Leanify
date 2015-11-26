@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
                 else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0)
                 {
                     j += 9;
-                    Jpeg::keep_exif = true;
+                    Jpeg::keep_exif_ = true;
                 }
                 else
                 {

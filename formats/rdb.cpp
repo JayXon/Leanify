@@ -18,7 +18,7 @@ const uint8_t Rdb::header_magic[] = { 0x35, 0x33, 0x31, 0x45, 0x39, 0x38, 0x32, 
 
 size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
 {
-    if (size <= 0x20)
+    if (size_ <= 0x20)
     {
         cerr << "Not a valid RDB file." << endl;
         return Format::Leanify(size_leanified);
@@ -29,8 +29,8 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
     size_t rdb_size_leanified = 0;
 
     // header
-    p_read = fp;
-    fp -= size_leanified;
+    p_read = fp_;
+    fp_ -= size_leanified;
 
     // total number of files including directory
     uint32_t file_num = *(uint32_t *)(p_read + 0x10);
@@ -42,10 +42,10 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
     // move header and indexes
     if (size_leanified)
     {
-        memmove(fp, p_read, (size_t)content_offset);
+        memmove(fp_, p_read, (size_t)content_offset);
     }
 
-    uint8_t *p_index = fp + index_offset;
+    uint8_t *p_index = fp_ + index_offset;
     p_read += content_offset;
 
 
@@ -99,7 +99,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/)
 
         p_index += 16;
     }
-    size = p_read - fp - size_leanified - rdb_size_leanified;
+    size_ = p_read - fp_ - size_leanified - rdb_size_leanified;
     depth--;
-    return size;
+    return size_;
 }

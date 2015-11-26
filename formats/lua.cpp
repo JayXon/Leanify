@@ -15,52 +15,52 @@ void Lua::FunctionParser()
     uint8_t *oldp;
 
     // Function header
-    i = *(uint32_t *)p_read;
-    p_read += i + 4;
+    i = *(uint32_t *)p_read_;
+    p_read_ += i + 4;
 
     // remove Source name, Line defined and last line defined
-    memset(p_write, 0, 12);
-    *(uint32_t *)(p_write + 12) = *(uint32_t *)(p_read + 8);
-    p_write += 0x10;
-    p_read += 0xC;
+    memset(p_write_, 0, 12);
+    *(uint32_t *)(p_write_ + 12) = *(uint32_t *)(p_read_ + 8);
+    p_write_ += 0x10;
+    p_read_ += 0xC;
 
 
     // Instruction list
-    i = *(uint32_t *)p_read * 4 + 4;
-    memmove(p_write, p_read, i);
-    p_write += i;
-    p_read += i;
+    i = *(uint32_t *)p_read_ * 4 + 4;
+    memmove(p_write_, p_read_, i);
+    p_write_ += i;
+    p_read_ += i;
 
 
-    oldp = p_read;
+    oldp = p_read_;
     // Constant list
-    i = *(uint32_t *)p_read;
-    p_read += 4;
+    i = *(uint32_t *)p_read_;
+    p_read_ += 4;
     while (i--)
     {
-        switch (*p_read++)
+        switch (*p_read_++)
         {
         // 1=LUA_TBOOLEAN
         case 1:
-            p_read++;
+            p_read_++;
             break;
         // 3=LUA_TNUMBER
         case 3:
-            p_read += 8;
+            p_read_ += 8;
             break;
         // 4=LUA_TSTRING
         case 4:
-            p_read += *(uint32_t *)p_read + 4;
+            p_read_ += *(uint32_t *)p_read_ + 4;
         }
     }
 
 
     // Function prototype list
-    i = *(uint32_t *)p_read;
-    p_read += 4;
+    i = *(uint32_t *)p_read_;
+    p_read_ += 4;
 
-    memmove(p_write, oldp, p_read - oldp);
-    p_write += p_read - oldp;
+    memmove(p_write_, oldp, p_read_ - oldp);
+    p_write_ += p_read_ - oldp;
     while (i--)
     {
         FunctionParser();
@@ -69,29 +69,29 @@ void Lua::FunctionParser()
 
 
     // Source line position list (optional debug data)
-    p_read += *((uint32_t *)p_read) * 4 + 4;
+    p_read_ += *((uint32_t *)p_read_) * 4 + 4;
 
 
 
     // Local list (optional debug data)
-    i = *(uint32_t *)p_read;
-    p_read += 4;
+    i = *(uint32_t *)p_read_;
+    p_read_ += 4;
     while (i--)
     {
-        p_read += *(uint32_t *)p_read + 12;
+        p_read_ += *(uint32_t *)p_read_ + 12;
     }
 
     // Upvalue list (optional debug data)
-    i = *(uint32_t *)p_read;
-    p_read += 4;
+    i = *(uint32_t *)p_read_;
+    p_read_ += 4;
     while (i--)
     {
-        p_read += *(uint32_t *)p_read + 4;
+        p_read_ += *(uint32_t *)p_read_ + 4;
     }
 
     // strip above optional debug data
-    memset(p_write, 0, 12);
-    p_write += 12;
+    memset(p_write_, 0, 12);
+    p_write_ += 12;
 
 
 }
@@ -100,10 +100,10 @@ void Lua::FunctionParser()
 size_t Lua::Leanify(size_t size_leanified /*= 0*/)
 {
     // skip header
-    p_read += 0xC;
-    p_write = p_read - size_leanified;
-    fp -= size_leanified;
+    p_read_ += 0xC;
+    p_write_ = p_read_ - size_leanified;
+    fp_ -= size_leanified;
     FunctionParser();
 
-    return p_write - fp;
+    return p_write_ - fp_;
 }

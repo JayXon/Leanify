@@ -13,7 +13,7 @@ using std::endl;
 using std::string;
 
 
-Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
+Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc_(true)
 {
     uint8_t *q = static_cast<uint8_t *>(p);
 
@@ -42,11 +42,11 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
     // only parse the file if it starts with '<'
     if (*q == '<')
     {
-        is_valid = (doc.Parse(reinterpret_cast<char *>(fp), size) == 0);
+        is_valid_ = (doc_.Parse(reinterpret_cast<char *>(fp_), size_) == 0);
     }
     else
     {
-        is_valid = false;
+        is_valid_ = false;
     }
 }
 
@@ -55,9 +55,9 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc(true)
 
 size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 {
-    if (doc.RootElement())
+    if (doc_.RootElement())
     {
-        const char *root_name = doc.RootElement()->Name();
+        const char *root_name = doc_.RootElement()->Name();
         // if the XML is fb2 file
         if (strcmp(root_name, "FictionBook") == 0)
         {
@@ -70,12 +70,12 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 depth++;
 
                 // iterate through all binary element
-                for (auto e = doc.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
+                for (auto e = doc_.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
                 {
                     const char *id = e->Attribute("id");
                     if (id == nullptr || *id == 0)
                     {
-                        doc.RootElement()->DeleteChild(e);
+                        doc_.RootElement()->DeleteChild(e);
                         continue;
                     }
 
@@ -114,15 +114,15 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             }
 
             // remove XML declaration and doctype
-            for (auto child = doc.FirstChild(); child; child = child->NextSibling())
+            for (auto child = doc_.FirstChild(); child; child = child->NextSibling())
             {
                 if (child->ToDeclaration() || child->ToUnknown())
                 {
-                    doc.DeleteChild(child);
+                    doc_.DeleteChild(child);
                 }
             }
 
-            TraverseElements(doc.RootElement(), [](tinyxml2::XMLElement *e)
+            TraverseElements(doc_.RootElement(), [](tinyxml2::XMLElement *e)
             {
                 for (auto attr = e->FirstAttribute(); attr; attr = attr->Next())
                 {
@@ -196,20 +196,20 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 
     // print leanified XML to memory
     tinyxml2::XMLPrinter printer(0, true);
-    doc.Print(&printer);
+    doc_.Print(&printer);
 
     size_t new_size = printer.CStrSize() - 1;     // -1 for the \0
-    fp -= size_leanified;
-    if (new_size < size)
+    fp_ -= size_leanified;
+    if (new_size < size_)
     {
-        memcpy(fp, printer.CStr(), new_size);
+        memcpy(fp_, printer.CStr(), new_size);
         return new_size;
     }
     else if (size_leanified)
     {
-        memmove(fp, fp + size_leanified, size);
+        memmove(fp_, fp_ + size_leanified, size_);
     }
-    return size;
+    return size_;
 }
 
 void Xml::TraverseElements(tinyxml2::XMLElement *ele, std::function<void(tinyxml2::XMLElement *)> callback)

@@ -21,15 +21,15 @@ const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 size_t Zip::Leanify(size_t size_leanified /*= 0*/)
 {
     depth++;
-    uint8_t *p_read = fp;
-    fp -= size_leanified;
-    uint8_t *p_write = fp;
+    uint8_t *p_read = fp_;
+    fp_ -= size_leanified;
+    uint8_t *p_write = fp_;
 
     vector<uint32_t> vector_local_header_offset;
     // Local file header
     while (memcmp(p_read, header_magic, sizeof(header_magic)) == 0)
     {
-        vector_local_header_offset.push_back(p_write - fp);
+        vector_local_header_offset.push_back(p_write - fp_);
 
         uint16_t filename_length = *(uint16_t *)(p_read + 26);
 
@@ -81,13 +81,13 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             uint8_t *dd = p_read + header_size;
             do
             {
-                dd = std::search(dd + 1, fp + size + size_leanified, dd_sign, dd_sign + 4);
-                if (dd == fp + size + size_leanified)
+                dd = std::search(dd + 1, fp_ + size_ + size_leanified, dd_sign, dd_sign + 4);
+                if (dd == fp_ + size_ + size_leanified)
                 {
                     cerr << "data descriptor signature not found!" << endl;
                     // abort
                     // zip does not have 4-byte signature preceded
-                    return size;
+                    return size_;
                 }
             }
             while (*(uint32_t *)(dd + 8) != dd - p_read - header_size);
@@ -163,7 +163,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
                 // recompress
                 uint8_t bp = 0, *out = nullptr;
                 size_t new_comp_size = 0;
-                ZopfliDeflate(&zopfli_options, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
+                ZopfliDeflate(&zopfli_options_, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
 
                 // switch to store if deflate makes file larger
                 if (new_uncomp_size <= new_comp_size && new_uncomp_size <= orig_comp_size)
@@ -238,9 +238,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             *(uint16_t *)(p_write + 32) = 0;
         }
 
-        uint8_t *local_header = fp + vector_local_header_offset[i];
+        uint8_t *local_header = fp_ + vector_local_header_offset[i];
 
-        // copy new CRC-32, Compressed size, Uncompressed size
+        // copy new CRC-32, Compressed size, Uncompressed size_
         // from Local file header to Central directory file header
         memcpy(p_write + 16, local_header + 14, 12);
 
@@ -268,11 +268,11 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     // central directory size
     *(uint32_t *)(p_write + 12) = p_write - central_directory;
     // central directory offset
-    *(uint32_t *)(p_write + 16) = central_directory - fp;
+    *(uint32_t *)(p_write + 16) = central_directory - fp_;
     // set comment length to 0
     *(uint16_t *)(p_write + 20) = 0;
 
     // 22 is the length of EOCD
-    return p_write + 22 - fp;
+    return p_write + 22 - fp_;
 }
 

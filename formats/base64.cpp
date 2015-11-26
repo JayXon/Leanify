@@ -122,10 +122,10 @@ size_t Base64Encode(const uint8_t *in, size_t in_len, uint8_t *out)
 size_t Base64::Leanify(size_t size_leanified /*= 0*/)
 {
     // 4 base64 character contains information of 3 bytes
-    size_t binary_len = size * 3 / 4;
+    size_t binary_len = size_ * 3 / 4;
     uint8_t *binary_data = new uint8_t[binary_len];
 
-    if (Base64Decode(fp, size, binary_data, &binary_len))
+    if (Base64Decode(fp_, size_, binary_data, &binary_len))
     {
         std::cerr << "Base64 decode error." << std::endl;
         delete[] binary_data;
@@ -135,10 +135,10 @@ size_t Base64::Leanify(size_t size_leanified /*= 0*/)
     // Leanify embedded file
     binary_len = LeanifyFile(binary_data, binary_len);
 
-    fp -= size_leanified;
+    fp_ -= size_leanified;
     // encode back
-    size = Base64Encode(binary_data, binary_len, fp);
+    size_ = Base64Encode(binary_data, binary_len, fp_);
 
     delete[] binary_data;
-    return size;
+    return size_;
 }
