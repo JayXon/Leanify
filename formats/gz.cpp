@@ -32,6 +32,12 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     depth++;
     uint8_t flags = *(fp_ + 3);
+
+    if (size_leanified)
+    {
+        memmove(fp_ - size_leanified, fp_, 10);
+    }
+
     // set the flags to 0, remove all unnecessary section
     *(fp_ + 3 - size_leanified) = 0;
 
@@ -71,12 +77,8 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/)
 
     if (p_read >= fp_ + size_)
     {
-        return Format::Leanify(size_leanified);
-    }
-
-    if (size_leanified)
-    {
-        memmove(fp_ - size_leanified, fp_, 10);
+        memmove(p_write, fp_ + 10, size_ - 10);
+        return size_;
     }
 
     if (is_fast)
