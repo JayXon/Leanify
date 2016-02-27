@@ -26,9 +26,11 @@ namespace
 
 void TraverseElements(pugi::xml_node node, std::function<void(pugi::xml_node)> callback)
 {
-    for (auto n : node.children())
+    // cannot use ranged loop here because we need to store the next_sibling before recursion so that if child was removed the loop won't be terminated
+    for (pugi::xml_node child = node.first_child(), next; child; child = next)
     {
-        TraverseElements(n, callback);
+        next = child.next_sibling();
+        TraverseElements(child, callback);
     }
 
     callback(node);
@@ -65,8 +67,9 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             pugi::xml_node root = doc_.child("FictionBook");
 
             // iterate through all binary element
-            for (pugi::xml_node binary : root.children("binary"))
+            for (pugi::xml_node binary = root.child("binary"), next; binary; binary = next)
             {
+                next = binary.next_sibling("binary");
                 pugi::xml_attribute id = binary.attribute("id");
                 if (id == nullptr || id.value() == nullptr || id.value()[0] == 0)
                 {
@@ -109,8 +112,9 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
         }
 
         // remove XML declaration and doctype
-        for (auto child : doc_.children())
+        for (pugi::xml_node child = doc_.first_child(), next; child; child = next)
         {
+            next = child.next_sibling();
             if (child.type() == pugi::node_declaration || child.type() == pugi::node_doctype)
             {
                 doc_.remove_child(child);
@@ -119,8 +123,9 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 
         TraverseElements(doc_.child("svg"), [](pugi::xml_node node)
         {
-            for (auto attr : node.attributes())
+            for (pugi::xml_attribute attr = node.first_attribute(), next; attr; attr = next)
             {
+                next = attr.next_attribute();
                 const char* value = attr.value();
                 // remove empty attribute
                 if (value == nullptr || *value == 0)
