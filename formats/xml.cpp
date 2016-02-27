@@ -130,30 +130,26 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 }
 
                 // shrink spaces and newlines in attribute
-                string s(value);
-                size_t ssize = 0;
-                for (size_t i = 0; i < s.size(); i++)
+                // also removes preceding and trailing spaces
+                string new_value;
+                while (*value)
                 {
-                    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\t')
+                    if (*value == ' ' || *value == '\n' || *value == '\t')
                     {
                         do
                         {
-                            i++;
+                            value++;
                         }
-                        while (i < s.size() && s[i] == ' ' || s[i] == '\n' || s[i] == '\t');
-                        s[ssize++] = ' ';
+                        while (*value == ' ' || *value == '\n' || *value == '\t');
+                        if (*value == 0)
+                        {
+                            break;
+                        }
+                        new_value += ' ';
                     }
-                    if (i < s.size())
-                    {
-                        s[ssize++] = s[i];
-                    }
+                    new_value += *value++;
                 }
-                if (ssize && s[ssize - 1] == ' ')
-                {
-                    ssize--;
-                }
-                s.resize(ssize);
-                attr = s.c_str();
+                attr = new_value.c_str() + (new_value[0] == ' ' ? 1 : 0);
             }
 
             // remove empty text element and container element
