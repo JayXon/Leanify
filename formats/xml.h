@@ -4,7 +4,7 @@
 
 #include <functional>
 
-#include "../lib/tinyxml2/tinyxml2.h"
+#include "../lib/pugixml/pugixml.hpp"
 
 #include "format.h"
 
@@ -26,9 +26,8 @@ public:
 
 private:
     bool is_valid_;
-    tinyxml2::XMLDocument doc_;
-
-    void TraverseElements(tinyxml2::XMLElement *e, std::function<void(tinyxml2::XMLElement *)> callback);
+    pugi::xml_document doc_;
+    pugi::xml_encoding encoding_;
 };
 
 

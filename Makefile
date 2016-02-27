@@ -2,7 +2,7 @@ LEANIFY_SRC     := $(wildcard *.cpp formats/*.cpp)
 LZMA_SRC        := lib/LZMA/Alloc.c lib/LZMA/LzFind.c lib/LZMA/LzmaDec.c lib/LZMA/LzmaEnc.c lib/LZMA/LzmaLib.c
 MINIZ_SRC       := lib/miniz/miniz.c
 MOZJPEG_SRC     := lib/mozjpeg/jaricom.c lib/mozjpeg/jcapimin.c lib/mozjpeg/jcarith.c lib/mozjpeg/jcext.c lib/mozjpeg/jchuff.c lib/mozjpeg/jcmarker.c lib/mozjpeg/jcmaster.c lib/mozjpeg/jcomapi.c lib/mozjpeg/jcparam.c lib/mozjpeg/jcphuff.c lib/mozjpeg/jctrans.c lib/mozjpeg/jdapimin.c lib/mozjpeg/jdarith.c lib/mozjpeg/jdatadst.c lib/mozjpeg/jdatasrc.c lib/mozjpeg/jdcoefct.c lib/mozjpeg/jdcolor.c lib/mozjpeg/jddctmgr.c lib/mozjpeg/jdhuff.c lib/mozjpeg/jdinput.c lib/mozjpeg/jdmainct.c lib/mozjpeg/jdmarker.c lib/mozjpeg/jdmaster.c lib/mozjpeg/jdphuff.c lib/mozjpeg/jdpostct.c lib/mozjpeg/jdsample.c lib/mozjpeg/jdtrans.c lib/mozjpeg/jerror.c lib/mozjpeg/jidctflt.c lib/mozjpeg/jidctint.c lib/mozjpeg/jidctred.c lib/mozjpeg/jmemmgr.c lib/mozjpeg/jmemnobs.c lib/mozjpeg/jsimd_none.c lib/mozjpeg/jutils.c
-TINYXML_SRC     := lib/tinyxml2/tinyxml2.cpp
+PUGIXML_SRC     := lib/pugixml/pugixml.cpp
 ZOPFLI_SRC      := lib/zopfli/hash.c lib/zopfli/squeeze.c lib/zopfli/gzip_container.c lib/zopfli/katajainen.c lib/zopfli/zopfli_lib.c lib/zopfli/cache.c lib/zopfli/zlib_container.c lib/zopfli/util.c lib/zopfli/tree.c lib/zopfli/deflate.c lib/zopfli/blocksplitter.c lib/zopfli/lz77.c
 ZOPFLIPNG_SRC   := lib/zopflipng/lodepng/lodepng.cpp lib/zopflipng/lodepng/lodepng_util.cpp lib/zopflipng/zopflipng_lib.cc
 
@@ -19,13 +19,13 @@ endif
 
 .PHONY:     leanify clean
 
-leanify:    lzma.a miniz.o mozjpeg.a tinyxml2.o zopfli.a zopflipng.a
+leanify:    lzma.a miniz.o mozjpeg.a pugixml.o zopfli.a zopflipng.a
 	$(CXX) $(CFLAGS) --std=c++11 $(LEANIFY_SRC) $^ $(LDFLAGS) -o $@
 
 miniz.o:    $(MINIZ_SRC)
 	$(CC) $(CFLAGS) -Wno-strict-aliasing -c $?
 
-tinyxml2.o: $(TINYXML_SRC)
+pugixml.o: $(PUGIXML_SRC)
 	$(CXX) $(CFLAGS) -c $?
 
 lzma.a:     $(LZMA_SRC)

@@ -13,213 +13,189 @@ using std::endl;
 using std::string;
 
 
-Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s), doc_(true)
+Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s)
 {
-    uint8_t *q = static_cast<uint8_t *>(p);
-
-    const uint8_t utf8_bom[] = { 0xEF, 0xBB, 0xBF };
-
-    // tinyxml2 does not support utf16
-    /*
-    const uint8_t utf16be_bom[] = { 0xFE, 0xFF };
-    const uint8_t utf16le_bom[] = { 0xFF, 0xFE };
-    */
-    // skip utf8 bom
-    if (memcmp(q, utf8_bom, sizeof(utf8_bom)) == 0)
-    {
-        q += sizeof(utf8_bom);
-    }
-    /*      else if (!memcmp(q, utf16le_bom, sizeof(utf16le_bom)) || !memcmp(q, utf16be_bom, sizeof(utf16be_bom)))
-    {
-    q += sizeof(utf16le_bom);
-    }
-    */
-    // skip spaces
-    while (isspace(*q) && q < static_cast<uint8_t *>(p) + s)
-    {
-        q++;
-    }
-    // only parse the file if it starts with '<'
-    if (*q == '<')
-    {
-        is_valid_ = (doc_.Parse(reinterpret_cast<char *>(fp_), size_) == 0);
-    }
-    else
-    {
-        is_valid_ = false;
-    }
+    pugi::xml_parse_result result = doc_.load_buffer(fp_, size_, pugi::parse_default | pugi::parse_declaration | pugi::parse_doctype | pugi::parse_ws_pcdata_single);
+    is_valid_ = result;
+    encoding_ = result.encoding;
 }
 
 
+namespace
+{
+
+void TraverseElements(pugi::xml_node node, std::function<void(pugi::xml_node)> callback)
+{
+    for (auto n : node.children())
+    {
+        TraverseElements(n, callback);
+    }
+
+    callback(node);
+}
+
+struct xml_memory_writer : pugi::xml_writer
+{
+    uint8_t *p_write;
+
+    virtual void write(const void* data, size_t size) override
+    {
+        memcpy(p_write, data, size);
+        p_write += size;
+    }
+};
+
+} // namespace
 
 
 size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 {
-    if (doc_.RootElement())
+
+    // if the XML is fb2 file
+    if (doc_.child("FictionBook"))
     {
-        const char *root_name = doc_.RootElement()->Name();
-        // if the XML is fb2 file
-        if (strcmp(root_name, "FictionBook") == 0)
+        if (is_verbose)
         {
-            if (is_verbose)
-            {
-                cout << "FB2 detected." << endl;
-            }
-            if (depth < max_depth)
-            {
-                depth++;
+            cout << "FB2 detected." << endl;
+        }
+        if (depth < max_depth)
+        {
+            depth++;
 
-                // iterate through all binary element
-                for (auto e = doc_.RootElement()->FirstChildElement("binary"); e; e = e->NextSiblingElement("binary"))
+            pugi::xml_node root = doc_.child("FictionBook");
+
+            // iterate through all binary element
+            for (pugi::xml_node binary : root.children("binary"))
+            {
+                pugi::xml_attribute id = binary.attribute("id");
+                if (id == nullptr || id.value() == nullptr || id.value()[0] == 0)
                 {
-                    const char *id = e->Attribute("id");
-                    if (id == nullptr || *id == 0)
-                    {
-                        doc_.RootElement()->DeleteChild(e);
-                        continue;
-                    }
-
-                    PrintFileName(id);
-
-                    const char *base64_data = e->GetText();
-                    if (base64_data == nullptr)
-                    {
-                        cout << "No data found." << endl;
-                        continue;
-                    }
-                    size_t base64_len = strlen(base64_data);
-                    // copy to a new location because base64_data is const
-                    char *new_base64_data = new char[base64_len + 1];
-                    memcpy(new_base64_data, base64_data, base64_len);
-
-                    Base64 b64(new_base64_data, base64_len);
-                    size_t new_base64_len = b64.Leanify();
-
-                    if (new_base64_len < base64_len)
-                    {
-                        new_base64_data[new_base64_len] = 0;
-                        e->SetText(new_base64_data);
-                    }
-
-                    delete[] new_base64_data;
+                    root.remove_child(binary);
+                    continue;
                 }
-                depth--;
+
+                PrintFileName(id.value());
+
+                const char *base64_data = binary.child_value();
+                if (base64_data == nullptr)
+                {
+                    cout << "No data found." << endl;
+                    continue;
+                }
+                size_t base64_len = strlen(base64_data);
+                // copy to a new location because base64_data is const
+                char *new_base64_data = new char[base64_len + 1];
+                memcpy(new_base64_data, base64_data, base64_len);
+
+                Base64 b64(new_base64_data, base64_len);
+                size_t new_base64_len = b64.Leanify();
+
+                if (new_base64_len < base64_len)
+                {
+                    new_base64_data[new_base64_len] = 0;
+                    binary.text() = new_base64_data;
+                }
+
+                delete[] new_base64_data;
+            }
+            depth--;
+        }
+    }
+    else if (doc_.child("svg"))
+    {
+        if (is_verbose)
+        {
+            cout << "SVG detected." << endl;
+        }
+
+        // remove XML declaration and doctype
+        for (auto child : doc_.children())
+        {
+            if (child.type() == pugi::node_declaration || child.type() == pugi::node_doctype)
+            {
+                doc_.remove_child(child);
             }
         }
-        else if (strcmp(root_name, "svg") == 0)
+
+        TraverseElements(doc_.child("svg"), [](pugi::xml_node node)
         {
-            if (is_verbose)
+            for (auto attr : node.attributes())
             {
-                cout << "SVG detected." << endl;
-            }
-
-            // remove XML declaration and doctype
-            for (auto child = doc_.FirstChild(); child; child = child->NextSibling())
-            {
-                if (child->ToDeclaration() || child->ToUnknown())
+                const char* value = attr.value();
+                // remove empty attribute
+                if (value == nullptr || *value == 0)
                 {
-                    doc_.DeleteChild(child);
+                    node.remove_attribute(attr);
+                    continue;
                 }
-            }
 
-            TraverseElements(doc_.RootElement(), [](tinyxml2::XMLElement *e)
-            {
-                for (auto attr = e->FirstAttribute(); attr; attr = attr->Next())
+                // shrink spaces and newlines in attribute
+                string s(value);
+                size_t ssize = 0;
+                for (size_t i = 0; i < s.size(); i++)
                 {
-                    auto value = attr->Value();
-                    // remove empty attribute
-                    if (value == nullptr || *value == 0)
+                    if (s[i] == ' ' || s[i] == '\n' || s[i] == '\t')
                     {
-                        e->DeleteAttribute(attr->Name());
-                        continue;
-                    }
-
-                    // shrink spaces and newlines in attribute
-                    string s(value);
-                    size_t ssize = 0;
-                    for (size_t i = 0; i < s.size(); i++)
-                    {
-                        if (s[i] == ' ' || s[i] == '\n' || s[i] == '\t')
+                        do
                         {
-                            do
-                            {
-                                i++;
-                            }
-                            while (s[i] == ' ' || s[i] == '\n' || s[i] == '\t');
-                            s[ssize++] = ' ';
+                            i++;
                         }
+                        while (i < s.size() && s[i] == ' ' || s[i] == '\n' || s[i] == '\t');
+                        s[ssize++] = ' ';
+                    }
+                    if (i < s.size())
+                    {
                         s[ssize++] = s[i];
                     }
-                    if (ssize && s[ssize - 1] == ' ')
-                    {
-                        ssize--;
-                    }
-                    s.resize(ssize);
-                    e->SetAttribute(attr->Name(), s.c_str());
                 }
-
-                // remove empty text element and container element
-                auto name = e->Name();
-                if (e->NoChildren())
+                if (ssize && s[ssize - 1] == ' ')
                 {
-                    if (strcmp(name, "text") == 0 ||
-                        strcmp(name, "tspan") == 0 ||
-                        strcmp(name, "a") == 0 ||
-                        strcmp(name, "defs") == 0 ||
-                        strcmp(name, "g") == 0 ||
-                        strcmp(name, "marker") == 0 ||
-                        strcmp(name, "mask") == 0 ||
-                        strcmp(name, "missing-glyph") == 0 ||
-                        strcmp(name, "pattern") == 0 ||
-                        strcmp(name, "switch") == 0 ||
-                        strcmp(name, "symbol") == 0)
-                    {
-                        e->Parent()->DeleteChild(e);
-                        return;
-                    }
+                    ssize--;
                 }
+                s.resize(ssize);
+                attr = s.c_str();
+            }
 
-                if (strcmp(name, "tref") == 0 && e->Attribute("xlink:href") == nullptr)
+            // remove empty text element and container element
+            const char* name = node.name();
+            if (node.first_child() == nullptr)
+            {
+                if (strcmp(name, "text") == 0 ||
+                    strcmp(name, "tspan") == 0 ||
+                    strcmp(name, "a") == 0 ||
+                    strcmp(name, "defs") == 0 ||
+                    strcmp(name, "g") == 0 ||
+                    strcmp(name, "marker") == 0 ||
+                    strcmp(name, "mask") == 0 ||
+                    strcmp(name, "missing-glyph") == 0 ||
+                    strcmp(name, "pattern") == 0 ||
+                    strcmp(name, "switch") == 0 ||
+                    strcmp(name, "symbol") == 0)
                 {
-                    e->Parent()->DeleteChild(e);
+                    node.parent().remove_child(node);
                     return;
                 }
+            }
 
-                if (strcmp(name, "metadata") == 0)
-                {
-                    e->Parent()->DeleteChild(e);
-                    return;
-                }
-            });
-        }
+            if (strcmp(name, "tref") == 0 && node.attribute("xlink:href") == nullptr)
+            {
+                node.parent().remove_child(node);
+                return;
+            }
+
+            if (strcmp(name, "metadata") == 0)
+            {
+                node.parent().remove_child(node);
+                return;
+            }
+        });
     }
 
     // print leanified XML to memory
-    tinyxml2::XMLPrinter printer(0, true);
-    doc_.Print(&printer);
-
-    size_t new_size = printer.CStrSize() - 1;     // -1 for the \0
+    xml_memory_writer writer;
     fp_ -= size_leanified;
-    if (new_size < size_)
-    {
-        memcpy(fp_, printer.CStr(), new_size);
-        return new_size;
-    }
-    else if (size_leanified)
-    {
-        memmove(fp_, fp_ + size_leanified, size_);
-    }
+    writer.p_write = fp_;
+    doc_.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, encoding_);
+    size_ = writer.p_write - fp_;
     return size_;
 }
-
-void Xml::TraverseElements(tinyxml2::XMLElement *ele, std::function<void(tinyxml2::XMLElement *)> callback)
-{
-    for (auto e = ele->FirstChildElement(); e; e = e->NextSiblingElement())
-    {
-        TraverseElements(e, callback);
-    }
-
-    callback(ele);
-}
-
-
