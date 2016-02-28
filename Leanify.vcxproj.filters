@@ -264,9 +264,6 @@
     <ClCompile Include="lib\miniz\miniz.c">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
-    <ClCompile Include="lib\tinyxml2\tinyxml2.cpp">
-      <Filter>Source Files\lib</Filter>
-    </ClCompile>
     <ClCompile Include="formats\base64.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
@@ -275,6 +272,9 @@
     </ClCompile>
     <ClCompile Include="formats\data_uri.cpp">
       <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\pugixml\pugixml.cpp">
+      <Filter>Source Files\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

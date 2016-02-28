@@ -225,7 +225,7 @@
     <ClCompile Include="formats\rdb.cpp" />
     <ClCompile Include="formats\swf.cpp" />
     <ClCompile Include="formats\tar.cpp" />
-    <ClCompile Include="lib\tinyxml2\tinyxml2.cpp" />
+    <ClCompile Include="lib\pugixml\pugixml.cpp" />
     <ClCompile Include="formats\xml.cpp" />
     <ClCompile Include="formats\zip.cpp" />
     <ClCompile Include="lib\zopflipng\lodepng\lodepng.cpp" />
