@@ -18,9 +18,6 @@ public:
     static const uint8_t header_magic_deflate[3];
     static const uint8_t header_magic_lzma[3];
 
-private:
-
-    void UpdateTagLength(uint8_t *tag_content, size_t header_length, size_t new_length);
 };
 
 

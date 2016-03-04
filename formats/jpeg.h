@@ -25,10 +25,6 @@ public:
     static const uint8_t header_magic[3];
     static bool keep_exif_;
 
-private:
-    static jmp_buf setjmp_buffer_;
-
-    static void mozjpeg_error_handler(j_common_ptr cinfo);
 };
 
 

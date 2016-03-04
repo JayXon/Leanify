@@ -4,15 +4,19 @@
 const uint8_t Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
 bool Jpeg::keep_exif_ = false;
 
-jmp_buf Jpeg::setjmp_buffer_;
+namespace
+{
 
-void Jpeg::mozjpeg_error_handler(j_common_ptr cinfo)
+jmp_buf setjmp_buffer;
+
+void mozjpeg_error_handler(j_common_ptr cinfo)
 {
     (*cinfo->err->output_message)(cinfo);
 
-    longjmp(setjmp_buffer_, 1);
+    longjmp(setjmp_buffer, 1);
 }
 
+} // namespace
 
 
 size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
@@ -24,7 +28,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/)
 
     srcinfo.err = jpeg_std_error(&jsrcerr);
     jsrcerr.error_exit = mozjpeg_error_handler;
-    if (setjmp(setjmp_buffer_))
+    if (setjmp(setjmp_buffer))
     {
         jpeg_destroy_compress(&dstinfo);
         jpeg_destroy_decompress(&srcinfo);

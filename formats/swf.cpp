@@ -17,6 +17,22 @@ const uint8_t Swf::header_magic[]         = { 'F', 'W', 'S' };
 const uint8_t Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
 const uint8_t Swf::header_magic_lzma[]    = { 'Z', 'W', 'S' };
 
+namespace
+{
+
+void UpdateTagLength(uint8_t *tag_content, size_t header_length, size_t new_length)
+{
+    if (header_length == 6)
+    {
+        *(uint32_t *)(tag_content - 4) = new_length;
+    }
+    else
+    {
+        *(tag_content - 2) += (new_length & 0x3F) - (*(tag_content - 2) & 0x3F);
+    }
+}
+
+} // namespace
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/)
 {
@@ -248,18 +264,4 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     delete[] dst;
 
     return size_;
-}
-
-
-
-void Swf::UpdateTagLength(uint8_t *tag_content, size_t header_length, size_t new_length)
-{
-    if (header_length == 6)
-    {
-        *(uint32_t *)(tag_content - 4) = new_length;
-    }
-    else
-    {
-        *(tag_content - 2) += (new_length & 0x3F) - (*(tag_content - 2) & 0x3F);
-    }
 }
