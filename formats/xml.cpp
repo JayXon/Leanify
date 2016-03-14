@@ -40,7 +40,7 @@ struct xml_memory_writer : pugi::xml_writer
 {
     uint8_t *p_write;
 
-    virtual void write(const void* data, size_t size) override
+    void write(const void* data, size_t size) override
     {
         memcpy(p_write, data, size);
         p_write += size;
