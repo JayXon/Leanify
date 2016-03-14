@@ -24,6 +24,33 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s)
 namespace
 {
 
+// shrink spaces and newlines, also removes preceding and trailing spaces
+string ShrinkSpace(const char* value)
+{
+    string new_value;
+    while (*value)
+    {
+        if (*value == ' ' || *value == '\n' || *value == '\t')
+        {
+            do
+            {
+                value++;
+            } while (*value == ' ' || *value == '\n' || *value == '\t');
+            if (*value == 0)
+            {
+                break;
+            }
+            new_value += ' ';
+        }
+        new_value += *value++;
+    }
+    if (!new_value.empty() && new_value[0] == ' ')
+    {
+        new_value.erase(0, 1);
+    }
+    return new_value;
+}
+
 void TraverseElements(pugi::xml_node node, std::function<void(pugi::xml_node)> callback)
 {
     // cannot use ranged loop here because we need to store the next_sibling before recursion so that if child was removed the loop won't be terminated
@@ -34,6 +61,31 @@ void TraverseElements(pugi::xml_node node, std::function<void(pugi::xml_node)> c
     }
 
     callback(node);
+}
+
+// Remove single PCData only contains whitespace if xml:space="preserve" is not set.
+void RemovePCDataSingle(pugi::xml_node node, bool xml_space_preserve)
+{
+    xml_space_preserve |= strcmp(node.attribute("xml:space").value(), "preserve") == 0;
+    if (xml_space_preserve)
+    {
+        return;
+    }
+    pugi::xml_node pcdata = node.first_child();
+    if (pcdata.first_child() == nullptr &&
+        pcdata.type() == pugi::node_pcdata &&
+        pcdata.next_sibling() == nullptr)
+    {
+        if (ShrinkSpace(pcdata.value()).empty())
+        {
+            node.remove_child(pcdata);
+        }
+        return;
+    }
+    for (pugi::xml_node child : node.children())
+    {
+        RemovePCDataSingle(child, xml_space_preserve);
+    }
 }
 
 struct xml_memory_writer : pugi::xml_writer
@@ -52,6 +104,7 @@ struct xml_memory_writer : pugi::xml_writer
 
 size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 {
+    RemovePCDataSingle(doc_, false);
 
     // if the XML is fb2 file
     if (doc_.child("FictionBook"))
@@ -134,27 +187,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                     continue;
                 }
 
-                // shrink spaces and newlines in attribute
-                // also removes preceding and trailing spaces
-                string new_value;
-                while (*value)
-                {
-                    if (*value == ' ' || *value == '\n' || *value == '\t')
-                    {
-                        do
-                        {
-                            value++;
-                        }
-                        while (*value == ' ' || *value == '\n' || *value == '\t');
-                        if (*value == 0)
-                        {
-                            break;
-                        }
-                        new_value += ' ';
-                    }
-                    new_value += *value++;
-                }
-                attr = new_value.c_str() + (new_value[0] == ' ' ? 1 : 0);
+                attr = ShrinkSpace(value).c_str();
             }
 
             // remove empty text element and container element
