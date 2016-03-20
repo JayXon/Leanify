@@ -25,8 +25,18 @@ Author: jyrki.alakuijala@gmail.com (Jyrki Alakuijala)
 #include <stdio.h>
 #include <stdlib.h>
 
+/* __has_builtin available in clang */
+#ifdef __has_builtin
+# if __has_builtin(__builtin_clz)
+#   define HAS_BUILTIN_CLZ
+# endif
+/* __builtin_clz available beginning with GCC 3.4 */
+#elif __GNUC__ * 100 + __GNUC_MINOR__ >= 304
+# define HAS_BUILTIN_CLZ
+#endif
+
 int ZopfliGetDistExtraBits(int dist) {
-#ifdef __GNUC__
+#ifdef HAS_BUILTIN_CLZ
   if (dist < 5) return 0;
   return (31 ^ __builtin_clz(dist - 1)) - 1; /* log2(dist - 1) - 1 */
 #else
@@ -48,7 +58,7 @@ int ZopfliGetDistExtraBits(int dist) {
 }
 
 int ZopfliGetDistExtraBitsValue(int dist) {
-#ifdef __GNUC__
+#ifdef HAS_BUILTIN_CLZ
   if (dist < 5) {
     return 0;
   } else {
@@ -74,7 +84,7 @@ int ZopfliGetDistExtraBitsValue(int dist) {
 }
 
 int ZopfliGetDistSymbol(int dist) {
-#ifdef __GNUC__
+#ifdef HAS_BUILTIN_CLZ
   if (dist < 5) {
     return dist - 1;
   } else {
@@ -201,6 +211,22 @@ int ZopfliGetLengthSymbol(int l) {
     284, 284, 284, 284, 284, 284, 284, 285
   };
   return table[l];
+}
+
+int ZopfliGetLengthSymbolExtraBits(int s) {
+  static const int table[29] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
+    3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0
+  };
+  return table[s - 257];
+}
+
+int ZopfliGetDistSymbolExtraBits(int s) {
+  static const int table[30] = {
+    0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8,
+    9, 9, 10, 10, 11, 11, 12, 12, 13, 13
+  };
+  return table[s];
 }
 
 void ZopfliInitOptions(ZopfliOptions* options) {
