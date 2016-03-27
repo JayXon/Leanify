@@ -4,10 +4,15 @@
 #include <iostream>
 #include <vector>
 
+#include "../lib/zopflipng/lodepng/lodepng.h"
+
+#include "bmp.h"
 #include "png.h"
 
+using std::cout;
 using std::cerr;
 using std::endl;
+using std::vector;
 
 const uint8_t Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
 
@@ -42,7 +47,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
 
     // sort the entries by offset just in case it's not sorted before
     IconDirEntry *entry_addr = reinterpret_cast<IconDirEntry *>(fp_ + 6);
-    std::vector<IconDirEntry> entries(entry_addr, entry_addr + num_of_img);
+    vector<IconDirEntry> entries(entry_addr, entry_addr + num_of_img);
     std::sort(entries.begin(), entries.end(), [] (const IconDirEntry& a, const IconDirEntry& b)
     {
         return a.dwImageOffset < b.dwImageOffset;
@@ -77,15 +82,57 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
             entries[i].dwImageOffset = 6 + num_of_img * sizeof(IconDirEntry);
         }
 
-        // only Leanify PNG
+        // Leanify PNG
         if (memcmp(fp_ + old_offset, Png::header_magic, sizeof(Png::header_magic)) == 0)
         {
             entries[i].dwBytesInRes = Png(fp_ + old_offset, entries[i].dwBytesInRes).Leanify(size_leanified + old_offset - entries[i].dwImageOffset);
+            continue;
         }
-        else
+
+        // Convert 256x256 BMP to PNG if possible
+        if (entries[i].bWidth == 0 && entries[i].bHeight == 0)
         {
-            memmove(fp_ + entries[i].dwImageOffset - size_leanified, fp_ + old_offset, entries[i].dwBytesInRes);
+            auto dib = reinterpret_cast<Bmp::BITMAPINFOHEADER*>(fp_ + old_offset);
+            if (dib->biSize >= 40 &&
+                dib->biWidth == 256 && dib->biHeight == 512 &&   // DIB in ICO always has double height
+                dib->biPlanes == 1 &&
+                dib->biBitCount == 32 &&        // only support RGBA for now
+                dib->biCompression == 0 &&      // BI_RGB aka no compression
+                dib->biSize + std::max(dib->biSizeImage, 256 * 256 * 4U) <= entries[i].dwBytesInRes &&
+                (dib->biSizeImage == 0 || dib->biSizeImage >= 256 * 256 * 4U) &&
+                dib->biClrUsed == 0)
+            {
+                if (is_verbose)
+                {
+                    cout << "Converting 256x256 BMP to PNG..." << endl;
+                }
+                // BMP stores ARGB in little endian, so it's actually BGRA, convert it to normal RGBA
+                // It also stores the pixels backwards for some reason, so reverse it.
+                uint8_t *bmp = fp_ + old_offset + dib->biSize + 256 * 256 * 4;
+                vector<uint8_t> raw(256 * 256 * 4), png;
+                // TODO: detect 0RGB and convert it to RGBA using mask
+                for (size_t j = 0; j < 256 * 256; j++)
+                {
+                    bmp -= 4;
+                    raw[j * 4 + 0] = bmp[2];
+                    raw[j * 4 + 1] = bmp[1];
+                    raw[j * 4 + 2] = bmp[0];
+                    raw[j * 4 + 3] = bmp[3];
+                }
+                if (lodepng::encode(png, raw, 256, 256) == 0)
+                {
+                    // Optimize the new PNG
+                    size_t png_size = Png(png.data(), png.size()).Leanify();
+                    if (png_size < entries[i].dwBytesInRes)
+                    {
+                        entries[i].dwBytesInRes = png_size;
+                        memcpy(fp_ + entries[i].dwImageOffset - size_leanified, png.data(), png_size);
+                        continue;
+                    }
+                }
+            }
         }
+        memmove(fp_ + entries[i].dwImageOffset - size_leanified, fp_ + old_offset, entries[i].dwBytesInRes);
     }
 
     fp_ -= size_leanified;
