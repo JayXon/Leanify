@@ -75,7 +75,7 @@ BEGIN
             VALUE "FileDescription", "lightweight lossless file minifier/optimizer"
             VALUE "FileVersion", VERSION_STR
             VALUE "InternalName", "Leanify.exe"
-            VALUE "LegalCopyright", "Copyright (C) 2015 JayXon"
+            VALUE "LegalCopyright", "Copyright (C) 2016 JayXon"
             VALUE "OriginalFilename", "Leanify.exe"
             VALUE "ProductName", "Leanify"
             VALUE "ProductVersion", VERSION_STR
