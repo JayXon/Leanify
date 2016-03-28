@@ -122,7 +122,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
                 if (lodepng::encode(png, raw, 256, 256) == 0)
                 {
                     // Optimize the new PNG
-                    size_t png_size = Png(png.data(), png.size()).Leanify();
+                    size_t png_size = Png(png).Leanify();
                     if (png_size < entries[i].dwBytesInRes)
                     {
                         entries[i].dwBytesInRes = png_size;
