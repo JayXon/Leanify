@@ -1,5 +1,9 @@
 #include "jpeg.h"
 
+#include <csetjmp>  // for mozjpeg error handling
+#include <cstdio>
+
+#include "../lib/mozjpeg/jpeglib.h"
 
 const uint8_t Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
 bool Jpeg::keep_exif_ = false;

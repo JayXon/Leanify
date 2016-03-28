@@ -1,6 +1,7 @@
 #include "xml.h"
 
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <string>
 

@@ -1,9 +1,6 @@
 #ifndef XML_H
 #define XML_H
 
-
-#include <functional>
-
 #include "../lib/pugixml/pugixml.hpp"
 
 #include "format.h"
