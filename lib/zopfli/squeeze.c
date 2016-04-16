@@ -282,14 +282,14 @@ static double GetBestLengths(ZopfliBlockState *s,
       }
     }
     /* Lengths. */
-    for (k = 3; k <= leng && i + k <= inend; k++) {
-      double newCost;
-
+    double kmincost = mincost + costs[j];
+    int kend = leng <= inend - i ? leng : inend - i;
+    for (k = 3; k <= kend; k++) {
       /* Calling the cost model is expensive, avoid this if we are already at
       the minimum possible cost that it can return. */
-     if (costs[j + k] - costs[j] <= mincost) continue;
+      if (costs[j + k] <= kmincost) continue;
 
-      newCost = costs[j] + costmodel(k, sublen[k], costcontext);
+      double newCost = costs[j] + costmodel(k, sublen[k], costcontext);
       assert(newCost >= 0);
       if (newCost < costs[j + k]) {
         assert(k <= ZOPFLI_MAX_MATCH);

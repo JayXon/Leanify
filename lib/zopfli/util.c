@@ -33,15 +33,22 @@ Author: jyrki.alakuijala@gmail.com (Jyrki Alakuijala)
 /* __builtin_clz available beginning with GCC 3.4 */
 #elif __GNUC__ * 100 + __GNUC_MINOR__ >= 304
 # define HAS_BUILTIN_CLZ
+/* _BitScanReverse available beginning with Visual Studio 2005 */
+#elif _MSC_VER >= 1400
+# include <intrin.h> 
+# define HAS_BITSCANREVERSE
 #endif
 
 int ZopfliGetDistExtraBits(int dist) {
+  if (dist < 5) return 0;
 #ifdef HAS_BUILTIN_CLZ
-  if (dist < 5) return 0;
   return (31 ^ __builtin_clz(dist - 1)) - 1; /* log2(dist - 1) - 1 */
+#elif defined HAS_BITSCANREVERSE
+  unsigned long l;
+  _BitScanReverse(&l, dist - 1);
+  return l - 1;
 #else
-  if (dist < 5) return 0;
-  else if (dist < 9) return 1;
+  if (dist < 9) return 1;
   else if (dist < 17) return 2;
   else if (dist < 33) return 3;
   else if (dist < 65) return 4;
@@ -63,6 +70,14 @@ int ZopfliGetDistExtraBitsValue(int dist) {
     return 0;
   } else {
     int l = 31 ^ __builtin_clz(dist - 1); /* log2(dist - 1) */
+    return (dist - (1 + (1 << l))) & ((1 << (l - 1)) - 1);
+  }
+#elif defined HAS_BITSCANREVERSE
+  if (dist < 5) {
+    return 0;
+  } else {
+    unsigned long l;
+    _BitScanReverse(&l, dist - 1);
     return (dist - (1 + (1 << l))) & ((1 << (l - 1)) - 1);
   }
 #else
@@ -89,6 +104,15 @@ int ZopfliGetDistSymbol(int dist) {
     return dist - 1;
   } else {
     int l = (31 ^ __builtin_clz(dist - 1)); /* log2(dist - 1) */
+    int r = ((dist - 1) >> (l - 1)) & 1;
+    return l * 2 + r;
+  }
+#elif defined HAS_BITSCANREVERSE
+  if (dist < 5) {
+    return dist - 1;
+  } else {
+    unsigned long l;
+    _BitScanReverse(&l, dist - 1);
     int r = ((dist - 1) >> (l - 1)) & 1;
     return l * 2 + r;
   }
