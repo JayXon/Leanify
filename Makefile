@@ -8,9 +8,11 @@ ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng
 
 CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -flto
 CXXFLAGS    += --std=c++11 $(CFLAGS)
-LDFLAGS     += -s -fuse-ld=gold
+LDFLAGS     += -fuse-ld=gold
 ifeq ($(shell uname -s),Darwin)
     LDFLAGS += -liconv
+else
+    LDFLAGS += -s
 endif
 
 .PHONY:     leanify clean
