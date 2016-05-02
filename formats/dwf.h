@@ -1,5 +1,5 @@
-#ifndef DWF_H
-#define DWF_H
+#ifndef FORMATS_DWF_H_
+#define FORMATS_DWF_H_
 
 #include "format.h"
 
@@ -13,4 +13,4 @@ public:
     static const uint8_t header_magic[9];
 };
 
-#endif
+#endif  // FORMATS_DWF_H_

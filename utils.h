@@ -1,6 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
-
+#ifndef UTILS_H_
+#define UTILS_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -13,4 +12,4 @@ void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen);
 void PrintFileName(const char *name);
 void PrintFileName(const std::string& name);
 
-#endif
+#endif  // UTILS_H_

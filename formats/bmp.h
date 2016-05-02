@@ -1,6 +1,5 @@
-#ifndef BMP_H
-#define BMP_H
-
+#ifndef FORMATS_BMP_H_
+#define FORMATS_BMP_H_
 
 #include "format.h"
 
@@ -28,8 +27,7 @@ public:
         uint32_t biClrUsed;
         uint32_t biClrImportant;
     };
-
 };
 
 
-#endif
+#endif  // FORMATS_BMP_H_

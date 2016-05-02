@@ -1,6 +1,5 @@
-#ifndef FORMAT_H
-#define FORMAT_H
-
+#ifndef FORMATS_FORMAT_H_
+#define FORMATS_FORMAT_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -10,10 +9,10 @@
 class Format
 {
 public:
-    explicit Format(std::vector<uint8_t>& data) : fp_(data.data()), size_(data.size()) {};
-    explicit Format(void *p, size_t s = 0) : fp_(static_cast<uint8_t *>(p)), size_(s) {};
+    explicit Format(std::vector<uint8_t>& data) : fp_(data.data()), size_(data.size()) {}
+    explicit Format(void *p, size_t s = 0) : fp_(static_cast<uint8_t *>(p)), size_(s) {}
 
-    virtual ~Format() {};
+    virtual ~Format() {}
 
     virtual size_t Leanify(size_t size_leanified = 0)
     {
@@ -33,5 +32,4 @@ protected:
     size_t size_;
 };
 
-
-#endif
+#endif  // FORMATS_FORMAT_H_

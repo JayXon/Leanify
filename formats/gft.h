@@ -1,10 +1,7 @@
-#ifndef GFT_H
-#define GFT_H
-
+#ifndef FORMATS_GFT_H_
+#define FORMATS_GFT_H_
 
 #include "format.h"
-
-
 
 class Gft : public Format
 {
@@ -16,6 +13,4 @@ public:
     static const uint8_t header_magic[8];
 };
 
-
-
-#endif
+#endif  // FORMATS_GFT_H_

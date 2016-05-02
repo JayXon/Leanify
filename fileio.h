@@ -1,20 +1,20 @@
-#ifndef FILEIO_H
-#define FILEIO_H
+#ifndef FILEIO_H_
+#define FILEIO_H_
 
 #include <cstddef>
 
 #ifdef _WIN32
 #ifndef UNICODE
 #define UNICODE
-#endif
+#endif  // UNICODE
 #ifndef _UNICODE
 #define _UNICODE
-#endif
+#endif  // _UNICODE
 #include <Windows.h>
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
-#endif // _WIN32
+#endif  // _WIN32
 
 
 class File
@@ -24,7 +24,7 @@ public:
     explicit File(const wchar_t *filepath);
 #else
     explicit File(const char *filepath);
-#endif // _WIN32
+#endif  // _WIN32
 
     void *GetFilePionter() const
     {
@@ -48,7 +48,7 @@ private:
     HANDLE hFile_, hMap_;
 #else
     int fd_;
-#endif // _WIN32
+#endif  // _WIN32
     void *fp_;
     size_t size_;
 };
@@ -60,7 +60,7 @@ bool IsDirectory(const wchar_t path[]);
 #else
 void TraverseDirectory(const char Dir[], int Callback(const char file_path[], const struct stat *sb, int typeflag));
 bool IsDirectory(const char path[]);
-#endif // _WIN32
+#endif  // _WIN32
 
 
-#endif
+#endif  // FILEIO_H_

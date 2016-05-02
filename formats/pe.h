@@ -1,12 +1,11 @@
-#ifndef PE_H
-#define PE_H
+#ifndef FORMATS_PE_H_
+#define FORMATS_PE_H_
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
 #include "format.h"
-
 
 // PE format specification
 // http://msdn.microsoft.com/en-us/gg463119.aspx
@@ -140,4 +139,4 @@ private:
     std::vector<std::pair<uint32_t *, std::string>> rsrc_data_;
 };
 
-#endif
+#endif  // FORMATS_PE_H_

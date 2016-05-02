@@ -1,9 +1,8 @@
-#ifndef GZ_H
-#define GZ_H
+#ifndef FORMATS_GZ_H_
+#define FORMATS_GZ_H_
 
 
 #include "format.h"
-
 
 extern bool is_fast;
 extern int iterations;
@@ -18,5 +17,4 @@ public:
     static const uint8_t header_magic[3];
 };
 
-
-#endif
+#endif  // FORMATS_GZ_H_

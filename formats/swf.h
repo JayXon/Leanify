@@ -1,5 +1,5 @@
-#ifndef SWF_H
-#define SWF_H
+#ifndef FORMATS_SWF_H_
+#define FORMATS_SWF_H_
 
 #include "format.h"
 
@@ -17,8 +17,6 @@ public:
     static const uint8_t header_magic[3];
     static const uint8_t header_magic_deflate[3];
     static const uint8_t header_magic_lzma[3];
-
 };
 
-
-#endif
+#endif  // FORMATS_SWF_H_

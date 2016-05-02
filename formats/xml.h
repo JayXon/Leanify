@@ -1,13 +1,11 @@
-#ifndef XML_H
-#define XML_H
+#ifndef FORMATS_XML_H_
+#define FORMATS_XML_H_
 
 #include "../lib/pugixml/pugixml.hpp"
 
 #include "format.h"
 
-
 extern bool is_verbose;
-
 
 class Xml : public Format
 {
@@ -27,5 +25,4 @@ private:
     pugi::xml_encoding encoding_;
 };
 
-
-#endif
+#endif  // FORMATS_XML_H_

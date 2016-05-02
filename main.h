@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef MAIN_H_
+#define MAIN_H_
 
 
 #ifdef _WIN32
@@ -8,13 +8,13 @@
 #else
 #define STRTOL strtol
 #define STRCMP strcmp
-#endif // _WIN32
+#endif  // _WIN32
 
 bool is_fast;
 bool is_verbose;
 #ifdef _WIN32
 bool is_pause;
-#endif // _WIN32
+#endif  // _WIN32
 
 // iteration of zopfli
 int iterations;
@@ -24,7 +24,4 @@ int iterations;
 int depth;
 int max_depth;
 
-
-
-
-#endif
+#endif  // MAIN_H_

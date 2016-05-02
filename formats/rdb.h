@@ -1,9 +1,7 @@
-#ifndef RDB_H
-#define RDB_H
-
+#ifndef FORMATS_RDB_H_
+#define FORMATS_RDB_H_
 
 #include "format.h"
-
 
 class Rdb : public Format
 {
@@ -15,5 +13,4 @@ public:
     static const uint8_t header_magic[16];
 };
 
-
-#endif
+#endif  // FORMATS_RDB_H_

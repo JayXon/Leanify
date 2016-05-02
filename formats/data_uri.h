@@ -1,12 +1,9 @@
-#ifndef DATA_URI_H
-#define DATA_URI_H
-
+#ifndef FORMATS_DATA_URI_H_
+#define FORMATS_DATA_URI_H_
 
 #include "format.h"
 
-
 extern bool is_verbose;
-
 
 class DataURI : public Format
 {
@@ -16,5 +13,4 @@ public:
     size_t Leanify(size_t size_leanified = 0) override;
 };
 
-
-#endif
+#endif  // FORMATS_DATA_URI_H_

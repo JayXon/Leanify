@@ -1,5 +1,5 @@
-#ifndef BASE64_H
-#define BASE64_H
+#ifndef FORMATS_BASE64_H_
+#define FORMATS_BASE64_H_
 
 #include "format.h"
 
@@ -12,5 +12,4 @@ public:
 
 };
 
-
-#endif
+#endif  // FORMATS_BASE64_H_

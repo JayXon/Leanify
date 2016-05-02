@@ -1,11 +1,9 @@
-#ifndef TAR_H
-#define TAR_H
-
+#ifndef FORMATS_TAR_H_
+#define FORMATS_TAR_H_
 
 #include <cstdlib>
 
 #include "format.h"
-
 
 extern bool is_verbose;
 
@@ -30,8 +28,6 @@ private:
     int CalcChecksum(uint8_t *header) const;
 
     bool is_valid_;
-
 };
 
-
-#endif
+#endif  // FORMATS_TAR_H_

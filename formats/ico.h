@@ -1,5 +1,5 @@
-#ifndef ICO_H
-#define ICO_H
+#ifndef FORMATS_ICO_H_
+#define FORMATS_ICO_H_
 
 #include "format.h"
 
@@ -13,5 +13,4 @@ public:
     static const uint8_t header_magic[4];
 };
 
-
-#endif
+#endif  // FORMATS_ICO_H_

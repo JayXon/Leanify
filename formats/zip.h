@@ -1,16 +1,13 @@
-#ifndef ZIP_H
-#define ZIP_H
-
+#ifndef FORMATS_ZIP_H_
+#define FORMATS_ZIP_H_
 
 #include "../lib/zopfli/deflate.h"
 
 #include "format.h"
 
-
 extern bool is_fast;
 extern int iterations;
 extern int depth;
-
 
 class Zip : public Format
 {
@@ -33,5 +30,4 @@ private:
     ZopfliOptions zopfli_options_;
 };
 
-
-#endif
+#endif  // FORMATS_ZIP_H_

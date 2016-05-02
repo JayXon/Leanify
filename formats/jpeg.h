@@ -1,8 +1,7 @@
-#ifndef JPEG_H
-#define JPEG_H
+#ifndef FORMATS_JPEG_H_
+#define FORMATS_JPEG_H_
 
 #include "format.h"
-
 
 extern bool is_fast;
 extern bool is_verbose;
@@ -16,8 +15,6 @@ public:
 
     static const uint8_t header_magic[3];
     static bool keep_exif_;
-
 };
 
-
-#endif
+#endif  // FORMATS_JPEG_H_

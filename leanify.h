@@ -1,5 +1,5 @@
-#ifndef LEANIFY_H
-#define LEANIFY_H
+#ifndef LEANIFY_H_
+#define LEANIFY_H_
 
 #include <cstddef>
 #include <string>
@@ -11,5 +11,4 @@ size_t LeanifyFile(void *file_pointer, size_t file_size, size_t size_leanified =
 
 size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified = 0);
 
-
-#endif
+#endif  // LEANIFY_H_

@@ -1,9 +1,7 @@
-#ifndef LUA_H
-#define LUA_H
-
+#ifndef FORMATS_LUA_H_
+#define FORMATS_LUA_H_
 
 #include "format.h"
-
 
 class Lua : public Format
 {
@@ -19,5 +17,4 @@ private:
     uint8_t *p_read_, *p_write_;
 };
 
-
-#endif
+#endif  // FORMATS_LUA_H_
