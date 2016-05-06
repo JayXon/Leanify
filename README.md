@@ -47,6 +47,11 @@ It is based on [XML] and [ZIP].
 Office document 1997-2003 (.doc, .xls, .ppt) is not supported.
 
 
+####Data URI (.html .htm .js .css)
+
+Looks for `data:image/*;base64` and leanify base64 encoded embedded image.
+
+
 ####Design Web Format (.dwf, dwfx)
 
 It is based on [ZIP].
@@ -80,6 +85,8 @@ Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
 
 ####Icon file (.ico)
 
+Convert 256x256 BMP to [PNG].
+
 Leanify [PNG] inside, if any.
 
 
@@ -90,7 +97,7 @@ It is based on [ZIP].
 
 ####JPEG image (.jpeg, .jpg, .jpe, .jif, .jfif, .jfi, .thm)
 
-Remove all application markers (e.g. `Exif`) and comments.
+Remove all application markers (e.g. `Exif` (use `--keep-exif` to keep it), `ICC profile`, `XMP`) and comments.
 
 Optimize with `mozjpeg`.
 
@@ -111,7 +118,7 @@ Remove all debugging information:
 It is based on [XML] and [ZIP].
 
 
-####PE file (.exe, .dll, .sys, .ocx, .scr, .cpl)
+####PE file (.exe, .dll, .ocx, .scr, .cpl)
 
 Leanify embedded resource.
 
@@ -145,17 +152,21 @@ Leanify all files inside.
 Leanify embedded images.
 
 Recompress it with `LZMA`.
-  
+
 Remove Metadata Tag.
 
 
 ####SVG image (.svg, .svgz)
- 
+
 It is based on [XML].
-  
+
 Remove metadata.
 
+Shrink spaces in attributes.
+
 Remove empty attributes.
+
+Remove empty text element and container element.
 
 ####tar archive (.tar)
 
@@ -171,8 +182,8 @@ Remove all comments, unnecessary spaces, tabs, line breaks.
 
 It is based on [ZIP].
 
-Note that modifying files inside `xpi` will break digital signature if exist.
-To install it, you'll have to either delete the META-INF folder inside `xpi` or sign it again.
+Note that modifying files inside `xpi` will break digital signature.
+To install it, you'll have to sign it again.
 
 
 ####XPS document (.xps, .oxps)
@@ -184,6 +195,8 @@ It is based on [XML] and [ZIP].
 
 Leanify all files inside and recompress deflate stream using [Zopfli](https://github.com/google/zopfli).
 
+Use `STORE` method if `DEFLATE` makes file larger.
+
 Remove extra field in `Local file header`.
 
 Remove `Data descriptor structure`, write those information to `Local file header`.
@@ -192,21 +205,6 @@ Remove extra field and file comment in `Central directory file header`.
 
 Remove comment in `End of central directory record`.
 
-
-
-##To do list
-
-
-####BMP image (.bmp, .dib)
-
-
-####GIF image (.gif)
-
-
-####Microsoft Compound File Binary
-
-
-####PDF document (.pdf)
 
 
 ##Downloads
@@ -249,6 +247,7 @@ Usage: leanify [options] paths
 
 ####Linux, Mac
 
+  gcc 4.7+ or clang 3.5+ with LTO support and gold linker
 ```
 make
 ```
