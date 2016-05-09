@@ -25,11 +25,12 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     fp_ -= size_leanified;
     uint8_t *p_write = fp_;
 
-    vector<uint32_t> vector_local_header_offset;
+    vector<uint32_t> local_header_offsets;
+    // TODO: check EOF using size_
     // Local file header
     while (memcmp(p_read, header_magic, sizeof(header_magic)) == 0)
     {
-        vector_local_header_offset.push_back(p_write - fp_);
+        local_header_offsets.push_back(p_write - fp_);
 
         uint16_t filename_length = *(uint16_t *)(p_read + 26);
 
@@ -206,9 +207,15 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     uint8_t *central_directory = p_write;
     // Central directory file header
     const uint8_t cd_header_magic[] = { 0x50, 0x4B, 0x01, 0x02 };
-    
-    for (int i = 0; memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)) == 0; i++)
+
+    // TODO: check EOF using size_
+    for (uint32_t local_header_offset : local_header_offsets)
     {
+        if (memcmp(p_read, cd_header_magic, sizeof(cd_header_magic)))
+        {
+            cerr << "Central directory header magic mismatch!" << endl;
+            break;
+        }
         int header_size = 46 + *(uint16_t *)(p_read + 28);
         // move header
         if (p_read - p_write)
@@ -233,7 +240,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
             *(uint16_t *)(p_write + 32) = 0;
         }
 
-        uint8_t *local_header = fp_ + vector_local_header_offset[i];
+        uint8_t *local_header = fp_ + local_header_offset;
 
         // copy new CRC-32, Compressed size, Uncompressed size_
         // from Local file header to Central directory file header
@@ -243,7 +250,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
         *(uint16_t *)(p_write + 10) = *(uint16_t *)(local_header + 8);
 
         // new Local file header offset
-        *(uint32_t *)(p_write + 42) = vector_local_header_offset[i];
+        *(uint32_t *)(p_write + 42) = local_header_offset;
 
         p_read += header_size;
         p_write += header_size;
@@ -254,7 +261,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     if (memcmp(p_read, eocd_header_magic, sizeof(eocd_header_magic)))
     {
         cerr << "EOCD not found!" << endl;
-
+        // TODO: properly handle this error.
     }
     if (p_read - p_write)
     {
@@ -268,6 +275,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/)
     *(uint16_t *)(p_write + 20) = 0;
 
     // 22 is the length of EOCD
-    return p_write + 22 - fp_;
+    size_ = p_write + 22 - fp_;
+    return size_;
 }
 
