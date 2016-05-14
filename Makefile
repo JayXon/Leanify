@@ -6,9 +6,9 @@ PUGIXML_OBJ     := lib/pugixml/pugixml.o
 ZOPFLI_OBJ      := lib/zopfli/hash.o lib/zopfli/squeeze.o lib/zopfli/gzip_container.o lib/zopfli/katajainen.o lib/zopfli/zopfli_lib.o lib/zopfli/cache.o lib/zopfli/zlib_container.o lib/zopfli/util.o lib/zopfli/tree.o lib/zopfli/deflate.o lib/zopfli/blocksplitter.o lib/zopfli/lz77.o
 ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng_util.o lib/zopflipng/zopflipng_lib.o
 
-CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -flto
+CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -fno-exceptions -fno-rtti -flto
 CXXFLAGS    += --std=c++11 $(CFLAGS)
-LDFLAGS     += -fuse-ld=gold
+LDFLAGS     += -flto -fuse-ld=gold
 ifeq ($(shell uname -s),Darwin)
     LDFLAGS += -liconv
 else
