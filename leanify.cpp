@@ -227,10 +227,10 @@ size_t ZlibRecompress(void *src, size_t src_len, size_t size_leanified /*= 0*/)
             if (new_size < src_len)
             {
                 memcpy(static_cast<uint8_t *>(src) - size_leanified, out_buffer, new_size);
-                delete[] out_buffer;
+                free(out_buffer);
                 return new_size;
             }
-            delete[] out_buffer;
+            free(out_buffer);
         }
     }
 
