@@ -119,31 +119,43 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/)
     fp_ -= size_leanified;
     size_ = p_write - fp_;
 
+    size_t resultpng_size = 0;
 
-    ZopfliPNGOptions zopflipng_options;
-    zopflipng_options.use_zopfli = !is_fast;
-    zopflipng_options.lossy_transparent = true;
-    // see the switch above for information about these chunks
-    zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
-    zopflipng_options.num_iterations = iterations;
-    zopflipng_options.num_iterations_large = iterations / 3 + 1;
-
-    const vector<uint8_t> origpng(fp_, fp_ + size_);
-    vector<uint8_t> resultpng;
-
-    if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
     {
-        // only use the result PNG if it is smaller
-        // sometimes the original PNG is already highly optimized
-        // then maybe ZopfliPNG will produce bigger file
-        if (resultpng.size() < size_)
+        ZopfliPNGOptions zopflipng_options;
+        zopflipng_options.use_zopfli = !is_fast;
+        zopflipng_options.lossy_transparent = true;
+        // see the switch above for information about these chunks
+        zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
+        zopflipng_options.num_iterations = iterations;
+        zopflipng_options.num_iterations_large = iterations;
+
+        const vector<uint8_t> origpng(fp_, fp_ + size_);
+        vector<uint8_t> resultpng;
+
+        if (!ZopfliPNGOptimize(origpng, zopflipng_options, is_verbose, &resultpng))
         {
-            memcpy(fp_, resultpng.data(), resultpng.size());
-            return resultpng.size();
+            // only use the result PNG if it is smaller
+            // sometimes the original PNG is already highly optimized
+            // then maybe ZopfliPNG will produce bigger file
+            resultpng_size = resultpng.size();
+            if (resultpng.size() < size_)
+            {
+                size_ = resultpng_size;
+                memcpy(fp_, resultpng.data(), resultpng_size);
+                return size_;
+            }
+        }
+        else
+        {
+            cerr << "ZopfliPNG failed!" << endl;
         }
     }
 
-    if (idat_addr)
+    // If the result is exactly the same size as before, chances are it was optimized by ZopfliPNG.
+    // So there's no need to try Zopfli only, but if it's very small file, that might be a coincidence,
+    // even if it's not, it won't take much time.
+    if (idat_addr && (resultpng_size != size_ || size_ < 32768))
     {
         // sometimes the strategy chosen by ZopfliPNG is worse than original
         // then try to recompress IDAT chunk using only Zopfli
