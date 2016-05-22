@@ -8,21 +8,41 @@ ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng
 
 CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -fno-exceptions -flto
 CXXFLAGS    += $(CFLAGS) --std=c++11 -fno-rtti
-LDFLAGS     += -flto -fuse-ld=gold
-ifeq ($(shell uname -s),Darwin)
-    LDFLAGS += -liconv
+LDFLAGS     += -flto
+
+ifeq ($(OS), Windows_NT)
+    SYSTEM  := Windows
 else
+    SYSTEM  := $(shell uname -s)
+endif
+
+# Gold linker only supports Linux
+ifeq ($(SYSTEM), Linux)
+    LDFLAGS += -fuse-ld=gold
+endif
+
+ifeq ($(SYSTEM), Darwin)
+    LDLIBS  += -liconv
+else
+    # -s is "obsolete" on mac
     LDFLAGS += -s
+endif
+
+# Multithread in LZMA SDK is only supported on Windows
+ifeq ($(SYSTEM), Windows)
+    LZMA_OBJ    += lib/LZMA/LzFindMt.o lib/LZMA/Threads.o
+else
+    LZMA_CFLAGS := -D _7ZIP_ST
 endif
 
 .PHONY:     leanify clean
 
 leanify:    $(LEANIFY_SRC) $(LZMA_OBJ) $(MINIZ_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OBJ) $(ZOPFLIPNG_OBJ)
-	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+
+$(LZMA_OBJ):    CFLAGS += $(LZMA_CFLAGS)
 
 $(MINIZ_OBJ):   CFLAGS += -Wno-strict-aliasing
-
-$(LZMA_OBJ):    CFLAGS += -D _7ZIP_ST
 
 $(ZOPFLI_OBJ):  CFLAGS += -Wno-unused-function
 
