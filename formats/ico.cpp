@@ -107,17 +107,20 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
                     cout << "Converting 256x256 BMP to PNG..." << endl;
                 }
                 // BMP stores ARGB in little endian, so it's actually BGRA, convert it to normal RGBA
-                // It also stores the pixels backwards for some reason, so reverse it.
-                uint8_t *bmp = fp_ + old_offset + dib->biSize + 256 * 256 * 4;
+                // It also stores the pixels upside down for some reason, so reverse it.
+                uint8_t *bmp_row = fp_ + old_offset + dib->biSize + 256 * 256 * 4;
                 vector<uint8_t> raw(256 * 256 * 4), png;
                 // TODO: detect 0RGB and convert it to RGBA using mask
-                for (size_t j = 0; j < 256 * 256; j++)
+                for (size_t j = 0; j < 256; j++)
                 {
-                    bmp -= 4;
-                    raw[j * 4 + 0] = bmp[2];
-                    raw[j * 4 + 1] = bmp[1];
-                    raw[j * 4 + 2] = bmp[0];
-                    raw[j * 4 + 3] = bmp[3];
+                    bmp_row -= 256 * 4;
+                    for (size_t k = 0; k < 256; k++)
+                    {
+                        raw[(j * 256 + k) * 4 + 0] = bmp_row[k * 4 + 2];
+                        raw[(j * 256 + k) * 4 + 1] = bmp_row[k * 4 + 1];
+                        raw[(j * 256 + k) * 4 + 2] = bmp_row[k * 4 + 0];
+                        raw[(j * 256 + k) * 4 + 3] = bmp_row[k * 4 + 3];
+                    }
                 }
                 if (lodepng::encode(png, raw, 256, 256) == 0)
                 {
