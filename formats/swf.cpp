@@ -32,6 +32,14 @@ void UpdateTagLength(uint8_t *tag_content, size_t header_length, size_t new_leng
     }
 }
 
+size_t GetRECTSize(uint8_t *rect)
+{
+    // The first 5 bits.
+    uint8_t nbits = *rect >> 3;
+    // Xmin, Xmax, Ymin, Ymax takes nbits each, round the sum to bytes.
+    return (5 + nbits * 4 + 7) / 8;
+}
+
 } // namespace
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/)
@@ -89,7 +97,8 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/)
     }
 
     // parsing SWF tags
-    uint8_t *p = in_buffer + 13;      // skip FrameSize(9B) + FrameRate(2B) + FrameCount(2B) = 13B
+    uint8_t *p = in_buffer + GetRECTSize(in_buffer);    // skip FrameSize which is a RECT
+    p += 4;     // skip FrameRate(2 Byte) + FrameCount(2 Byte) = 4 Byte
     size_t tag_size_leanified = 0;
     do
     {
