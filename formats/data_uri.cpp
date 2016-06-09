@@ -17,22 +17,20 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/)
     while (p_read < fp_ + size_)
     {
         const string magic = "data:image/";
-        uint8_t *new_p_read = std::search(p_read, fp_ + size_, magic.begin(), magic.end());
-        // move anything in between
-        memmove(p_write, p_read, new_p_read - p_read);
-        p_write += new_p_read - p_read;
-        p_read = new_p_read;
+        uint8_t* data_magic = std::search(p_read, fp_ + size_, magic.begin(), magic.end());
 
-        if (p_read >= fp_ + size_)
+        if (data_magic >= fp_ + size_)
         {
+            memmove(p_write, p_read, fp_ + size_ - p_read);
+            p_write += fp_ + size_ - p_read;
             break;
         }
 
         const string base64_sign = ";base64,";
         // data:image/png;base64,   data:image/jpeg;base64,
         // maximum gap is 4
-        uint8_t *search_end = p_read + magic.size() + 4 + base64_sign.size();
-        uint8_t *start = std::search(p_read + magic.size(), search_end, base64_sign.begin(), base64_sign.end()) + base64_sign.size();
+        uint8_t* search_end = data_magic + magic.size() + 4 + base64_sign.size();
+        uint8_t* start = std::search(data_magic + magic.size(), search_end, base64_sign.begin(), base64_sign.end()) + base64_sign.size();
 
         memmove(p_write, p_read, start - p_read);
         p_write += start - p_read;
@@ -43,24 +41,22 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/)
             continue;
         }
 
-        const char quote[] = { '\'', '"', ')' };
-        uint8_t *end = std::find_first_of(p_read, fp_ + size_, quote, quote + sizeof(quote));
-        if (end < fp_ + size_)
-        {
-            if (is_verbose)
-            {
-                cout << string(reinterpret_cast<char *>(new_p_read), start + 8 - new_p_read) << "... found at offset 0x" << std::hex << new_p_read - fp_ << std::dec << endl;
-            }
-            size_t new_size = Base64(p_read, end - p_read).Leanify(p_read - p_write);
-            p_write += new_size;
-            p_read = end;
-        }
-        else
+        const string quote = "'\")";
+        uint8_t* end = std::find_first_of(p_read, fp_ + size_, quote.begin(), quote.end());
+        if (end >= fp_ + size_)
         {
             memmove(p_write, p_read, fp_ + size_ - p_read);
             p_write += fp_ + size_ - p_read;
-            p_read = fp_ + size_;
+            break;
         }
+
+        if (is_verbose)
+        {
+            cout << string(reinterpret_cast<char *>(data_magic), start + 8 - data_magic) << "... found at offset 0x" << std::hex << data_magic - fp_ << std::dec << endl;
+        }
+        size_t new_size = Base64(p_read, end - p_read).Leanify(p_read - p_write);
+        p_write += new_size;
+        p_read = end;
     }
     fp_ -= size_leanified;
     size_ = p_write - fp_;
