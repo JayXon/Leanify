@@ -18,6 +18,7 @@
 #include "formats/swf.h"
 #include "formats/tar.h"
 #include "formats/rdb.h"
+#include "formats/vcf.h"
 #include "formats/xml.h"
 #include "formats/zip.h"
 
@@ -53,6 +54,14 @@ Format *GetType(void *file_pointer, size_t file_size, const string& filename)
                     cout << ext << " detected." << endl;
                 }
                 return new DataURI(file_pointer, file_size);
+            }
+            if (ext == "VCF")
+            {
+                if (is_verbose)
+                {
+                    cout << ext << " detected." << endl;
+                }
+                return new Vcf(file_pointer, file_size);
             }
         }
 
