@@ -45,7 +45,8 @@ size_t Mime::Leanify(size_t size_leanified /*= 0*/)
             break;
         }
 
-        uint8_t* end = std::search(start, fp_ + size_, double_crlf.begin(), double_crlf.end());
+        const string dash_boundary = "\r\n--";
+        uint8_t* end = std::search(start, fp_ + size_, dash_boundary.begin(), dash_boundary.end());
         if (end >= fp_ + size_)
         {
             memmove(p_write, p_read, fp_ + size_ - p_read);
