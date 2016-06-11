@@ -13,6 +13,7 @@
 #include "formats/ico.h"
 #include "formats/jpeg.h"
 #include "formats/lua.h"
+#include "formats/mime.h"
 #include "formats/pe.h"
 #include "formats/png.h"
 #include "formats/swf.h"
@@ -62,6 +63,18 @@ Format *GetType(void *file_pointer, size_t file_size, const string& filename)
                     cout << ext << " detected." << endl;
                 }
                 return new Vcf(file_pointer, file_size);
+            }
+            if (ext == "MHT" ||
+                ext == "MHTML" ||
+                ext == "MIM" ||
+                ext == "MIME" ||
+                ext == "EML" )
+            {
+                if (is_verbose)
+                {
+                    cout << ext << " detected." << endl;
+                }
+                return new Mime(file_pointer, file_size);
             }
         }
 

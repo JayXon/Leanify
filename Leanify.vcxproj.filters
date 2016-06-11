@@ -279,6 +279,9 @@
     <ClCompile Include="formats\vcf.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
+    <ClCompile Include="formats\mime.cpp">
+      <Filter>Source Files\formats</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h">
@@ -351,6 +354,9 @@
       <Filter>Header Files\formats</Filter>
     </ClInclude>
     <ClInclude Include="formats\data_uri.h">
+      <Filter>Header Files\formats</Filter>
+    </ClInclude>
+    <ClInclude Include="formats\mime.h">
       <Filter>Header Files\formats</Filter>
     </ClInclude>
   </ItemGroup>
