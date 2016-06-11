@@ -37,7 +37,7 @@ struct IconDirEntry
 size_t Ico::Leanify(size_t size_leanified /*= 0*/)
 {
     // number of images inside ico file
-    uint16_t num_of_img = *(uint16_t *)(fp_ + 4);
+    const uint16_t num_of_img = *(uint16_t *)(fp_ + 4);
 
     // size too small
     if (6 + num_of_img * sizeof(IconDirEntry) >= size_)
@@ -140,6 +140,12 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/)
 
     fp_ -= size_leanified;
 
+    // write headers if moved
+    if (size_leanified)
+    {
+        memcpy(fp_, header_magic, sizeof(header_magic));
+        *(uint16_t *)(fp_ + 4) = num_of_img;
+    }
     // write new entries
     memcpy(fp_ + 6, entries.data(), entries.size() * sizeof(IconDirEntry));
 
