@@ -4,3 +4,6 @@
 *.exe
 *.vcxproj.user
 *.aps
+*.res
+*.o
+*.a
