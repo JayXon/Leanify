@@ -1,5 +1,6 @@
 #include "leanify.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "lib/miniz/miniz.h"
@@ -56,7 +57,8 @@ Format *GetType(void *file_pointer, size_t file_size, const string& filename)
                 }
                 return new DataURI(file_pointer, file_size);
             }
-            if (ext == "VCF")
+            if (ext == "VCF" ||
+                ext == "VCARD")
             {
                 if (is_verbose)
                 {
@@ -171,6 +173,19 @@ Format *GetType(void *file_pointer, size_t file_size, const string& filename)
     }
     else
     {
+        // Search for vcard magic which might not be at the very beginning.
+        const string vcard_magic = "BEGIN:VCARD";
+        const char* fp = static_cast<char*>(file_pointer);
+        const char* search_end = fp + std::min(static_cast<size_t>(1024), file_size);
+        if (std::search(fp, search_end, vcard_magic.begin(), vcard_magic.end()) < search_end)
+        {
+            if (is_verbose)
+            {
+                cout << "VCF detected." << endl;
+            }
+            return new Vcf(file_pointer, file_size);
+        }
+
         // tar file does not have header magic
         // ustar is optional
         {
