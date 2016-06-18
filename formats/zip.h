@@ -1,7 +1,7 @@
 #ifndef FORMATS_ZIP_H_
 #define FORMATS_ZIP_H_
 
-#include "../lib/zopfli/deflate.h"
+#include <zopfli/deflate.h>
 
 #include "format.h"
 

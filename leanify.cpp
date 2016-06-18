@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include "lib/miniz/miniz.h"
-#include "lib/zopfli/zlib_container.h"
+#include <miniz/miniz.h>
+#include <zopfli/zlib_container.h>
 
 #include "formats/data_uri.h"
 #include "formats/dwf.h"

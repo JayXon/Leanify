@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../lib/zopflipng/lodepng/lodepng.h"
+#include <zopflipng/lodepng/lodepng.h>
 
 #include "bmp.h"
 #include "png.h"

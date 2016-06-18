@@ -7,6 +7,7 @@ ZOPFLI_OBJ      := lib/zopfli/hash.o lib/zopfli/squeeze.o lib/zopfli/gzip_contai
 ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng_util.o lib/zopflipng/zopflipng_lib.o
 
 CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -fno-exceptions -flto
+CPPFLAGS    += -I./lib
 CXXFLAGS    += $(CFLAGS) --std=c++11 -fno-rtti
 LDFLAGS     += -flto
 
@@ -38,7 +39,7 @@ endif
 .PHONY:     leanify clean
 
 leanify:    $(LEANIFY_SRC) $(LZMA_OBJ) $(MINIZ_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OBJ) $(ZOPFLIPNG_OBJ)
-	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(LZMA_OBJ):    CFLAGS += $(LZMA_CFLAGS)
 

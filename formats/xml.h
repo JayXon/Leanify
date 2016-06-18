@@ -1,7 +1,7 @@
 #ifndef FORMATS_XML_H_
 #define FORMATS_XML_H_
 
-#include "../lib/pugixml/pugixml.hpp"
+#include <pugixml/pugixml.hpp>
 
 #include "format.h"
 

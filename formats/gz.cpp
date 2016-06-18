@@ -4,8 +4,8 @@
 #include <cstring>
 #include <iostream>
 
-#include "../lib/miniz/miniz.h"
-#include "../lib/zopfli/deflate.h"
+#include <miniz/miniz.h>
+#include <zopfli/deflate.h>
 
 #include "../leanify.h"
 #include "../utils.h"

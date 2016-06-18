@@ -4,8 +4,8 @@
 #include <cstring>
 #include <iostream>
 
-#include "../lib/miniz/miniz.h"
-#include "../lib/zopflipng/zopflipng_lib.h"
+#include <miniz/miniz.h>
+#include <zopflipng/zopflipng_lib.h>
 
 #include "../leanify.h"
 
