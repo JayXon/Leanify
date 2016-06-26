@@ -3,6 +3,7 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <string>
 
 #include "../leanify.h"
@@ -14,7 +15,7 @@ using std::endl;
 using std::string;
 
 
-Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s)
+Xml::Xml(void* p, size_t s /*= 0*/) : Format(p, s)
 {
     pugi::xml_parse_result result = doc_.load_buffer(fp_, size_, pugi::parse_default | pugi::parse_declaration | pugi::parse_doctype | pugi::parse_ws_pcdata_single);
     is_valid_ = result;
@@ -24,6 +25,74 @@ Xml::Xml(void *p, size_t s /*= 0*/) : Format(p, s)
 
 namespace
 {
+// https://github.com/svg/svgo/blob/master/plugins/_collections.js
+const std::map<string, string> kDefaultAttributes = {
+    {"x", "0"},
+    {"y" , "0"},
+    {"width" , "100%"},
+    {"height" , "100%"},
+    {"clip", "auto"},
+    {"clip-path", "none"},
+    {"clip-rule", "nonzero"},
+    {"mask", "none"},
+    {"opacity", "1"},
+    {"solid-color", "#000"},
+    {"solid-opacity", "1"},
+    {"stop-color", "#000"},
+    {"stop-opacity", "1"},
+    {"fill-opacity", "1"},
+    {"fill-rule", "nonzero"},
+    {"fill", "#000"},
+    {"stroke", "none"},
+    {"stroke-width", "1"},
+    {"stroke-linecap", "butt"},
+    {"stroke-linejoin", "miter"},
+    {"stroke-miterlimit", "4"},
+    {"stroke-dasharray", "none"},
+    {"stroke-dashoffset", "0"},
+    {"stroke-opacity", "1"},
+    {"paint-order", "normal"},
+    {"vector-effect", "none"},
+    {"viewport-fill", "none"},
+    {"viewport-fill-opacity", "1"},
+    {"display", "inline"},
+    {"visibility", "visible"},
+    {"marker-start", "none"},
+    {"marker-mid", "none"},
+    {"marker-end", "none"},
+    {"color-interpolation", "sRGB"},
+    {"color-interpolation-filters", "linearRGB"},
+    {"color-rendering", "auto"},
+    {"shape-rendering", "auto"},
+    {"text-rendering", "auto"},
+    {"image-rendering", "auto"},
+    {"buffered-rendering", "auto"},
+    {"font-style", "normal"},
+    {"font-variant", "normal"},
+    {"font-weight", "normal"},
+    {"font-stretch", "normal"},
+    {"font-size", "medium"},
+    {"font-size-adjust", "none"},
+    {"kerning", "auto"},
+    {"letter-spacing", "normal"},
+    {"word-spacing", "normal"},
+    {"text-decoration", "none"},
+    {"text-anchor", "start"},
+    {"text-overflow", "clip"},
+    {"writing-mode", "lr-tb"},
+    {"glyph-orientation-vertical", "auto"},
+    {"glyph-orientation-horizontal", "0deg"},
+    {"direction", "ltr"},
+    {"unicode-bidi", "normal"},
+    {"dominant-baseline", "auto"},
+    {"alignment-baseline", "baseline"},
+    {"baseline-shift", "baseline"},
+    {"slope", "1"},
+    {"intercept", "0"},
+    {"amplitude", "1"},
+    {"exponent", "1"},
+    {"offset", "0"}
+};
 
 // shrink spaces and newlines, also removes preceding and trailing spaces
 string ShrinkSpace(const char* value)
@@ -36,7 +105,8 @@ string ShrinkSpace(const char* value)
             do
             {
                 value++;
-            } while (*value == ' ' || *value == '\n' || *value == '\t');
+            }
+            while (*value == ' ' || *value == '\n' || *value == '\t');
             if (*value == 0)
             {
                 break;
@@ -91,7 +161,7 @@ void RemovePCDataSingle(pugi::xml_node node, bool xml_space_preserve)
 
 struct xml_memory_writer : pugi::xml_writer
 {
-    uint8_t *p_write;
+    uint8_t* p_write;
 
     void write(const void* data, size_t size) override
     {
@@ -99,7 +169,6 @@ struct xml_memory_writer : pugi::xml_writer
         p_write += size;
     }
 };
-
 } // namespace
 
 
@@ -133,7 +202,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
 
                 PrintFileName(id.value());
 
-                const char *base64_data = binary.child_value();
+                const char* base64_data = binary.child_value();
                 if (base64_data == nullptr)
                 {
                     cout << "No data found." << endl;
@@ -141,7 +210,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 }
                 size_t base64_len = strlen(base64_data);
                 // copy to a new location because base64_data is const
-                char *new_base64_data = new char[base64_len + 1];
+                char* new_base64_data = new char[base64_len + 1];
                 memcpy(new_base64_data, base64_data, base64_len);
 
                 Base64 b64(new_base64_data, base64_len);
@@ -180,15 +249,44 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
             for (pugi::xml_attribute attr = node.first_attribute(), next; attr; attr = next)
             {
                 next = attr.next_attribute();
-                const char* value = attr.value();
-                // remove empty attribute
-                if (value == nullptr || *value == 0)
+
+                string value = ShrinkSpace(attr.value());
+                // Remove empty attribute
+                if (value.empty())
                 {
                     node.remove_attribute(attr);
                     continue;
                 }
 
-                attr = ShrinkSpace(value).c_str();
+                // Remove default attribute
+                auto it = kDefaultAttributes.find(attr.name());
+                if (it != kDefaultAttributes.end() && it->second == value)
+                {
+                    // Only remove it if it's not an override of a parent non-default attribute
+                    bool is_override = false;
+                    for (pugi::xml_node n = node.parent(); n; n = n.parent())
+                    {
+                        pugi::xml_attribute n_attr = n.attribute(attr.name());
+                        // Stop at the first parent that has the same attribute, we can safely remove the attribute in the current node if this parent has the same value,
+                        // even if there's another parent higher up in the tree which has a different value for this attribute
+                        // (in which case we won't be able to remove the default attribute in this parent).
+                        if (!n_attr.empty())
+                        {
+                            if (n_attr.value() != value)
+                            {
+                                is_override = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (!is_override)
+                    {
+                        node.remove_attribute(attr);
+                        continue;
+                    }
+                }
+
+                attr = value.c_str();
             }
 
             // remove empty text element and container element
@@ -212,7 +310,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 }
             }
 
-            if (strcmp(name, "tref") == 0 && node.attribute("xlink:href") == nullptr)
+            if (strcmp(name, "tref") == 0 && node.attribute("xlink:href").empty())
             {
                 node.parent().remove_child(node);
                 return;
