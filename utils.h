@@ -7,9 +7,9 @@
 
 extern int depth;
 
-void UTF16toMBS(const wchar_t *u, size_t srclen, char *mbs, size_t dstlen);
+void UTF16toMBS(const wchar_t* u, size_t srclen, char* mbs, size_t dstlen);
 
-void PrintFileName(const char *name);
+void PrintFileName(const char* name);
 void PrintFileName(const std::string& name);
 
 #endif  // UTILS_H_

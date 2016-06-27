@@ -1,10 +1,9 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-
 #ifdef _WIN32
 #define STRTOL wcstol
-#define STRCMP(X, Y) wcscmp(X, L ## Y)
+#define STRCMP(X, Y) wcscmp(X, L##Y)
 #else
 #define STRTOL strtol
 #define STRCMP strcmp

@@ -1,9 +1,9 @@
 #ifndef VERSION_H_
 #define VERSION_H_
 
-#define VERSION_MAJOR   0
-#define VERSION_MINOR   4
-#define VERSION_BUILD   3
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 4
+#define VERSION_BUILD 3
 
 #define _STR(x) #x
 #define STR(x) _STR(x)

@@ -3,14 +3,13 @@
 
 #include "format.h"
 
-class Dwf : public Format
-{
-public:
-    using Format::Format;
+class Dwf : public Format {
+ public:
+  using Format::Format;
 
-    size_t Leanify(size_t size_leanified = 0) override;
+  size_t Leanify(size_t size_leanified = 0) override;
 
-    static const uint8_t header_magic[9];
+  static const uint8_t header_magic[9];
 };
 
 #endif  // FORMATS_DWF_H_

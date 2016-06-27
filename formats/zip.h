@@ -9,25 +9,22 @@ extern bool is_fast;
 extern int iterations;
 extern int depth;
 
-class Zip : public Format
-{
-public:
-    explicit Zip(void *p, size_t s = 0) : Format(p, s)
-    {
-        ZopfliInitOptions(&zopfli_options_);
-        zopfli_options_.numiterations = iterations;
-    }
-    ~Zip()
-    {
-        depth--;
-    }
+class Zip : public Format {
+ public:
+  explicit Zip(void* p, size_t s = 0) : Format(p, s) {
+    ZopfliInitOptions(&zopfli_options_);
+    zopfli_options_.numiterations = iterations;
+  }
+  ~Zip() {
+    depth--;
+  }
 
-    size_t Leanify(size_t size_leanified = 0) override;
+  size_t Leanify(size_t size_leanified = 0) override;
 
-    static const uint8_t header_magic[4];
+  static const uint8_t header_magic[4];
 
-private:
-    ZopfliOptions zopfli_options_;
+ private:
+  ZopfliOptions zopfli_options_;
 };
 
 #endif  // FORMATS_ZIP_H_
