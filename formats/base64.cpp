@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <vector>
 
 #include "../leanify.h"
 
@@ -123,22 +124,20 @@ size_t Base64::Leanify(size_t size_leanified /*= 0*/)
 {
     // 4 base64 character contains information of 3 bytes
     size_t binary_len = size_ * 3 / 4;
-    uint8_t *binary_data = new uint8_t[binary_len];
+    std::vector<uint8_t> binary_data(binary_len);
 
-    if (Base64Decode(fp_, size_, binary_data, &binary_len))
+    if (Base64Decode(fp_, size_, binary_data.data(), &binary_len))
     {
         std::cerr << "Base64 decode error." << std::endl;
-        delete[] binary_data;
         return Format::Leanify(size_leanified);
     }
 
     // Leanify embedded file
-    binary_len = LeanifyFile(binary_data, binary_len);
+    binary_len = LeanifyFile(binary_data.data(), binary_len);
 
     fp_ -= size_leanified;
     // encode back
-    size_ = Base64Encode(binary_data, binary_len, fp_);
+    size_ = Base64Encode(binary_data.data(), binary_len, fp_);
 
-    delete[] binary_data;
     return size_;
 }

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "../leanify.h"
 #include "../utils.h"
@@ -203,26 +204,22 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/)
                 PrintFileName(id.value());
 
                 const char* base64_data = binary.child_value();
-                if (base64_data == nullptr)
+                if (base64_data == nullptr || base64_data[0] == 0)
                 {
                     cout << "No data found." << endl;
                     continue;
                 }
                 size_t base64_len = strlen(base64_data);
                 // copy to a new location because base64_data is const
-                char* new_base64_data = new char[base64_len + 1];
-                memcpy(new_base64_data, base64_data, base64_len);
+                std::vector<char> new_base64_data(base64_data, base64_data + base64_len + 1);
 
-                Base64 b64(new_base64_data, base64_len);
-                size_t new_base64_len = b64.Leanify();
+                size_t new_base64_len = Base64(new_base64_data.data(), base64_len).Leanify();
 
                 if (new_base64_len < base64_len)
                 {
                     new_base64_data[new_base64_len] = 0;
-                    binary.text() = new_base64_data;
+                    binary.text() = new_base64_data.data();
                 }
-
-                delete[] new_base64_data;
             }
             depth--;
         }
