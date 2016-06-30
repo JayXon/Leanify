@@ -38,11 +38,14 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/) {
       continue;
 
     const string quote = "'\")";
-    uint8_t* end = std::find_first_of(p_read, fp_ + size_, quote.begin(), quote.end());
-    if (end >= fp_ + size_) {
-      memmove(p_write, p_read, fp_ + size_ - p_read);
-      p_write += fp_ + size_ - p_read;
-      break;
+    uint8_t* end = fp_ + size_;
+    if (!single_mode_) {
+      end = std::find_first_of(p_read, fp_ + size_, quote.begin(), quote.end());
+      if (end >= fp_ + size_) {
+        memmove(p_write, p_read, fp_ + size_ - p_read);
+        p_write += fp_ + size_ - p_read;
+        break;
+      }
     }
 
     if (is_verbose) {
