@@ -24,9 +24,9 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/) {
     }
 
     const string base64_sign = ";base64,";
-    // data:image/png;base64,   data:image/jpeg;base64,
-    // maximum gap is 4
-    uint8_t* search_end = data_magic + magic.size() + 4 + base64_sign.size();
+    const size_t kMaxSearchGap = 64;
+    uint8_t* search_end = data_magic + magic.size() + kMaxSearchGap + base64_sign.size();
+    search_end = std::min(search_end, fp_ + size_);
     uint8_t* start =
         std::search(data_magic + magic.size(), search_end, base64_sign.begin(), base64_sign.end()) + base64_sign.size();
 
