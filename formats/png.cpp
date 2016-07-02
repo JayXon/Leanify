@@ -8,6 +8,7 @@
 #include <zopflipng/zopflipng_lib.h>
 
 #include "../leanify.h"
+#include "../utils.h"
 
 #ifdef _MSC_VER
 #define bswap32(x) _byteswap_ulong(x)
@@ -137,9 +138,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
   if (idat_addr && (resultpng_size != size_ || size_ < 32768)) {
     // sometimes the strategy chosen by ZopfliPNG is worse than original
     // then try to recompress IDAT chunk using only Zopfli
-    if (is_verbose) {
-      cout << "ZopfliPNG failed to reduce size, try Zopfli only." << endl;
-    }
+    VerbosePrint("ZopfliPNG failed to reduce size, try Zopfli only.");
     uint32_t idat_length = bswap32(*(uint32_t*)idat_addr);
     uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
     if (idat_length != new_idat_length) {

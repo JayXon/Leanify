@@ -12,8 +12,6 @@
 #include "base64.h"
 #include "data_uri.h"
 
-using std::cout;
-using std::endl;
 using std::string;
 
 Xml::Xml(void* p, size_t s /*= 0*/) : Format(p, s) {
@@ -155,9 +153,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
 
   // if the XML is fb2 file
   if (doc_.child("FictionBook")) {
-    if (is_verbose) {
-      cout << "FB2 detected." << endl;
-    }
+    VerbosePrint("FB2 detected.");
     if (depth < max_depth) {
       depth++;
 
@@ -176,7 +172,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
 
         const char* base64_data = binary.child_value();
         if (base64_data == nullptr || base64_data[0] == 0) {
-          cout << "No data found." << endl;
+          VerbosePrint("No data found.");
           continue;
         }
         size_t base64_len = strlen(base64_data);
@@ -193,9 +189,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
       depth--;
     }
   } else if (doc_.child("svg")) {
-    if (is_verbose) {
-      cout << "SVG detected." << endl;
-    }
+    VerbosePrint("SVG detected.");
 
     // remove XML declaration and doctype
     for (pugi::xml_node child = doc_.first_child(), next; child; child = next) {

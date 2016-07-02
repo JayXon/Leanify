@@ -6,10 +6,10 @@
 
 #include <zopflipng/lodepng/lodepng.h>
 
+#include "../utils.h"
 #include "bmp.h"
 #include "png.h"
 
-using std::cout;
 using std::cerr;
 using std::endl;
 using std::vector;
@@ -83,9 +83,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/) {
           dib->biCompression == 0 &&                                           // BI_RGB aka no compression
           dib->biSize + std::max(dib->biSizeImage, 256 * 256 * 4U) <= entries[i].dwBytesInRes &&
           (dib->biSizeImage == 0 || dib->biSizeImage >= 256 * 256 * 4U) && dib->biClrUsed == 0) {
-        if (is_verbose) {
-          cout << "Converting 256x256 BMP to PNG..." << endl;
-        }
+        VerbosePrint("Converting 256x256 BMP to PNG...");
         // BMP stores ARGB in little endian, so it's actually BGRA, convert it to normal RGBA
         // It also stores the pixels upside down for some reason, so reverse it.
         uint8_t* bmp_row = fp_ + old_offset + dib->biSize + 256 * 256 * 4;

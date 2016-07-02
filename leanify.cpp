@@ -23,9 +23,9 @@
 #include "formats/vcf.h"
 #include "formats/xml.h"
 #include "formats/zip.h"
+#include "utils.h"
 
 using std::cerr;
-using std::cout;
 using std::endl;
 using std::string;
 
@@ -42,81 +42,53 @@ Format* GetType(void* file_pointer, size_t file_size, const string& filename) {
         c &= ~0x20;
 
       if (ext == "HTML" || ext == "HTM" || ext == "JS" || ext == "CSS") {
-        if (is_verbose) {
-          cout << ext << " detected." << endl;
-        }
+        VerbosePrint(ext, " detected.");
         return new DataURI(file_pointer, file_size);
       }
       if (ext == "VCF" || ext == "VCARD") {
-        if (is_verbose) {
-          cout << ext << " detected." << endl;
-        }
+        VerbosePrint(ext, " detected.");
         return new Vcf(file_pointer, file_size);
       }
       if (ext == "MHT" || ext == "MHTML" || ext == "MIM" || ext == "MIME" || ext == "EML") {
-        if (is_verbose) {
-          cout << ext << " detected." << endl;
-        }
+        VerbosePrint(ext, " detected.");
         return new Mime(file_pointer, file_size);
       }
     }
   }
   if (memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "PNG detected." << endl;
-    }
+    VerbosePrint("PNG detected.");
     return new Png(file_pointer, file_size);
   } else if (memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "JPEG detected." << endl;
-    }
+    VerbosePrint("JPEG detected.");
     return new Jpeg(file_pointer, file_size);
   } else if (memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "Lua detected." << endl;
-    }
+    VerbosePrint("Lua detected.");
     return new Lua(file_pointer, file_size);
   } else if (memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "ZIP detected." << endl;
-    }
+    VerbosePrint("ZIP detected.");
     return new Zip(file_pointer, file_size);
   } else if (memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "PE detected." << endl;
-    }
+    VerbosePrint("PE detected.");
     return new Pe(file_pointer, file_size);
   } else if (memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "GZ detected." << endl;
-    }
+    VerbosePrint("GZ detected.");
     return new Gz(file_pointer, file_size);
   } else if (memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "ICO detected." << endl;
-    }
+    VerbosePrint("ICO detected.");
     return new Ico(file_pointer, file_size);
   } else if (memcmp(file_pointer, Dwf::header_magic, sizeof(Dwf::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "DWF detected." << endl;
-    }
+    VerbosePrint("DWF detected.");
     return new Dwf(file_pointer, file_size);
   } else if (memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "GFT detected." << endl;
-    }
+    VerbosePrint("GFT detected.");
     return new Gft(file_pointer, file_size);
   } else if (memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)) == 0) {
-    if (is_verbose) {
-      cout << "RDB detected." << endl;
-    }
+    VerbosePrint("RDB detected.");
     return new Rdb(file_pointer, file_size);
   } else if (memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) == 0 ||
              memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) == 0 ||
              memcmp(file_pointer, Swf::header_magic_lzma, sizeof(Swf::header_magic_lzma)) == 0) {
-    if (is_verbose) {
-      cout << "SWF detected." << endl;
-    }
+    VerbosePrint("SWF detected.");
     return new Swf(file_pointer, file_size);
   } else {
     // Search for vcard magic which might not be at the very beginning.
@@ -124,9 +96,7 @@ Format* GetType(void* file_pointer, size_t file_size, const string& filename) {
     const char* fp = static_cast<char*>(file_pointer);
     const char* search_end = fp + std::min(static_cast<size_t>(1024), file_size);
     if (std::search(fp, search_end, vcard_magic.begin(), vcard_magic.end()) < search_end) {
-      if (is_verbose) {
-        cout << "VCF detected." << endl;
-      }
+      VerbosePrint("VCF detected.");
       return new Vcf(file_pointer, file_size);
     }
 
@@ -136,9 +106,7 @@ Format* GetType(void* file_pointer, size_t file_size, const string& filename) {
       Tar* t = new Tar(file_pointer, file_size);
       // checking first record checksum
       if (t->IsValid()) {
-        if (is_verbose) {
-          cout << "tar detected." << endl;
-        }
+        VerbosePrint("tar detected.");
         return t;
       }
       delete t;
@@ -149,18 +117,14 @@ Format* GetType(void* file_pointer, size_t file_size, const string& filename) {
     {
       Xml* x = new Xml(file_pointer, file_size);
       if (x->IsValid()) {
-        if (is_verbose) {
-          cout << "XML detected." << endl;
-        }
+        VerbosePrint("XML detected.");
         return x;
       }
       delete x;
     }
   }
 
-  if (is_verbose) {
-    cout << "Format not supported!" << endl;
-  }
+  VerbosePrint("Format not supported!");
   // for unsupported format, just memmove it.
   return new Format(file_pointer, file_size);
 }

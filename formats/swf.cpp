@@ -8,9 +8,9 @@
 #include <miniz/miniz.h>
 
 #include "../leanify.h"
+#include "../utils.h"
 
 using std::cerr;
-using std::cout;
 using std::endl;
 
 const uint8_t Swf::header_magic[] = { 'F', 'W', 'S' };
@@ -45,9 +45,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   // if SWF is compressed, decompress it first
   if (*fp_ == 'C') {
     // deflate
-    if (is_verbose) {
-      cout << "SWF is compressed with deflate." << endl;
-    }
+    VerbosePrint("SWF is compressed with deflate.");
     size_t s = 0;
     in_buffer =
         static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(in_buffer, size_ - 8, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
@@ -58,9 +56,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     }
   } else if (*fp_ == 'Z') {
     // LZMA
-    if (is_verbose) {
-      cout << "SWF is compressed with LZMA." << endl;
-    }
+    VerbosePrint("SWF is compressed with LZMA.");
     // | 4 bytes         | 4 bytes   | 4 bytes       | 5 bytes    | n bytes   | 6 bytes         |
     // | 'ZWS' + version | scriptLen | compressedLen | LZMA props | LZMA data | LZMA end marker |
     uint8_t* dst_buffer = new uint8_t[in_len];
@@ -74,8 +70,8 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       return Format::Leanify(size_leanified);
     }
     in_buffer = dst_buffer;
-  } else if (is_verbose) {
-    cout << "SWF is not compressed." << endl;
+  } else {
+    VerbosePrint("SWF is not compressed.");
   }
 
   // parsing SWF tags
@@ -101,9 +97,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       case 36:  // DefineBitsLossless2
       {
         size_t header_size = 7 + (p[3] == 3);
-        if (is_verbose) {
-          cout << "DefineBitsLossless tag found." << endl;
-        }
+        VerbosePrint("DefineBitsLossless tag found.");
         if (tag_size_leanified)
           memmove(p - tag_size_leanified, p, header_size);
 
@@ -116,9 +110,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       }
       case 21:  // DefineBitsJPEG2
       {
-        if (is_verbose) {
-          cout << "DefineBitsJPEG2 tag found." << endl;
-        }
+        VerbosePrint("DefineBitsJPEG2 tag found.");
         // copy id
         *(uint16_t*)(p - tag_size_leanified) = *(uint16_t*)p;
 
@@ -138,9 +130,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
         uint32_t img_size = *(uint32_t*)(p + 2);
         size_t header_size = tag_type == 90 ? 8 : 6;
 
-        if (is_verbose) {
-          cout << "DefineBitsJPEG" << header_size / 2 << " tag found." << endl;
-        }
+        VerbosePrint("DefineBitsJPEG", header_size / 2, " tag found.");
         // Leanify embedded image
         size_t new_img_size = LeanifyFile(p + header_size, img_size, tag_size_leanified);
         *(uint32_t*)(p + 2 - tag_size_leanified) = new_img_size;
@@ -155,9 +145,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
         break;
       }
       case 77:  // Metadata
-        if (is_verbose) {
-          cout << "Metadata removed." << endl;
-        }
+        VerbosePrint("Metadata removed.");
         tag_size_leanified += tag_length + tag_header_length;
         break;
       case 69:            // FileAttributes

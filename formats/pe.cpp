@@ -9,7 +9,6 @@
 #include "../utils.h"
 
 using std::cerr;
-using std::cout;
 using std::endl;
 using std::string;
 
@@ -49,9 +48,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   if (optional_header->Subsystem == 1) {
-    if (is_verbose) {
-      cout << ".sys (driver file) detected, skip." << endl;
-    }
+    VerbosePrint(".sys (driver file) detected, skip.");
     return Format::Leanify(size_leanified);
   }
 
@@ -75,9 +72,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
     *(uint32_t*)(fp_ - size_leanified + 0x3C) = new_pe_header_offset;
   } else {
     // this file probably already packed with some extreme packer
-    if (is_verbose) {
-      cout << "PE Header already overlaps DOS Header." << endl;
-    }
+    VerbosePrint("PE Header already overlaps DOS Header.");
     if (size_leanified) {
       // move entire SizeOfHeaders to make sure nothing was missed
       memmove(fp_ - size_leanified, fp_, *(uint32_t*)(fp_ + pe_header_offset + 0x54));
@@ -137,9 +132,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
         total_header_size -= sizeof(ImageSectionHeader);
         i--;
 
-        if (is_verbose) {
-          cout << "Relocation Table removed." << endl;
-        }
+        VerbosePrint("Relocation Table removed.");
       }
     } else if (rsrc_virtual_address && section_table[i].VirtualAddress == rsrc_virtual_address) {
       rsrc_raw_offset = section_table[i].PointerToRawData;
@@ -193,9 +186,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
       TraverseRSRC(reinterpret_cast<ImageResourceDirectory*>(fp_ + rsrc_raw_offset));
     }
 
-    if (is_verbose) {
-      cout << rsrc_data_.size() << " embedded resources found." << endl;
-    }
+    VerbosePrint(rsrc_data_.size(), " embedded resources found.");
     // sort it according to it's data offset
     std::sort(rsrc_data_.begin(), rsrc_data_.end(),
               [](const std::pair<uint32_t*, string>& a, const std::pair<uint32_t*, string>& b) {
@@ -205,9 +196,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
 
     // detect non standard resource, maybe produced by some packer
     if (last_end < rsrc_virtual_address || last_end > rsrc_virtual_address + rsrc_virtual_size) {
-      if (is_verbose) {
-        cout << "Non standard resource detected." << endl;
-      }
+      VerbosePrint("Non standard resource detected.");
       if (reloc_raw_size) {
         // move everything before reloc
         memmove(fp_ - size_leanified + header_size_aligned, fp_ + header_size_aligned + pe_size_leanified,
@@ -330,10 +319,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
 
   optional_header->SizeOfImage -= reloc_virtual_size + rsrc_decrease_size;
 
-  if (is_verbose) {
-    cout << "Update Section Table." << endl;
-  }
-  // update Section Table
+  VerbosePrint("Update Section Table.");
+
   for (int i = 0; i < image_file_header->NumberOfSections; i++) {
     if (section_table[i].VirtualAddress > reloc_virtual_address) {
       section_table[i].VirtualAddress -= reloc_virtual_size;
