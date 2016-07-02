@@ -26,12 +26,8 @@ void UTF16toMBS(const wchar_t* u, size_t srclen, char* mbs, size_t dstlen) {
 #endif  // _WIN32
 }
 
-void PrintFileName(const char* name) {
+void PrintFileName(const string& name) {
   for (int i = 1; i < depth; i++)
     cout << "-> ";
   cout << name << endl;
-}
-
-void PrintFileName(const string& name) {
-  PrintFileName(name.c_str());
 }
