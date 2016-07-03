@@ -87,9 +87,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       tag_header_length += 4;
     }
 
-    if (tag_size_leanified)
-      memmove(p - tag_size_leanified, p, tag_header_length);
-
+    memmove(p - tag_size_leanified, p, tag_header_length);
     p += tag_header_length;
 
     switch (tag_type) {
@@ -98,8 +96,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       {
         size_t header_size = 7 + (p[3] == 3);
         VerbosePrint("DefineBitsLossless tag found.");
-        if (tag_size_leanified)
-          memmove(p - tag_size_leanified, p, header_size);
+        memmove(p - tag_size_leanified, p, header_size);
 
         // recompress Zlib bitmap data
         size_t new_data_size = ZlibRecompress(p + header_size, tag_length - header_size, tag_size_leanified);
@@ -151,8 +148,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       case 69:            // FileAttributes
         *p &= ~(1 << 4);  // set HasMetadata bit to 0
       default:
-        if (tag_size_leanified)
-          memmove(p - tag_size_leanified, p, tag_length);
+        memmove(p - tag_size_leanified, p, tag_length);
     }
     p += tag_length;
   } while (p < in_buffer + in_len);
@@ -162,14 +158,12 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   if (is_fast) {
     // write header
     fp_ -= size_leanified;
+    memmove(fp_, fp_ + size_leanified, 4);
 
     // decompressed size (including header)
     *(uint32_t*)(fp_ + 4) = size_ = in_len + 8;
 
-    if (size_leanified) {
-      memmove(fp_, fp_ + size_leanified, 4);
-      memmove(fp_ + 8, fp_ + 8 + size_leanified, in_len);
-    }
+    memmove(fp_ + 8, fp_ + 8 + size_leanified, in_len);
     return size_;
   }
 
@@ -212,7 +206,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     *(uint32_t*)(fp_ + 8) = s - LZMA_PROPS_SIZE;
 
     memcpy(fp_ + 12, dst, s);
-  } else if (size_leanified) {
+  } else {
     memmove(fp_, fp_ + size_leanified, size_);
   }
 

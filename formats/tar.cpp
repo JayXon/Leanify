@@ -27,8 +27,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
     if (checksum == 256)
       break;
 
-    if (size_leanified)
-      memmove(p_write, p_read, 512);
+    memmove(p_write, p_read, 512);
 
     p_read += 512;
     if (checksum != strtol(reinterpret_cast<char*>(p_write) + 148, nullptr, 8)) {

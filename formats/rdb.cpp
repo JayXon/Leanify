@@ -38,9 +38,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/) {
   uint64_t content_offset = index_offset + *(uint64_t*)(p_read + 0x1C);
 
   // move header and indexes
-  if (size_leanified) {
-    memmove(fp_, p_read, (size_t)content_offset);
-  }
+  memmove(fp_, p_read, (size_t)content_offset);
 
   uint8_t* p_index = fp_ + index_offset;
   p_read += content_offset;

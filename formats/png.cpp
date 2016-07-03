@@ -30,9 +30,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
   uint8_t* p_read = fp_;
   uint8_t* p_write = p_read - size_leanified;
 
-  if (size_leanified) {
-    memmove(p_write, p_read, sizeof(header_magic));
-  }
+  memmove(p_write, p_read, sizeof(header_magic));
 
   p_read += sizeof(header_magic);
   p_write += sizeof(header_magic);
@@ -90,9 +88,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     }
 
     // move this chunk
-    if (p_write != p_read) {
-      memmove(p_write, p_read, chunk_length);
-    }
+    memmove(p_write, p_read, chunk_length);
 
     // skip whole chunk
     p_write += chunk_length;

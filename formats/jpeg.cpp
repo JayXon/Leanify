@@ -98,7 +98,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   if (outsize < size_) {
     memcpy(fp_, outbuffer, outsize);
     size_ = outsize;
-  } else if (size_leanified) {
+  } else {
     memmove(fp_, fp_ + size_leanified, size_);
   }
 
