@@ -4,7 +4,10 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
+#include <LZMA/Alloc.h>
+#include <LZMA/LzmaEnc.h>
 #include <LZMA/LzmaLib.h>
 #include <miniz/miniz.h>
 
@@ -13,6 +16,7 @@
 
 using std::cerr;
 using std::endl;
+using std::vector;
 
 const uint8_t Swf::header_magic[] = { 'F', 'W', 'S' };
 const uint8_t Swf::header_magic_deflate[] = { 'C', 'W', 'S' };
@@ -32,6 +36,31 @@ size_t GetRECTSize(uint8_t* rect) {
   uint8_t nbits = *rect >> 3;
   // Xmin, Xmax, Ymin, Ymax takes nbits each, round the sum to bytes.
   return (5 + nbits * 4 + 7) / 8;
+}
+
+bool LZMACompress(const uint8_t* src, size_t src_len, vector<uint8_t>* out) {
+  // Reserve enough space.
+  out->resize(src_len + src_len / 8);
+
+  CLzmaEncProps props;
+  LzmaEncProps_Init(&props);
+  props.level = 9;
+  // Word size (the number of fast bytes)
+  props.fb = 256;
+  // MatchFinderCycles
+  props.mc = 1 << 30;
+  // We already know uncompressed data size, use it to reduce dictionary size.
+  props.reduceSize = src_len;
+  // SWF need end mark
+  props.writeEndMark = 1;
+
+  size_t out_size = out->size() - LZMA_PROPS_SIZE, props_size = LZMA_PROPS_SIZE;
+  if (LzmaEncode(out->data() + LZMA_PROPS_SIZE, &out_size, src, src_len, &props, out->data(), &props_size,
+                 props.writeEndMark, nullptr, &g_Alloc, &g_Alloc))
+    return false;
+
+  out->resize(props_size + out_size);
+  return true;
 }
 
 }  // namespace
@@ -173,13 +202,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   // compress with LZMA
-  size_t s = in_len + in_len / 4, props = LZMA_PROPS_SIZE;
-  uint8_t* dst = new uint8_t[s + LZMA_PROPS_SIZE];
-  // have to set writeEndMark to true
-  if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, std::min(9, iterations), 1 << 24, -1, -1,
-                   -1, 128, -1)) {
+  vector<uint8_t> lzma_data;
+  if (!LZMACompress(in_buffer, in_len, &lzma_data)) {
     cerr << "LZMA compression failed." << endl;
-    s = size_;
+    lzma_data.clear();
   }
 
   // free decompressed data
@@ -190,9 +216,8 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
 
   fp_ -= size_leanified;
 
-  s += LZMA_PROPS_SIZE;
-  if (s + 12 < size_) {
-    size_ = s + 12;
+  if (!lzma_data.empty() && lzma_data.size() + 12 < size_) {
+    size_ = lzma_data.size() + 12;
 
     // write header
     memcpy(fp_, header_magic_lzma, sizeof(header_magic_lzma));
@@ -204,14 +229,12 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     *(uint32_t*)(fp_ + 4) = in_len + 8;
 
     // compressed size: LZMA data + end mark
-    *(uint32_t*)(fp_ + 8) = s - LZMA_PROPS_SIZE;
+    *(uint32_t*)(fp_ + 8) = lzma_data.size() - LZMA_PROPS_SIZE;
 
-    memcpy(fp_ + 12, dst, s);
+    memcpy(fp_ + 12, lzma_data.data(), lzma_data.size());
   } else {
     memmove(fp_, fp_ + size_leanified, size_);
   }
-
-  delete[] dst;
 
   return size_;
 }
