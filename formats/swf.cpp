@@ -1,5 +1,6 @@
 #include "swf.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -91,9 +92,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     p += tag_header_length;
 
     switch (tag_type) {
-      case 20:  // DefineBitsLossless
-      case 36:  // DefineBitsLossless2
-      {
+      // DefineBitsLossless
+      case 20:
+      // DefineBitsLossless2
+      case 36: {
         size_t header_size = 7 + (p[3] == 3);
         VerbosePrint("DefineBitsLossless tag found.");
         memmove(p - tag_size_leanified, p, header_size);
@@ -105,8 +107,8 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
         tag_size_leanified += tag_length - header_size - new_data_size;
         break;
       }
-      case 21:  // DefineBitsJPEG2
-      {
+      // DefineBitsJPEG2
+      case 21: {
         VerbosePrint("DefineBitsJPEG2 tag found.");
         // copy id
         *(uint16_t*)(p - tag_size_leanified) = *(uint16_t*)p;
@@ -118,9 +120,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
         tag_size_leanified += tag_length - 2 - new_size;
         break;
       }
-      case 35:  // DefineBitsJPEG3
-      case 90:  // DefineBitsJPEG4
-      {
+      // DefineBitsJPEG3
+      case 35:
+      // DefineBitsJPEG4
+      case 90: {
         // copy id
         *(uint16_t*)(p - tag_size_leanified) = *(uint16_t*)p;
 
@@ -141,11 +144,13 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
         tag_size_leanified += tag_length - new_tag_size;
         break;
       }
-      case 77:  // Metadata
+      // Metadata
+      case 77:
         VerbosePrint("Metadata removed.");
         tag_size_leanified += tag_length + tag_header_length;
         break;
-      case 69:            // FileAttributes
+      // FileAttributes
+      case 69:
         *p &= ~(1 << 4);  // set HasMetadata bit to 0
       default:
         memmove(p - tag_size_leanified, p, tag_length);
@@ -171,18 +176,17 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   size_t s = in_len + in_len / 4, props = LZMA_PROPS_SIZE;
   uint8_t* dst = new uint8_t[s + LZMA_PROPS_SIZE];
   // have to set writeEndMark to true
-  if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, iterations < 9 ? iterations : 9, 1 << 24,
-                   -1, -1, -1, 128, -1)) {
+  if (LzmaCompress(dst + LZMA_PROPS_SIZE, &s, in_buffer, in_len, dst, &props, std::min(9, iterations), 1 << 24, -1, -1,
+                   -1, 128, -1)) {
     cerr << "LZMA compression failed." << endl;
     s = size_;
   }
 
   // free decompressed data
-  if (*fp_ == 'C') {
+  if (*fp_ == 'C')
     mz_free(in_buffer);
-  } else if (*fp_ == 'Z') {
+  else if (*fp_ == 'Z')
     delete[] in_buffer;
-  }
 
   fp_ -= size_leanified;
 
@@ -194,10 +198,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     memcpy(fp_, header_magic_lzma, sizeof(header_magic_lzma));
 
     // write SWF version, at least 13 to support LZMA
-    if (fp_[3 + size_leanified] < 13)
-      fp_[3] = 13;
-    else
-      fp_[3] = fp_[3 + size_leanified];
+    fp_[3] = std::max(static_cast<uint8_t>(13), fp_[3 + size_leanified]);
 
     // decompressed size (including header)
     *(uint32_t*)(fp_ + 4) = in_len + 8;
