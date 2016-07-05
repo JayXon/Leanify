@@ -240,9 +240,6 @@
     <ClCompile Include="lib\LZMA\LzmaEnc.c">
       <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>
-    <ClCompile Include="lib\LZMA\LzmaLib.c">
-      <Filter>Source Files\lib\LZMA</Filter>
-    </ClCompile>
     <ClCompile Include="lib\LZMA\LzFindMt.c">
       <Filter>Source Files\lib\LZMA</Filter>
     </ClCompile>

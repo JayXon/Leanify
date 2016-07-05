@@ -7,8 +7,8 @@
 #include <vector>
 
 #include <LZMA/Alloc.h>
+#include <LZMA/LzmaDec.h>
 #include <LZMA/LzmaEnc.h>
-#include <LZMA/LzmaLib.h>
 #include <miniz/miniz.h>
 
 #include "../leanify.h"
@@ -63,6 +63,16 @@ bool LZMACompress(const uint8_t* src, size_t src_len, vector<uint8_t>* out) {
   return true;
 }
 
+bool LZMADecompress(const uint8_t* src, size_t src_len, uint8_t* dst, size_t dst_len) {
+  size_t decompressed_size = dst_len, lzma_size = src_len - LZMA_PROPS_SIZE;
+  ELzmaStatus status;
+  if (LzmaDecode(dst, &decompressed_size, src + LZMA_PROPS_SIZE, &lzma_size, src, LZMA_PROPS_SIZE, LZMA_FINISH_END,
+                 &status, &g_Alloc))
+    return false;
+
+  return decompressed_size == dst_len;
+}
+
 }  // namespace
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
@@ -90,11 +100,9 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     // | 4 bytes         | 4 bytes   | 4 bytes       | 5 bytes    | n bytes   | 6 bytes         |
     // | 'ZWS' + version | scriptLen | compressedLen | LZMA props | LZMA data | LZMA end marker |
     uint8_t* dst_buffer = new uint8_t[in_len];
-    size_t s = in_len, len = size_ - 12 - LZMA_PROPS_SIZE;
     // check compressed length
-    if (*(uint32_t*)in_buffer != len ||
-        LzmaUncompress(dst_buffer, &s, in_buffer + 4 + LZMA_PROPS_SIZE, &len, in_buffer + 4, LZMA_PROPS_SIZE) ||
-        s != in_len) {
+    if (*(uint32_t*)in_buffer != size_ - 12 - LZMA_PROPS_SIZE ||
+        !LZMADecompress(in_buffer + 4, size_ - 12, dst_buffer, in_len)) {
       cerr << "SWF file corrupted!" << endl;
       delete[] dst_buffer;
       return Format::Leanify(size_leanified);
