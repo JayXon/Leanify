@@ -39,9 +39,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="fileio.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="formats\bmp.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
@@ -278,6 +275,9 @@
     </ClCompile>
     <ClCompile Include="formats\mime.cpp">
       <Filter>Source Files\formats</Filter>
+    </ClCompile>
+    <ClCompile Include="fileio_win.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

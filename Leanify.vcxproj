@@ -171,7 +171,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="fileio.cpp" />
+    <ClCompile Include="fileio_win.cpp" />
     <ClCompile Include="formats\base64.cpp" />
     <ClCompile Include="formats\bmp.cpp" />
     <ClCompile Include="formats\data_uri.cpp" />
