@@ -9,6 +9,14 @@
 extern int depth;
 extern bool is_verbose;
 
+#ifdef _MSC_VER
+#define BSWAP32(x) _byteswap_ulong(x)
+#elif defined __GNUC__
+#define BSWAP32(x) __builtin_bswap32(x)
+#else
+#define BSWAP32(x) _bswap(x)
+#endif
+
 void UTF16toMBS(const wchar_t* u, size_t srclen, char* mbs, size_t dstlen);
 
 void PrintFileName(const std::string& name);

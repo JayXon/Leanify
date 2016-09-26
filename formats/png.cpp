@@ -10,14 +10,6 @@
 #include "../leanify.h"
 #include "../utils.h"
 
-#ifdef _MSC_VER
-#define bswap32(x) _byteswap_ulong(x)
-#elif defined __GNUC__
-#define bswap32(x) __builtin_bswap32(x)
-#else
-#define bswap32(x) _bswap(x)
-#endif
-
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -44,7 +36,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     // read chunk length
     // use bswap to convert Big-Endian to Little-Endian
     // 12 = length: 4 + type: 4 + crc: 4
-    uint32_t chunk_length = bswap32(*(uint32_t*)p_read) + 12;
+    uint32_t chunk_length = BSWAP32(*(uint32_t*)p_read) + 12;
 
     // detect truncated file
     if (p_read + chunk_length > fp_ + size_) {
@@ -135,11 +127,11 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     // sometimes the strategy chosen by ZopfliPNG is worse than original
     // then try to recompress IDAT chunk using only Zopfli
     VerbosePrint("ZopfliPNG failed to reduce size, try Zopfli only.");
-    uint32_t idat_length = bswap32(*(uint32_t*)idat_addr);
+    uint32_t idat_length = BSWAP32(*(uint32_t*)idat_addr);
     uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
     if (idat_length != new_idat_length) {
-      *(uint32_t*)idat_addr = bswap32(new_idat_length);
-      *(uint32_t*)(idat_addr + new_idat_length + 8) = bswap32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
+      *(uint32_t*)idat_addr = BSWAP32(new_idat_length);
+      *(uint32_t*)(idat_addr + new_idat_length + 8) = BSWAP32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
       uint8_t* idat_end = idat_addr + idat_length + 12;
       memmove(idat_addr + new_idat_length + 12, idat_end, fp_ + size_ - idat_end);
       size_ -= idat_length - new_idat_length;
