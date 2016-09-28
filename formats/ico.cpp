@@ -35,8 +35,8 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/) {
   // number of images inside ico file
   const uint16_t num_of_img = *(uint16_t*)(fp_ + 4);
 
-  // size too small
-  if (6 + num_of_img * sizeof(IconDirEntry) >= size_) {
+  // corrupt file: no image or file size too small
+  if (num_of_img == 0 || 6 + num_of_img * sizeof(IconDirEntry) >= size_) {
     return Format::Leanify(size_leanified);
   }
 
