@@ -49,8 +49,11 @@ size_t DataURI::Leanify(size_t size_leanified /*= 0*/) {
     }
 
     if (is_verbose) {
-      cout << string(reinterpret_cast<char*>(data_magic), start + 8 - data_magic) << "... found at offset 0x"
-           << std::hex << data_magic - fp_ << std::dec << endl;
+      cout << string(reinterpret_cast<char*>(data_magic), start + 8 - data_magic) << "... found";
+      if (!single_mode_) {
+        cout << " at offset 0x" << std::hex << data_magic - fp_ << std::dec;
+      }
+      cout << endl;
     }
     size_t new_size = Base64(p_read, end - p_read).Leanify(p_read - p_write);
     p_write += new_size;
