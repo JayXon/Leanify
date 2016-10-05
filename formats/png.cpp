@@ -55,13 +55,17 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     // tRNS has transparency information
     if (chunk_type & 0x20) {
       switch (chunk_type) {
-        case 0x534E5274:  // tRNS     transparent
         case 0x4C546361:  // acTL     APNG
         case 0x4C546366:  // fcTL     APNG
         case 0x54416466:  // fdAT     APNG    TODO: use Zopfli to recompress fdAT
         case 0x6354706E:  // npTc     Android 9Patch images (*.9.png)
           break;
 
+        case 0x534E5274:  // tRNS     transparent
+          // tRNS must be before IDAT according to PNG spec
+          if (idat_addr == nullptr)
+            break;
+          // Fallthrough to remove it
         default:
           if (is_verbose) {
             // chunk name
