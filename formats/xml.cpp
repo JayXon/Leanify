@@ -12,6 +12,7 @@
 #include "base64.h"
 #include "data_uri.h"
 
+using std::map;
 using std::string;
 
 Xml::Xml(void* p, size_t s /*= 0*/) : Format(p, s) {
@@ -23,71 +24,94 @@ Xml::Xml(void* p, size_t s /*= 0*/) : Format(p, s) {
 
 namespace {
 // https://github.com/svg/svgo/blob/master/plugins/_collections.js
-const std::map<string, string> kDefaultAttributes = { { "x", "0" },
-                                                      { "y", "0" },
-                                                      { "width", "100%" },
-                                                      { "height", "100%" },
-                                                      { "clip", "auto" },
-                                                      { "clip-path", "none" },
-                                                      { "clip-rule", "nonzero" },
-                                                      { "mask", "none" },
-                                                      { "opacity", "1" },
-                                                      { "solid-color", "#000" },
-                                                      { "solid-opacity", "1" },
-                                                      { "stop-color", "#000" },
-                                                      { "stop-opacity", "1" },
-                                                      { "fill-opacity", "1" },
-                                                      { "fill-rule", "nonzero" },
-                                                      { "fill", "#000" },
-                                                      { "stroke", "none" },
-                                                      { "stroke-width", "1" },
-                                                      { "stroke-linecap", "butt" },
-                                                      { "stroke-linejoin", "miter" },
-                                                      { "stroke-miterlimit", "4" },
-                                                      { "stroke-dasharray", "none" },
-                                                      { "stroke-dashoffset", "0" },
-                                                      { "stroke-opacity", "1" },
-                                                      { "paint-order", "normal" },
-                                                      { "vector-effect", "none" },
-                                                      { "viewport-fill", "none" },
-                                                      { "viewport-fill-opacity", "1" },
-                                                      { "display", "inline" },
-                                                      { "visibility", "visible" },
-                                                      { "marker-start", "none" },
-                                                      { "marker-mid", "none" },
-                                                      { "marker-end", "none" },
-                                                      { "color-interpolation", "sRGB" },
-                                                      { "color-interpolation-filters", "linearRGB" },
-                                                      { "color-rendering", "auto" },
-                                                      { "shape-rendering", "auto" },
-                                                      { "text-rendering", "auto" },
-                                                      { "image-rendering", "auto" },
-                                                      { "buffered-rendering", "auto" },
-                                                      { "font-style", "normal" },
-                                                      { "font-variant", "normal" },
-                                                      { "font-weight", "normal" },
-                                                      { "font-stretch", "normal" },
-                                                      { "font-size", "medium" },
-                                                      { "font-size-adjust", "none" },
-                                                      { "kerning", "auto" },
-                                                      { "letter-spacing", "normal" },
-                                                      { "word-spacing", "normal" },
-                                                      { "text-decoration", "none" },
-                                                      { "text-anchor", "start" },
-                                                      { "text-overflow", "clip" },
-                                                      { "writing-mode", "lr-tb" },
-                                                      { "glyph-orientation-vertical", "auto" },
-                                                      { "glyph-orientation-horizontal", "0deg" },
-                                                      { "direction", "ltr" },
-                                                      { "unicode-bidi", "normal" },
-                                                      { "dominant-baseline", "auto" },
-                                                      { "alignment-baseline", "baseline" },
-                                                      { "baseline-shift", "baseline" },
-                                                      { "slope", "1" },
-                                                      { "intercept", "0" },
-                                                      { "amplitude", "1" },
-                                                      { "exponent", "1" },
-                                                      { "offset", "0" } };
+const map<string, string> kCommonDefaultAttributes = { { "x", "0" },
+                                                       { "y", "0" },
+                                                       { "clip", "auto" },
+                                                       { "clip-path", "none" },
+                                                       { "clip-rule", "nonzero" },
+                                                       { "mask", "none" },
+                                                       { "opacity", "1" },
+                                                       { "solid-color", "#000" },
+                                                       { "solid-opacity", "1" },
+                                                       { "stop-color", "#000" },
+                                                       { "stop-opacity", "1" },
+                                                       { "fill-opacity", "1" },
+                                                       { "fill-rule", "nonzero" },
+                                                       { "fill", "#000" },
+                                                       { "stroke", "none" },
+                                                       { "stroke-width", "1" },
+                                                       { "stroke-linecap", "butt" },
+                                                       { "stroke-linejoin", "miter" },
+                                                       { "stroke-miterlimit", "4" },
+                                                       { "stroke-dasharray", "none" },
+                                                       { "stroke-dashoffset", "0" },
+                                                       { "stroke-opacity", "1" },
+                                                       { "paint-order", "normal" },
+                                                       { "vector-effect", "none" },
+                                                       { "viewport-fill", "none" },
+                                                       { "viewport-fill-opacity", "1" },
+                                                       { "display", "inline" },
+                                                       { "visibility", "visible" },
+                                                       { "marker-start", "none" },
+                                                       { "marker-mid", "none" },
+                                                       { "marker-end", "none" },
+                                                       { "color-interpolation", "sRGB" },
+                                                       { "color-interpolation-filters", "linearRGB" },
+                                                       { "color-rendering", "auto" },
+                                                       { "shape-rendering", "auto" },
+                                                       { "text-rendering", "auto" },
+                                                       { "image-rendering", "auto" },
+                                                       { "buffered-rendering", "auto" },
+                                                       { "font-style", "normal" },
+                                                       { "font-variant", "normal" },
+                                                       { "font-weight", "normal" },
+                                                       { "font-stretch", "normal" },
+                                                       { "font-size", "medium" },
+                                                       { "font-size-adjust", "none" },
+                                                       { "kerning", "auto" },
+                                                       { "letter-spacing", "normal" },
+                                                       { "word-spacing", "normal" },
+                                                       { "text-decoration", "none" },
+                                                       { "text-anchor", "start" },
+                                                       { "text-overflow", "clip" },
+                                                       { "writing-mode", "lr-tb" },
+                                                       { "glyph-orientation-vertical", "auto" },
+                                                       { "glyph-orientation-horizontal", "0deg" },
+                                                       { "direction", "ltr" },
+                                                       { "unicode-bidi", "normal" },
+                                                       { "dominant-baseline", "auto" },
+                                                       { "alignment-baseline", "baseline" },
+                                                       { "baseline-shift", "baseline" },
+                                                       { "slope", "1" },
+                                                       { "intercept", "0" },
+                                                       { "amplitude", "1" },
+                                                       { "exponent", "1" },
+                                                       { "offset", "0" },
+                                                       { "preserveAspectRatio", "xMidYMid" } };
+
+const map<string, map<string, string>> kSingleDefaultAttributes = {
+  { "a", { { "target", "_self" } } },
+  { "svg",
+    { { "width", "100%" },
+      { "height", "100%" },
+      { "zoomAndPan", "magnify" },
+      { "baseProfile", "none" },
+      { "contentScriptType", "application/ecmascript" },
+      { "contentStyleType", "text/css" } } },
+  { "filter",
+    { { "primitiveUnits", "userSpaceOnUse" },
+      { "x", "-10%" },
+      { "y", "-10%" },
+      { "width", "120%" },
+      { "height", "120%" } } },
+  { "mask",
+    { { "maskUnits", "objectBoundingBox" },
+      { "maskContentUnits", "userSpaceOnUse" },
+      { "x", "-10%" },
+      { "y", "-10%" },
+      { "width", "120%" },
+      { "height", "120%" } } }
+};
 
 // shrink spaces and newlines, also removes preceding and trailing spaces
 string ShrinkSpace(const char* value) {
@@ -136,6 +160,34 @@ void RemovePCDataSingle(pugi::xml_node node, bool xml_space_preserve) {
 
   for (pugi::xml_node child : node.children())
     RemovePCDataSingle(child, xml_space_preserve);
+}
+
+// Check the parent and ancestor of the given node if the attribute is an override
+bool IsOverride(pugi::xml_node node, const char* name, const string& value) {
+  for (pugi::xml_node n = node.parent(); n; n = n.parent()) {
+    pugi::xml_attribute n_attr = n.attribute(name);
+    // Stop at the first parent that has the same attribute, we can safely remove the attribute in the current node if
+    // this parent has the same value, even if there's another parent higher up in the tree which has a different value
+    // for this attribute (in which case we won't be able to remove the default attribute in this parent).
+    if (!n_attr.empty()) {
+      if (n_attr.value() != value)
+        return true;
+      break;
+    }
+  }
+  return false;
+}
+
+// Check if the given attribute is the default
+bool IsDefaultAttribute(const map<string, string>* single_default_attrs, const string& name, const string& value) {
+  if (single_default_attrs) {
+    auto it = single_default_attrs->find(name);
+    if (it != single_default_attrs->end())
+      return it->second == value;
+  }
+  // Fallback to common
+  auto it = kCommonDefaultAttributes.find(name);
+  return it != kCommonDefaultAttributes.end() && it->second == value;
 }
 
 struct xml_memory_writer : pugi::xml_writer {
@@ -200,6 +252,11 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
     }
 
     TraverseElements(doc_.child("svg"), [](pugi::xml_node node) {
+      auto single_default_attrs_iter = kSingleDefaultAttributes.find(node.name());
+      const map<string, string>* single_default_attrs = nullptr;
+      if (single_default_attrs_iter != kSingleDefaultAttributes.end())
+        single_default_attrs = &single_default_attrs_iter->second;
+
       for (pugi::xml_attribute attr = node.first_attribute(), next; attr; attr = next) {
         next = attr.next_attribute();
 
@@ -210,24 +267,14 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
           continue;
         }
 
+        // the second parameter in preserveAspectRatio meet by default
+        if (strcmp(attr.name(), "preserveAspectRatio") == 0 && value.substr(value.size() - 5) == " meet")
+          value.resize(value.size() - 5);
+
         // Remove default attribute
-        auto it = kDefaultAttributes.find(attr.name());
-        if (it != kDefaultAttributes.end() && it->second == value) {
+        if (IsDefaultAttribute(single_default_attrs, attr.name(), value)) {
           // Only remove it if it's not an override of a parent non-default attribute
-          bool is_override = false;
-          for (pugi::xml_node n = node.parent(); n; n = n.parent()) {
-            pugi::xml_attribute n_attr = n.attribute(attr.name());
-            // Stop at the first parent that has the same attribute, we can safely remove the attribute in the current
-            // node if this parent has the same value,
-            // even if there's another parent higher up in the tree which has a different value for this attribute
-            // (in which case we won't be able to remove the default attribute in this parent).
-            if (!n_attr.empty()) {
-              if (n_attr.value() != value)
-                is_override = true;
-              break;
-            }
-          }
-          if (!is_override) {
+          if (!IsOverride(node, attr.name(), value)) {
             node.remove_attribute(attr);
             continue;
           }
