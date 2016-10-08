@@ -281,7 +281,8 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
         }
 
         const string kDataURIMagic = "data:";
-        if (strcmp(attr.name(), "xlink:href") == 0 && value.size() > kDataURIMagic.size() &&
+        if ((strcmp(attr.name(), "href") == 0 || strcmp(attr.name(), "xlink:href") == 0) &&
+            value.size() > kDataURIMagic.size() &&
             memcmp(value.data(), kDataURIMagic.data(), kDataURIMagic.size()) == 0) {
           DataURI data_uri(&value[0], value.size());
           data_uri.SetSingleMode(true);
