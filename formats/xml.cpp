@@ -268,7 +268,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
         }
 
         // the second parameter in preserveAspectRatio meet by default
-        if (strcmp(attr.name(), "preserveAspectRatio") == 0 && value.substr(value.size() - 5) == " meet")
+        if (value.size() > 5 && strcmp(attr.name(), "preserveAspectRatio") == 0 && value.substr(value.size() - 5) == " meet")
           value.resize(value.size() - 5);
 
         // Remove default attribute
