@@ -240,14 +240,14 @@ Usage: leanify [options] paths
 
   Use Leanify.vcxproj
 
-* gcc 4.7 or up
+* gcc 4.8 or up
 
-  run build_gcc.bat
+  `build_gcc.bat` or `mingw32-make`
 
 
 ####Linux, Mac
 
-  gcc 4.7+ or clang 3.5+ with LTO support and gold linker
+  gcc 4.8+ or clang 3.5+ with LTO and gold linker support
 ```
 make
 ```
