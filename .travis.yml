@@ -2,28 +2,77 @@ sudo: false
 
 language: cpp
 
-os:
-  - linux
-  - osx
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.7
+      env: COMPILER_VER=-4.7
 
-compiler:
-  - clang
-  - gcc
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env: COMPILER_VER=-5
 
-script: make
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env: COMPILER_VER=-6
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.5
+          packages:
+            - clang-3.5
+            - llvm-3.5-dev    # for LLVMgold.so
+      env: COMPILER_VER=-3.5
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages:
+            - clang-3.7
+            - llvm-3.7-dev    # for LLVMgold.so
+      env: COMPILER_VER=-3.7
+
+    - os: osx
+      compiler: clang
+
+    - os: osx
+      osx_image: xcode6.4
+      compiler: clang
+
+    - os: osx
+      osx_image: xcode8
+      compiler: clang
 
 install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
-  - if [ "$CXX" = "clang++" ] && [ "$TRAVIS_OS_NAME" = "linux" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
+  - export CXX="$CXX$COMPILER_VER"
+  - export CC="$CC$COMPILER_VER"
   - $CXX --version
+  - $CC --version
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.7
-    packages:
-    - gcc-4.8
-    - g++-4.8
-    - clang-3.7
-    - llvm-3.7-dev    # for LLVMgold.so
+script: make
