@@ -35,7 +35,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   if (p_ecod == p_end) {
     cerr << "EOCD not found!" << endl;
     // abort
-    goto failure;
+    return Format::Leanify(size_leanified);
   }
 
   //2. find CD with EOCD
@@ -43,7 +43,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   if (p_read + 22 > p_end) {
     cerr << "EOF with EOCD!" << endl;
     // abort
-    goto failure;
+    return Format::Leanify(size_leanified);
   }
   uint16_t cd_parts = *(uint16_t*)(p_read + 4);
   uint16_t cd_parts_total = *(uint16_t*)(p_read + 6);
@@ -57,7 +57,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     cd_count != cd_count_total) {
     cerr << "Neither split split nor spanned archives is supported!" << endl;
     // abort
-    goto failure;
+    return Format::Leanify(size_leanified);
   }
   if (cd_off + cd_size > p_end) {
     cerr << "EOF with central directory!" << endl;
@@ -140,7 +140,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
           cerr << "data descriptor signature not found!" << endl;
           // abort
           // zip does not have 4-byte signature preceded
-          goto failure;
+          return Format::Leanify(size_leanified);
         }
       } while (*(uint32_t*)(dd + 8) != dd - p_read - header_size);
 
@@ -298,7 +298,4 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   size_ = p_write + 22 - fp_w;
   fp_ = fp_w;
   return size_;
-
-failure:
-  return Format::Leanify(size_leanified);
 }
