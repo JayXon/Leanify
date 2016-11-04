@@ -20,42 +20,44 @@ const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 
 size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   depth++;
-  uint8_t* p_read = fp_;
+  uint8_t* fp_r = fp_;
+  uint8_t* p_read;
   uint8_t* p_end = fp_ + size_;
-  fp_ -= size_leanified;
-  uint8_t* p_write = fp_;
+  uint8_t* fp_w = fp_ - size_leanified;
+  uint8_t* p_write = fp_w;
 
   //1. find EOCD
   // End of central directory record
   const uint8_t eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
   uint8_t* p_searchstart = p_end - 65535 - 22;
-  if (p_searchstart < p_read) p_searchstart = p_read;
+  if (p_searchstart < fp_r) p_searchstart = fp_r;
   uint8_t* p_ecod = std::search(p_searchstart, p_end, eocd_header_magic, eocd_header_magic + sizeof(eocd_header_magic));
   if (p_ecod == p_end) {
     cerr << "EOCD not found!" << endl;
     // abort
-    return size_;
-  }
-  if (p_ecod + 22 > p_end) {
-    cerr << "EOF with EOCD!" << endl;
-    // abort
-    return size_;
+    goto failure;
   }
 
   //2. find CD with EOCD
-  uint16_t cd_parts = *(uint16_t*)(p_ecod + 4);
-  uint16_t cd_parts_total = *(uint16_t*)(p_ecod + 6);
-  uint16_t cd_count = *(uint16_t*)(p_ecod + 8);
-  uint16_t cd_count_total = *(uint16_t*)(p_ecod + 10);
-  uint32_t cd_size = *(uint32_t*)(p_ecod + 12);
-  uint8_t* cd_off = p_read + *(uint32_t*)(p_ecod + 16);
-  uint16_t cd_comment_len = *(uint16_t*)(p_ecod + 20);
+  p_read = p_ecod;
+  if (p_read + 22 > p_end) {
+    cerr << "EOF with EOCD!" << endl;
+    // abort
+    goto failure;
+  }
+  uint16_t cd_parts = *(uint16_t*)(p_read + 4);
+  uint16_t cd_parts_total = *(uint16_t*)(p_read + 6);
+  uint16_t cd_count = *(uint16_t*)(p_read + 8);
+  uint16_t cd_count_total = *(uint16_t*)(p_read + 10);
+  uint32_t cd_size = *(uint32_t*)(p_read + 12);
+  uint8_t* cd_off = fp_r + *(uint32_t*)(p_read + 16);
+  uint16_t cd_comment_len = *(uint16_t*)(p_read + 20);
 
   if (cd_parts > 0 || cd_parts_total > 0 ||
     cd_count != cd_count_total) {
     cerr << "Neither split split nor spanned archives is supported!" << endl;
     // abort
-    return size_;
+    goto failure;
   }
   if (cd_off + cd_size > p_end) {
     cerr << "EOF with central directory!" << endl;
@@ -89,8 +91,8 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   // TODO: check EOF using size_
   // Local file header
   for (uint32_t local_header_offset : local_header_offsets_r) {
-    p_read = fp_ + size_leanified + local_header_offset;
-    local_header_offsets_w.push_back(p_write - fp_);
+    p_read = fp_r + local_header_offset;
+    local_header_offsets_w.push_back(p_write - fp_w);
 
     uint16_t filename_length = *(uint16_t*)(p_read + 26);
 
@@ -133,12 +135,12 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
       // search for signature
       uint8_t* dd = p_read + header_size;
       do {
-        dd = std::search(dd + 1, fp_ + size_ + size_leanified, dd_sign, dd_sign + 4);
-        if (dd == fp_ + size_ + size_leanified) {
+        dd = std::search(dd + 1, p_end, dd_sign, dd_sign + 4);
+        if (dd == p_end) {
           cerr << "data descriptor signature not found!" << endl;
           // abort
           // zip does not have 4-byte signature preceded
-          return size_;
+          goto failure;
         }
       } while (*(uint32_t*)(dd + 8) != dd - p_read - header_size);
 
@@ -235,7 +237,13 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   // TODO: check EOF using size_
   for (uint32_t local_header_offset : local_header_offsets_w) {
     if (memcmp(p_read, cd_header_magic, sizeof(cd_header_magic))) {
+      //Already checked before
       cerr << "Central directory header magic mismatch!" << endl;
+      break;
+    }
+    if (p_read + 46 > p_end) {
+      //Already checked before
+      cerr << "EOF with central directory!" << endl;
       break;
     }
     int header_size = 46 + *(uint16_t*)(p_read + 28);
@@ -257,7 +265,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
       *(uint16_t*)(p_write + 32) = 0;
     }
 
-    uint8_t* local_header = fp_ + local_header_offset;
+    uint8_t* local_header = fp_w + local_header_offset;
 
     // copy new CRC-32, Compressed size, Uncompressed size_
     // from Local file header to Central directory file header
@@ -267,7 +275,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     *(uint16_t*)(p_write + 10) = *(uint16_t*)(local_header + 8);
 
     // new Local file header offset
-    *(uint32_t*)(p_write + 42) = local_header_offset;
+    *(uint32_t*)(p_write + 42) = local_header_offset + out_embed_off_;
 
     p_read += header_size;
     p_write += header_size;
@@ -277,15 +285,20 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   p_read = p_ecod;
 
   memmove(p_write, p_read, 12);
-
+  // Number of central directory records on this disk, Total number of central directory records
+  *(uint16_t*)(p_write + 8) = *(uint16_t*)(p_write + 10) = local_header_offsets_w.size();
   // central directory size
   *(uint32_t*)(p_write + 12) = p_write - central_directory;
   // central directory offset
-  *(uint32_t*)(p_write + 16) = central_directory - fp_;
+  *(uint32_t*)(p_write + 16) = central_directory - fp_w + out_embed_off_;
   // set comment length to 0
   *(uint16_t*)(p_write + 20) = 0;
 
   // 22 is the length of EOCD
-  size_ = p_write + 22 - fp_;
+  size_ = p_write + 22 - fp_w;
+  fp_ = fp_w;
   return size_;
+
+failure:
+  return Format::Leanify(size_leanified);
 }
