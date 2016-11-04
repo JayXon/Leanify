@@ -89,7 +89,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   // TODO: check EOF using size_
   // Local file header
   for (uint32_t local_header_offset : local_header_offsets_r) {
-    p_read = fp_ + local_header_offset;
+    p_read = fp_ + size_leanified + local_header_offset;
     local_header_offsets_w.push_back(p_write - fp_);
 
     uint16_t filename_length = *(uint16_t*)(p_read + 26);
