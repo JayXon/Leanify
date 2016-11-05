@@ -31,7 +31,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   const uint8_t eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
   uint8_t* p_searchstart = p_end - 65535 - 22;
   if (p_searchstart < fp_r) p_searchstart = fp_r;
-  uint8_t* p_eocd = std::search(p_searchstart, p_end, eocd_header_magic, eocd_header_magic + sizeof(eocd_header_magic));
+  uint8_t* p_eocd = std::find_end(p_searchstart, p_end, eocd_header_magic, eocd_header_magic + sizeof(eocd_header_magic));
   if (p_eocd == p_end) {
     cerr << "EOCD not found!" << endl;
     // abort
