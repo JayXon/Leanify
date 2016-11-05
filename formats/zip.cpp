@@ -31,15 +31,15 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   const uint8_t eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
   uint8_t* p_searchstart = p_end - 65535 - 22;
   if (p_searchstart < fp_r) p_searchstart = fp_r;
-  uint8_t* p_ecod = std::search(p_searchstart, p_end, eocd_header_magic, eocd_header_magic + sizeof(eocd_header_magic));
-  if (p_ecod == p_end) {
+  uint8_t* p_eocd = std::search(p_searchstart, p_end, eocd_header_magic, eocd_header_magic + sizeof(eocd_header_magic));
+  if (p_eocd == p_end) {
     cerr << "EOCD not found!" << endl;
     // abort
     return Format::Leanify(size_leanified);
   }
 
   //2. find CD with EOCD
-  p_read = p_ecod;
+  p_read = p_eocd;
   if (p_read + 22 > p_end) {
     cerr << "EOF with EOCD!" << endl;
     // abort
@@ -282,7 +282,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   // End of central directory record
-  p_read = p_ecod;
+  p_read = p_eocd;
 
   memmove(p_write, p_read, 12);
   // Number of central directory records on this disk, Total number of central directory records
