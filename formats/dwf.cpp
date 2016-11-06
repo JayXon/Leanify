@@ -11,8 +11,8 @@ size_t Dwf::Leanify(size_t size_leanified /*= 0*/) {
     return Format::Leanify(size_leanified);
   }
   memmove(fp_ - size_leanified, fp_, dwf_header_len);
-  Zip zip(fp_ + dwf_header_len, size_ - dwf_header_len);
-  size_ = zip.Leanify(size_leanified) + dwf_header_len;
+  Zip zip(fp_, size_, dwf_header_len);
+  size_ = zip.Leanify(size_leanified - dwf_header_len) + dwf_header_len;
   fp_ -= size_leanified;
   return size_;
 }
