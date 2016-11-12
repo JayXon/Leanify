@@ -11,7 +11,7 @@ extern int depth;
 
 class Zip : public Format {
  public:
-  explicit Zip(void* p, size_t s = 0, uint32_t o = 0) : Format(p, s), out_embed_off_(o) {
+  explicit Zip(void* p, size_t s = 0) : Format(p, s) {
     ZopfliInitOptions(&zopfli_options_);
     zopfli_options_.numiterations = iterations;
   }
@@ -25,7 +25,6 @@ class Zip : public Format {
 
  private:
   ZopfliOptions zopfli_options_;
-  uint32_t out_embed_off_;
 };
 
 #endif  // FORMATS_ZIP_H_

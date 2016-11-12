@@ -1,6 +1,6 @@
 #include "zip.h"
 
-#include <algorithm>  // std::search
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -18,85 +18,137 @@ using std::vector;
 
 const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 
+namespace {
+
+PACK(struct CDHeader {
+  uint8_t magic[4] = { 0x50, 0x4B, 0x01, 0x02 };
+  uint16_t version_made_by;
+  uint16_t version_needed;
+  uint16_t flag;
+  uint16_t compression_method;
+  uint16_t last_mod_time;
+  uint16_t last_mod_date;
+  uint32_t crc32;
+  uint32_t compressed_size;
+  uint32_t uncompressed_size;
+  uint16_t filename_len;
+  uint16_t extra_field_len;
+  uint16_t comment_len;
+  uint16_t disk_file_start;
+  uint16_t internal_file_attributes;
+  uint32_t external_file_attributes;
+  uint32_t local_header_offset;
+});
+
+PACK(struct EOCD {
+  uint8_t magic[4] = { 0x50, 0x4B, 0x05, 0x06 };
+  uint16_t disk_num;
+  uint16_t disk_cd_start;
+  uint16_t num_records;
+  uint16_t num_records_total;
+  uint32_t cd_size;
+  uint32_t cd_offset;
+  uint16_t comment_len;
+});
+
+}  // namespace
+
 size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   depth++;
-  uint8_t* fp_r = fp_;
-  uint8_t* p_read;
-  uint8_t* p_end = fp_ + size_;
-  uint8_t* fp_w = fp_ - size_leanified;
-  uint8_t* p_write = fp_w;
 
-  //1. find EOCD
-  // End of central directory record
-  const uint8_t eocd_header_magic[] = { 0x50, 0x4B, 0x05, 0x06 };
-  uint8_t* p_searchstart = p_end - 65535 - 22;
-  if (p_searchstart < fp_r) p_searchstart = fp_r;
-  uint8_t* p_eocd = std::find_end(p_searchstart, p_end, eocd_header_magic, eocd_header_magic + sizeof(eocd_header_magic));
+  EOCD eocd;
+  uint8_t* p_end = fp_ + size_;
+  // smallest possible location of EOCD if there's a 64K comment
+  uint8_t* p_searchstart = std::max(fp_, p_end - 65535 - sizeof(eocd.magic));
+  uint8_t* p_eocd = std::find_end(p_searchstart, p_end, eocd.magic, eocd.magic + sizeof(eocd.magic));
   if (p_eocd == p_end) {
     cerr << "EOCD not found!" << endl;
-    // abort
     return Format::Leanify(size_leanified);
   }
 
-  //2. find CD with EOCD
-  p_read = p_eocd;
-  if (p_read + 22 > p_end) {
+  if (p_eocd + sizeof(EOCD) > p_end) {
     cerr << "EOF with EOCD!" << endl;
-    // abort
     return Format::Leanify(size_leanified);
   }
-  uint16_t cd_parts = *(uint16_t*)(p_read + 4);
-  uint16_t cd_parts_total = *(uint16_t*)(p_read + 6);
-  uint16_t cd_count = *(uint16_t*)(p_read + 8);
-  uint16_t cd_count_total = *(uint16_t*)(p_read + 10);
-  uint32_t cd_size = *(uint32_t*)(p_read + 12);
-  uint8_t* cd_off = fp_r + *(uint32_t*)(p_read + 16);
-  uint16_t cd_comment_len = *(uint16_t*)(p_read + 20);
+  memcpy(&eocd, p_eocd, sizeof(EOCD));
 
-  if (cd_parts > 0 || cd_parts_total > 0 ||
-    cd_count != cd_count_total) {
-    cerr << "Neither split split nor spanned archives is supported!" << endl;
-    // abort
+  if (eocd.disk_num != 0 || eocd.disk_cd_start != 0 || eocd.num_records != eocd.num_records_total) {
+    cerr << "Neither split nor spanned archives is supported!" << endl;
     return Format::Leanify(size_leanified);
   }
-  if (cd_off + cd_size > p_end) {
-    cerr << "EOF with central directory!" << endl;
-    // ignore
+  uint8_t* cd_end = fp_ + eocd.cd_offset + eocd.cd_size;
+  if (cd_end > p_eocd) {
+    cerr << "Central directory too large!" << endl;
+    return Format::Leanify(size_leanified);
   }
 
-  //3. find all local file headers with CD
-  vector<uint32_t> local_header_offsets_r;
-  p_read = cd_off;
-  const uint8_t cd_header_magic[] = { 0x50, 0x4B, 0x01, 0x02 };
-  for (int entity = 0; entity < cd_count; ++entity) {
-    if (p_read + 46 > p_end) {
-      cerr << "EOF with central directory!" << endl;
-      // ignore
+  uint8_t* first_local_header =
+      std::search(fp_, fp_ + eocd.cd_offset, header_magic, header_magic + sizeof(header_magic));
+  // The offset of the first local header, we should keep everything before this offset.
+  off_t zip_offset = first_local_header - fp_;
+  // The offset that all the offsets in the zip file based on (relative to).
+  // Should be 0 by default except when we detected that the input file has a base offset.
+  off_t base_offset = 0;
+
+  // Copy cd headers to vector
+  vector<CDHeader> cd_headers;
+  uint8_t* p_read = fp_ + eocd.cd_offset;
+  for (int i = 0; i < eocd.num_records; i++) {
+    CDHeader cd_header;
+    if (p_read + sizeof(CDHeader) > cd_end) {
+      cerr << "Central directory header " << i << " passed end, all remaining headers ignored." << endl;
       break;
     }
-    if (memcmp(cd_off, cd_header_magic, sizeof(cd_header_magic))) {
-      cerr << "Central directory header magic mismatch!" << endl;
-      // ignore
-      break;
+    if (memcmp(p_read, cd_header.magic, sizeof(cd_header.magic))) {
+      // The offset might be relative to the first local file header instead of the beginning of the file.
+      if (i == 0 && cd_end + zip_offset <= p_end &&
+          memcmp(p_read + zip_offset, cd_header.magic, sizeof(cd_header.magic)) == 0) {
+        // This is indeed the case, set the |base_offset| to |zip_offset| and move pointer forward.
+        base_offset = zip_offset;
+        p_read += base_offset;
+        cd_end += base_offset;
+      } else {
+        cerr << "Central directory header magic mismatch at offset 0x" << std::hex << p_read - fp_ << std::dec << endl;
+        break;
+      }
     }
-    local_header_offsets_r.push_back(*(uint32_t*)(p_read + 42));
-    p_read += 46 + *(uint16_t*)(p_read + 28) + *(uint16_t*)(p_read + 30) + *(uint16_t*)(p_read + 32);
+    memcpy(&cd_header, p_read, sizeof(CDHeader));
+    p_read += sizeof(CDHeader) + cd_header.filename_len + cd_header.extra_field_len + cd_header.comment_len;
+
+    cd_headers.push_back(cd_header);
   }
-  if (p_read - cd_off != cd_size) {
-    cerr << "Central directory size mismatch!" << endl;
-    //ignore
+  if (p_read != cd_end) {
+    cerr << "Warning: Central directory size mismatch!" << endl;
   }
 
-  vector<uint32_t> local_header_offsets_w;
-  // TODO: check EOF using size_
+  std::sort(cd_headers.begin(), cd_headers.end(),
+            [](const CDHeader& a, const CDHeader& b) { return a.local_header_offset < b.local_header_offset; });
+
+  uint8_t* fp_w = fp_ - size_leanified;
+  uint8_t* fp_w_base = fp_w + base_offset;
+  memmove(fp_w, fp_, zip_offset);
+  uint8_t* p_write = fp_w + zip_offset;
   // Local file header
-  for (uint32_t local_header_offset : local_header_offsets_r) {
-    p_read = fp_r + local_header_offset;
-    local_header_offsets_w.push_back(p_write - fp_w);
+  for (CDHeader& cd_header : cd_headers) {
+    p_read = fp_ + base_offset + cd_header.local_header_offset;
+
+    if (p_read + 30 > p_end || memcmp(p_read, header_magic, sizeof(header_magic))) {
+      cerr << "Invalid local header offset: 0x" << std::hex << cd_header.local_header_offset << std::dec << endl;
+      continue;
+    }
+    cd_header.local_header_offset = p_write - fp_w_base;
 
     uint16_t filename_length = *(uint16_t*)(p_read + 26);
 
+    if (filename_length != cd_header.filename_len) {
+      cerr << "Warning: Filename length mismatch between local file header and central directory!" << endl;
+    }
+
     size_t header_size = 30 + filename_length;
+    if (p_read + header_size > p_end) {
+      cerr << "Reached EOF in local header!" << endl;
+      break;
+    }
     // move header
     memmove(p_write, p_read, header_size);
 
@@ -120,34 +172,23 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     if ((orig_comp_size || *compression_method || flag & 8) && depth <= max_depth)
       PrintFileName(filename);
 
-    // From Wikipedia:
-    // If bit 3 (0x08) of the general-purpose flags field is set,
-    // then the CRC-32 and file sizes are not known when the header is written.
-    // The fields in the local header are filled with zero,
-    // and the CRC-32 and size are appended in a 12-byte structure
-    // (optionally preceded by a 4-byte signature) immediately after the compressed data
     if (flag & 8) {
       // set this bit to 0
       *(uint16_t*)(p_write + 6) &= ~8;
 
-      // data descriptor signature
-      const uint8_t dd_sign[] = { 0x50, 0x4B, 0x07, 0x08 };
-      // search for signature
-      uint8_t* dd = p_read + header_size;
-      do {
-        dd = std::search(dd + 1, p_end, dd_sign, dd_sign + 4);
-        if (dd == p_end) {
-          cerr << "data descriptor signature not found!" << endl;
-          // abort
-          // zip does not have 4-byte signature preceded
-          return Format::Leanify(size_leanified);
-        }
-      } while (*(uint32_t*)(dd + 8) != dd - p_read - header_size);
-
-      *crc = *(uint32_t*)(dd + 4);
-      *compressed_size = orig_comp_size = *(uint32_t*)(dd + 8);
-      *uncompressed_size = *(uint32_t*)(dd + 12);
+      // Use the correct value from central directory
+      *crc = cd_header.crc32;
+      *compressed_size = orig_comp_size = cd_header.compressed_size;
+      *uncompressed_size = cd_header.uncompressed_size;
     }
+
+    if (p_read + orig_comp_size > p_end) {
+      cerr << "Compressed size too large!" << endl;
+      break;
+    }
+
+    p_read += header_size;
+    p_write += header_size;
 
     // if compression method is not deflate or fast mode
     // then only Leanify embedded file if the method is store
@@ -156,146 +197,91 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
       if (*compression_method == 0 && depth <= max_depth && !(flag & 1)) {
         // method is store
         if (orig_comp_size) {
-          uint32_t new_size = LeanifyFile(p_read + header_size, orig_comp_size, p_read - p_write, filename);
-          p_read += header_size + orig_comp_size;
-          *compressed_size = *uncompressed_size = new_size;
-          *crc = mz_crc32(0, p_write + header_size, new_size);
-        } else {
-          p_read += header_size;
+          uint32_t new_size = LeanifyFile(p_read, orig_comp_size, p_read - p_write, filename);
+          cd_header.compressed_size = *compressed_size = cd_header.uncompressed_size = *uncompressed_size = new_size;
+          cd_header.crc32 = *crc = mz_crc32(0, p_write, new_size);
         }
       } else {
         // unsupported compression method or encrypted, move it
-        memmove(p_write + header_size, p_read + header_size, orig_comp_size);
-        p_read += header_size + orig_comp_size;
+        memmove(p_write, p_read, orig_comp_size);
       }
-      p_write += header_size + *compressed_size;
+      p_write += *compressed_size;
 
     } else {
-      // the method is deflate, uncompress it and recompress with zopfli
+      // Compression method is deflate, recompress it with zopfli
 
-      p_read += header_size;
-      p_write += header_size;
-
-      if (*uncompressed_size) {
-        // uncompress
-        size_t s = 0;
-        uint8_t* buffer = static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(p_read, orig_comp_size, &s, 0));
-
-        if (!buffer || s != *uncompressed_size || *crc != mz_crc32(0, buffer, *uncompressed_size)) {
-          cerr << "ZIP file corrupted!" << endl;
-          mz_free(buffer);
-          memmove(p_write, p_read, orig_comp_size);
-          p_read += orig_comp_size;
-          p_write += orig_comp_size;
-          continue;
-        }
-
-        // Leanify uncompressed file
-        uint32_t new_uncomp_size = LeanifyFile(buffer, s, 0, filename);
-
-        // recompress
-        uint8_t bp = 0, *out = nullptr;
-        size_t new_comp_size = 0;
-        ZopfliDeflate(&zopfli_options_, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
-
-        // switch to store if deflate makes file larger
-        if (new_uncomp_size <= new_comp_size && new_uncomp_size <= orig_comp_size) {
-          *compression_method = 0;
-          *crc = mz_crc32(0, buffer, new_uncomp_size);
-          *compressed_size = new_uncomp_size;
-          *uncompressed_size = new_uncomp_size;
-          memcpy(p_write, buffer, new_uncomp_size);
-          p_write += new_uncomp_size;
-        } else if (new_comp_size < orig_comp_size) {
-          *crc = mz_crc32(0, buffer, new_uncomp_size);
-          *compressed_size = new_comp_size;
-          *uncompressed_size = new_uncomp_size;
-          memcpy(p_write, out, new_comp_size);
-          p_write += new_comp_size;
-        } else {
-          memmove(p_write, p_read, orig_comp_size);
-          p_write += orig_comp_size;
-        }
-        p_read += orig_comp_size;
-
-        mz_free(buffer);
-        delete[] out;
-      } else {
-        *compression_method = 0;
-        *compressed_size = 0;
-        p_read += orig_comp_size;
+      // Switch from deflate to store for empty file.
+      if (*uncompressed_size == 0) {
+        cd_header.compression_method = *compression_method = 0;
+        cd_header.compressed_size = *compressed_size = 0;
+        continue;
       }
-    }
 
-    // we don't use data descriptor, so that can save more bytes (16 per file)
-    if (flag & 8)
-      p_read += 16;
+      // decompress
+      size_t s = 0;
+      uint8_t* buffer = static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(p_read, orig_comp_size, &s, 0));
+
+      if (!buffer || s != *uncompressed_size || *crc != mz_crc32(0, buffer, *uncompressed_size)) {
+        cerr << "Decompression failed or CRC32 mismatch, skipping this file." << endl;
+        mz_free(buffer);
+        memmove(p_write, p_read, orig_comp_size);
+        p_write += orig_comp_size;
+        continue;
+      }
+
+      // Leanify uncompressed file
+      uint32_t new_uncomp_size = LeanifyFile(buffer, s, 0, filename);
+
+      // recompress
+      uint8_t bp = 0, *out = nullptr;
+      size_t new_comp_size = 0;
+      ZopfliDeflate(&zopfli_options_, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
+
+      // switch to store if deflate makes file larger
+      if (new_uncomp_size <= new_comp_size && new_uncomp_size <= orig_comp_size) {
+        cd_header.compression_method = *compression_method = 0;
+        cd_header.crc32 = *crc = mz_crc32(0, buffer, new_uncomp_size);
+        cd_header.compressed_size = *compressed_size = new_uncomp_size;
+        cd_header.uncompressed_size = *uncompressed_size = new_uncomp_size;
+        memcpy(p_write, buffer, new_uncomp_size);
+      } else if (new_comp_size < orig_comp_size) {
+        cd_header.crc32 = *crc = mz_crc32(0, buffer, new_uncomp_size);
+        cd_header.compressed_size = *compressed_size = new_comp_size;
+        cd_header.uncompressed_size = *uncompressed_size = new_uncomp_size;
+        memcpy(p_write, out, new_comp_size);
+      } else {
+        memmove(p_write, p_read, orig_comp_size);
+      }
+      p_write += *compressed_size;
+
+      mz_free(buffer);
+      delete[] out;
+    }
   }
 
-  uint8_t* central_directory = p_write;
-  p_read = cd_off;
-  // TODO: check EOF using size_
-  for (uint32_t local_header_offset : local_header_offsets_w) {
-    if (memcmp(p_read, cd_header_magic, sizeof(cd_header_magic))) {
-      //Already checked before
-      cerr << "Central directory header magic mismatch!" << endl;
-      break;
-    }
-    if (p_read + 46 > p_end) {
-      //Already checked before
-      cerr << "EOF with central directory!" << endl;
-      break;
-    }
-    int header_size = 46 + *(uint16_t*)(p_read + 28);
-    // move header
-    memmove(p_write, p_read, header_size);
-
-    // set bit 3 of General purpose bit flag to 0
-    *(uint16_t*)(p_write + 8) &= ~8;
-
-    // if Extra field length is not 0, then skip it and set it to 0
-    if (*(uint16_t*)(p_write + 30)) {
-      p_read += *(uint16_t*)(p_write + 30);
-      *(uint16_t*)(p_write + 30) = 0;
-    }
-
-    // if File comment length is not 0, then skip it and set it to 0
-    if (*(uint16_t*)(p_write + 32)) {
-      p_read += *(uint16_t*)(p_write + 32);
-      *(uint16_t*)(p_write + 32) = 0;
-    }
-
-    uint8_t* local_header = fp_w + local_header_offset;
-
-    // copy new CRC-32, Compressed size, Uncompressed size_
-    // from Local file header to Central directory file header
-    memcpy(p_write + 16, local_header + 14, 12);
-
-    // update compression method
-    *(uint16_t*)(p_write + 10) = *(uint16_t*)(local_header + 8);
-
-    // new Local file header offset
-    *(uint32_t*)(p_write + 42) = local_header_offset + out_embed_off_;
-
-    p_read += header_size;
-    p_write += header_size;
-  }
-
-  // End of central directory record
-  p_read = p_eocd;
-
-  memmove(p_write, p_read, 12);
-  // Number of central directory records on this disk, Total number of central directory records
-  *(uint16_t*)(p_write + 8) = *(uint16_t*)(p_write + 10) = local_header_offsets_w.size();
-  // central directory size
-  *(uint32_t*)(p_write + 12) = p_write - central_directory;
   // central directory offset
-  *(uint32_t*)(p_write + 16) = central_directory - fp_w + out_embed_off_;
-  // set comment length to 0
-  *(uint16_t*)(p_write + 20) = 0;
+  eocd.cd_offset = p_write - fp_w_base;
+  for (CDHeader& cd_header : cd_headers) {
+    // set bit 3 of General purpose bit flag to 0
+    cd_header.flag &= ~8;
+    cd_header.extra_field_len = cd_header.comment_len = 0;
 
-  // 22 is the length of EOCD
-  size_ = p_write + 22 - fp_w;
-  fp_ = fp_w;
+    memcpy(p_write, &cd_header, sizeof(CDHeader));
+    p_write += sizeof(CDHeader);
+    // Copy the filename from local file header to central directory,
+    // the old central directory might have been overwritten already because we sort them.
+    memcpy(p_write, fp_w_base + cd_header.local_header_offset + 30, cd_header.filename_len);
+    p_write += cd_header.filename_len;
+  }
+
+  // Update end of central directory record
+  eocd.num_records = eocd.num_records_total = cd_headers.size();
+  eocd.cd_size = p_write - fp_w_base - eocd.cd_offset;
+  eocd.comment_len = 0;
+
+  memcpy(p_write, &eocd, sizeof(eocd));
+
+  fp_ -= size_leanified;
+  size_ = p_write + sizeof(eocd) - fp_;
   return size_;
 }

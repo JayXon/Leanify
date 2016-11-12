@@ -17,6 +17,12 @@ extern bool is_verbose;
 #define BSWAP32(x) _bswap(x)
 #endif
 
+#ifdef _MSC_VER
+#define PACK(...) __pragma(pack(push, 1)) __VA_ARGS__ __pragma(pack(pop))
+#elif defined __GNUC__
+#define PACK(...) __VA_ARGS__ __attribute__((__packed__))
+#endif
+
 void UTF16toMBS(const wchar_t* u, size_t srclen, char* mbs, size_t dstlen);
 
 void PrintFileName(const std::string& name);
