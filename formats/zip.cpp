@@ -20,6 +20,20 @@ const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
 
 namespace {
 
+PACK(struct LocalHeader {
+  uint8_t magic[4];
+  uint16_t version_needed;
+  uint16_t flag;
+  uint16_t compression_method;
+  uint16_t last_mod_time;
+  uint16_t last_mod_date;
+  uint32_t crc32;
+  uint32_t compressed_size;
+  uint32_t uncompressed_size;
+  uint16_t filename_len;
+  uint16_t extra_field_len;
+});
+
 PACK(struct CDHeader {
   uint8_t magic[4] = { 0x50, 0x4B, 0x01, 0x02 };
   uint16_t version_made_by;
@@ -132,138 +146,131 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   for (CDHeader& cd_header : cd_headers) {
     p_read = fp_ + base_offset + cd_header.local_header_offset;
 
-    if (p_read + 30 > p_end || memcmp(p_read, header_magic, sizeof(header_magic))) {
+    if (p_read + sizeof(LocalHeader) > p_end || memcmp(p_read, header_magic, sizeof(header_magic))) {
       cerr << "Invalid local header offset: 0x" << std::hex << cd_header.local_header_offset << std::dec << endl;
       continue;
     }
     cd_header.local_header_offset = p_write - fp_w_base;
 
-    uint16_t filename_length = *(uint16_t*)(p_read + 26);
+    LocalHeader* local_header = reinterpret_cast<LocalHeader*>(p_read);
 
-    if (filename_length != cd_header.filename_len) {
+    if (local_header->filename_len != cd_header.filename_len) {
       cerr << "Warning: Filename length mismatch between local file header and central directory!" << endl;
     }
 
-    size_t header_size = 30 + filename_length;
+    size_t header_size = sizeof(LocalHeader) + local_header->filename_len;
     if (p_read + header_size > p_end) {
       cerr << "Reached EOF in local header!" << endl;
       break;
     }
     // move header
     memmove(p_write, p_read, header_size);
+    local_header = reinterpret_cast<LocalHeader*>(p_write);
 
     // if Extra field length is not 0, then skip it and set it to 0
-    if (*(uint16_t*)(p_write + 28)) {
-      p_read += *(uint16_t*)(p_write + 28);
-      *(uint16_t*)(p_write + 28) = 0;
+    if (local_header->extra_field_len) {
+      p_read += local_header->extra_field_len;
+      local_header->extra_field_len = 0;
     }
 
-    uint32_t* crc = (uint32_t*)(p_write + 14);
-    uint32_t* compressed_size = crc + 1;
-    uint32_t* uncompressed_size = compressed_size + 1;
-
-    uint32_t orig_comp_size = *compressed_size;
-
-    uint16_t flag = *(uint16_t*)(p_write + 6);
-    uint16_t* compression_method = (uint16_t*)(p_write + 8);
-
-    string filename(reinterpret_cast<char*>(p_write) + 30, filename_length);
-    // do not output filename if it is a directory
-    if ((orig_comp_size || *compression_method || flag & 8) && depth <= max_depth)
-      PrintFileName(filename);
-
-    if (flag & 8) {
-      // set this bit to 0
-      *(uint16_t*)(p_write + 6) &= ~8;
+    if (local_header->flag & 8) {
+      // set this bit to 0, we don't use data descriptor to save 16 byte
+      local_header->flag &= ~8;
+      cd_header.flag &= ~8;
 
       // Use the correct value from central directory
-      *crc = cd_header.crc32;
-      *compressed_size = orig_comp_size = cd_header.compressed_size;
-      *uncompressed_size = cd_header.uncompressed_size;
+      local_header->crc32 = cd_header.crc32;
+      local_header->compressed_size = cd_header.compressed_size;
+      local_header->uncompressed_size = cd_header.uncompressed_size;
     }
 
-    if (p_read + orig_comp_size > p_end) {
-      cerr << "Compressed size too large!" << endl;
+    string filename(reinterpret_cast<char*>(local_header) + sizeof(LocalHeader), local_header->filename_len);
+    // do not output filename if it is a directory
+    if ((local_header->compressed_size || local_header->compression_method) && depth <= max_depth)
+      PrintFileName(filename);
+
+    if (p_read + local_header->compressed_size > p_end) {
+      cerr << "Compressed size too large: " << local_header->compressed_size << endl;
       break;
     }
 
     p_read += header_size;
     p_write += header_size;
 
-    // if compression method is not deflate or fast mode
-    // then only Leanify embedded file if the method is store
-    // otherwise just memmove the compressed part
-    if (*compression_method != 8 || (flag & 1) || is_fast) {
-      if (*compression_method == 0 && depth <= max_depth && !(flag & 1)) {
-        // method is store
-        if (orig_comp_size) {
-          uint32_t new_size = LeanifyFile(p_read, orig_comp_size, p_read - p_write, filename);
-          cd_header.compressed_size = *compressed_size = cd_header.uncompressed_size = *uncompressed_size = new_size;
-          cd_header.crc32 = *crc = mz_crc32(0, p_write, new_size);
-        }
-      } else {
-        // unsupported compression method or encrypted, move it
-        memmove(p_write, p_read, orig_comp_size);
+    // If the method is store, just Leanify the embedded file
+    // don't try to change it to deflate, it might break some file.
+    if (local_header->compression_method == 0) {
+      // method is store
+      if (local_header->compressed_size) {
+        uint32_t new_size = LeanifyFile(p_read, local_header->compressed_size, p_read - p_write, filename);
+        cd_header.crc32 = local_header->crc32 = mz_crc32(0, p_write, new_size);
+        cd_header.compressed_size = local_header->compressed_size = new_size;
+        cd_header.uncompressed_size = local_header->uncompressed_size = new_size;
+        p_write += local_header->compressed_size;
       }
-      p_write += *compressed_size;
-
-    } else {
-      // Compression method is deflate, recompress it with zopfli
-
-      // Switch from deflate to store for empty file.
-      if (*uncompressed_size == 0) {
-        cd_header.compression_method = *compression_method = 0;
-        cd_header.compressed_size = *compressed_size = 0;
-        continue;
-      }
-
-      // decompress
-      size_t s = 0;
-      uint8_t* buffer = static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(p_read, orig_comp_size, &s, 0));
-
-      if (!buffer || s != *uncompressed_size || *crc != mz_crc32(0, buffer, *uncompressed_size)) {
-        cerr << "Decompression failed or CRC32 mismatch, skipping this file." << endl;
-        mz_free(buffer);
-        memmove(p_write, p_read, orig_comp_size);
-        p_write += orig_comp_size;
-        continue;
-      }
-
-      // Leanify uncompressed file
-      uint32_t new_uncomp_size = LeanifyFile(buffer, s, 0, filename);
-
-      // recompress
-      uint8_t bp = 0, *out = nullptr;
-      size_t new_comp_size = 0;
-      ZopfliDeflate(&zopfli_options_, 2, 1, buffer, new_uncomp_size, &bp, &out, &new_comp_size);
-
-      // switch to store if deflate makes file larger
-      if (new_uncomp_size <= new_comp_size && new_uncomp_size <= orig_comp_size) {
-        cd_header.compression_method = *compression_method = 0;
-        cd_header.crc32 = *crc = mz_crc32(0, buffer, new_uncomp_size);
-        cd_header.compressed_size = *compressed_size = new_uncomp_size;
-        cd_header.uncompressed_size = *uncompressed_size = new_uncomp_size;
-        memcpy(p_write, buffer, new_uncomp_size);
-      } else if (new_comp_size < orig_comp_size) {
-        cd_header.crc32 = *crc = mz_crc32(0, buffer, new_uncomp_size);
-        cd_header.compressed_size = *compressed_size = new_comp_size;
-        cd_header.uncompressed_size = *uncompressed_size = new_uncomp_size;
-        memcpy(p_write, out, new_comp_size);
-      } else {
-        memmove(p_write, p_read, orig_comp_size);
-      }
-      p_write += *compressed_size;
-
-      mz_free(buffer);
-      delete[] out;
+      continue;
     }
+
+    // If unsupported compression method or fast mode or encrypted, just move it.
+    if (local_header->compression_method != 8 || is_fast || local_header->flag & 1) {
+      memmove(p_write, p_read, local_header->compressed_size);
+      p_write += local_header->compressed_size;
+      continue;
+    }
+
+    // Switch from deflate to store for empty file.
+    if (local_header->uncompressed_size == 0) {
+      cd_header.compression_method = local_header->compression_method = 0;
+      cd_header.compressed_size = local_header->compressed_size = 0;
+      continue;
+    }
+
+    // decompress
+    size_t decompressed_size = 0;
+    uint8_t* decompress_buf = static_cast<uint8_t*>(
+        tinfl_decompress_mem_to_heap(p_read, local_header->compressed_size, &decompressed_size, 0));
+
+    if (!decompress_buf || decompressed_size != local_header->uncompressed_size ||
+        local_header->crc32 != mz_crc32(0, decompress_buf, local_header->uncompressed_size)) {
+      cerr << "Decompression failed or CRC32 mismatch, skipping this file." << endl;
+      mz_free(decompress_buf);
+      memmove(p_write, p_read, local_header->compressed_size);
+      p_write += local_header->compressed_size;
+      continue;
+    }
+
+    // Leanify uncompressed file
+    uint32_t new_uncomp_size = LeanifyFile(decompress_buf, decompressed_size, 0, filename);
+
+    // recompress
+    uint8_t bp = 0, *compress_buf = nullptr;
+    size_t new_comp_size = 0;
+    ZopfliDeflate(&zopfli_options_, 2, 1, decompress_buf, new_uncomp_size, &bp, &compress_buf, &new_comp_size);
+
+    // switch to store if deflate makes file larger
+    if (new_uncomp_size <= new_comp_size && new_uncomp_size <= local_header->compressed_size) {
+      cd_header.compression_method = local_header->compression_method = 0;
+      cd_header.crc32 = local_header->crc32 = mz_crc32(0, decompress_buf, new_uncomp_size);
+      cd_header.compressed_size = local_header->compressed_size = new_uncomp_size;
+      cd_header.uncompressed_size = local_header->uncompressed_size = new_uncomp_size;
+      memcpy(p_write, decompress_buf, new_uncomp_size);
+    } else if (new_comp_size < local_header->compressed_size) {
+      cd_header.crc32 = local_header->crc32 = mz_crc32(0, decompress_buf, new_uncomp_size);
+      cd_header.compressed_size = local_header->compressed_size = new_comp_size;
+      cd_header.uncompressed_size = local_header->uncompressed_size = new_uncomp_size;
+      memcpy(p_write, compress_buf, new_comp_size);
+    } else {
+      memmove(p_write, p_read, local_header->compressed_size);
+    }
+    p_write += local_header->compressed_size;
+
+    mz_free(decompress_buf);
+    delete[] compress_buf;
   }
 
   // central directory offset
   eocd.cd_offset = p_write - fp_w_base;
   for (CDHeader& cd_header : cd_headers) {
-    // set bit 3 of General purpose bit flag to 0
-    cd_header.flag &= ~8;
     cd_header.extra_field_len = cd_header.comment_len = 0;
 
     memcpy(p_write, &cd_header, sizeof(CDHeader));
@@ -279,9 +286,9 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   eocd.cd_size = p_write - fp_w_base - eocd.cd_offset;
   eocd.comment_len = 0;
 
-  memcpy(p_write, &eocd, sizeof(eocd));
+  memcpy(p_write, &eocd, sizeof(EOCD));
 
   fp_ -= size_leanified;
-  size_ = p_write + sizeof(eocd) - fp_;
+  size_ = p_write + sizeof(EOCD) - fp_;
   return size_;
 }
