@@ -65,10 +65,10 @@ PACK(struct EOCD {
   uint16_t comment_len;
 });
 
-bool GetCDHeaders(const uint8_t* fp, size_t size, const EOCD& eocd, off_t zip_offset, vector<CDHeader>* out_cd_headers,
-                  off_t* out_base_offset) {
+bool GetCDHeaders(const uint8_t* fp, size_t size, const EOCD& eocd, size_t zip_offset, vector<CDHeader>* out_cd_headers,
+                  size_t* out_base_offset) {
   vector<CDHeader> cd_headers;
-  off_t base_offset = 0;
+  size_t base_offset = 0;
   // Copy cd headers to vector
   const uint8_t* p_cdheader = fp + eocd.cd_offset;
   const uint8_t* cd_end = p_cdheader + eocd.cd_size;
@@ -129,14 +129,14 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
 
   uint8_t* first_local_header = std::search(fp_, fp_ + size_, header_magic, header_magic + sizeof(header_magic));
   // The offset of the first local header, we should keep everything before this offset.
-  off_t zip_offset = first_local_header - fp_;
+  size_t zip_offset = first_local_header - fp_;
   if (zip_offset == size_) {
     cerr << "ZIP header magic not found!" << endl;
     return Format::Leanify(size_leanified);
   }
   // The offset that all the offsets in the zip file based on (relative to).
   // Should be 0 by default except when we detected that the input file has a base offset.
-  off_t base_offset = 0;
+  size_t base_offset = 0;
 
   EOCD eocd;
   vector<CDHeader> cd_headers;
