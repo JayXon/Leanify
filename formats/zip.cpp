@@ -65,78 +65,109 @@ PACK(struct EOCD {
   uint16_t comment_len;
 });
 
+bool GetCDHeaders(const uint8_t* fp, size_t size, const EOCD& eocd, off_t zip_offset, vector<CDHeader>* out_cd_headers,
+                  off_t* out_base_offset) {
+  vector<CDHeader> cd_headers;
+  off_t base_offset = 0;
+  // Copy cd headers to vector
+  const uint8_t* p_cdheader = fp + eocd.cd_offset;
+  const uint8_t* cd_end = p_cdheader + eocd.cd_size;
+  for (int i = 0; i < eocd.num_records; i++) {
+    CDHeader cd_header;
+    if (p_cdheader + sizeof(CDHeader) > cd_end)
+      return false;
+    if (memcmp(p_cdheader, cd_header.magic, sizeof(cd_header.magic)) != 0) {
+      // The offset might be relative to the first local file header instead of the beginning of the file.
+      if (i != 0 || cd_end + zip_offset > fp + size ||
+          memcmp(p_cdheader + zip_offset, cd_header.magic, sizeof(cd_header.magic)) != 0) {
+        return false;
+      }
+      // This is indeed the case, set the |base_offset| to |zip_offset| and move pointer forward.
+      base_offset = zip_offset;
+      p_cdheader += base_offset;
+      cd_end += base_offset;
+    }
+    memcpy(&cd_header, p_cdheader, sizeof(CDHeader));
+    const uint8_t* p_local_header = fp + base_offset + cd_header.local_header_offset;
+
+    // Check if local header magic matches.
+    if (p_local_header + sizeof(LocalHeader) + cd_header.filename_len + cd_header.compressed_size > fp + size ||
+        memcmp(p_local_header, Zip::header_magic, sizeof(Zip::header_magic)) != 0) {
+      return false;
+    }
+    const LocalHeader* local_header = reinterpret_cast<const LocalHeader*>(p_local_header);
+    // Check if file name matches.
+    if (local_header->filename_len != cd_header.filename_len ||
+        memcmp(p_local_header + sizeof(LocalHeader), p_cdheader + sizeof(CDHeader), cd_header.filename_len) != 0)
+      return false;
+
+    p_cdheader += sizeof(CDHeader) + cd_header.filename_len + cd_header.extra_field_len + cd_header.comment_len;
+    if (p_cdheader > cd_end)
+      return false;
+    cd_headers.push_back(cd_header);
+  }
+  std::sort(cd_headers.begin(), cd_headers.end(),
+            [](const CDHeader& a, const CDHeader& b) { return a.local_header_offset < b.local_header_offset; });
+  // Check if there's any overlaps.
+  for (size_t i = 1; i < cd_headers.size(); i++) {
+    if (cd_headers[i - 1].local_header_offset + sizeof(LocalHeader) + cd_headers[i - 1].filename_len +
+            cd_headers[i - 1].compressed_size >
+        cd_headers[i].local_header_offset) {
+      return false;
+    }
+  }
+
+  *out_cd_headers = std::move(cd_headers);
+  *out_base_offset = base_offset;
+  return true;
+}
+
 }  // namespace
 
 size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   depth++;
 
-  EOCD eocd;
-  uint8_t* p_end = fp_ + size_;
-  // smallest possible location of EOCD if there's a 64K comment
-  uint8_t* p_searchstart = std::max(fp_, p_end - 65535 - sizeof(eocd.magic));
-  uint8_t* p_eocd = std::find_end(p_searchstart, p_end, eocd.magic, eocd.magic + sizeof(eocd.magic));
-  if (p_eocd == p_end) {
-    cerr << "EOCD not found!" << endl;
-    return Format::Leanify(size_leanified);
-  }
-
-  if (p_eocd + sizeof(EOCD) > p_end) {
-    cerr << "EOF with EOCD!" << endl;
-    return Format::Leanify(size_leanified);
-  }
-  memcpy(&eocd, p_eocd, sizeof(EOCD));
-
-  if (eocd.disk_num != 0 || eocd.disk_cd_start != 0 || eocd.num_records != eocd.num_records_total) {
-    cerr << "Neither split nor spanned archives is supported!" << endl;
-    return Format::Leanify(size_leanified);
-  }
-  uint8_t* cd_end = fp_ + eocd.cd_offset + eocd.cd_size;
-  if (cd_end > p_eocd) {
-    cerr << "Central directory too large!" << endl;
-    return Format::Leanify(size_leanified);
-  }
-
-  uint8_t* first_local_header =
-      std::search(fp_, fp_ + eocd.cd_offset, header_magic, header_magic + sizeof(header_magic));
+  uint8_t* first_local_header = std::search(fp_, fp_ + size_, header_magic, header_magic + sizeof(header_magic));
   // The offset of the first local header, we should keep everything before this offset.
   off_t zip_offset = first_local_header - fp_;
+  if (zip_offset == size_) {
+    cerr << "ZIP header magic not found!" << endl;
+    return Format::Leanify(size_leanified);
+  }
   // The offset that all the offsets in the zip file based on (relative to).
   // Should be 0 by default except when we detected that the input file has a base offset.
   off_t base_offset = 0;
 
-  // Copy cd headers to vector
+  EOCD eocd;
   vector<CDHeader> cd_headers;
-  uint8_t* p_read = fp_ + eocd.cd_offset;
-  for (int i = 0; i < eocd.num_records; i++) {
-    CDHeader cd_header;
-    if (p_read + sizeof(CDHeader) > cd_end) {
-      cerr << "Central directory header " << i << " passed end, all remaining headers ignored." << endl;
+  uint8_t* p_end = fp_ + size_;
+  // smallest possible location of EOCD if there's a 64K comment
+  uint8_t* p_searchstart = std::max(fp_, p_end - 65535 - sizeof(eocd.magic));
+  uint8_t* p_eocd = nullptr;
+  while (true) {
+    if (p_eocd != nullptr) {
+      cerr << "Warning: Found EOCD at 0x" << std::hex << p_eocd - fp_ << std::dec << ", but it's invalid." << endl;
+      p_end = p_eocd;
+    }
+    p_eocd = std::find_end(p_searchstart, p_end, eocd.magic, eocd.magic + sizeof(eocd.magic));
+    if (p_eocd == p_end) {
+      cerr << "EOCD not found!" << endl;
+      return Format::Leanify(size_leanified);
+    }
+
+    if (p_eocd + sizeof(EOCD) > p_end)
+      continue;
+
+    memcpy(&eocd, p_eocd, sizeof(EOCD));
+    uint8_t* cd_end = fp_ + eocd.cd_offset + eocd.cd_size;
+    if (cd_end > p_eocd)
+      continue;
+
+    // Try to get all CD headers using this EOCD, if everything checks out then proceed.
+    if (GetCDHeaders(fp_, size_, eocd, zip_offset, &cd_headers, &base_offset)) {
       break;
     }
-    if (memcmp(p_read, cd_header.magic, sizeof(cd_header.magic))) {
-      // The offset might be relative to the first local file header instead of the beginning of the file.
-      if (i == 0 && cd_end + zip_offset <= p_end &&
-          memcmp(p_read + zip_offset, cd_header.magic, sizeof(cd_header.magic)) == 0) {
-        // This is indeed the case, set the |base_offset| to |zip_offset| and move pointer forward.
-        base_offset = zip_offset;
-        p_read += base_offset;
-        cd_end += base_offset;
-      } else {
-        cerr << "Central directory header magic mismatch at offset 0x" << std::hex << p_read - fp_ << std::dec << endl;
-        break;
-      }
-    }
-    memcpy(&cd_header, p_read, sizeof(CDHeader));
-    p_read += sizeof(CDHeader) + cd_header.filename_len + cd_header.extra_field_len + cd_header.comment_len;
-
-    cd_headers.push_back(cd_header);
   }
-  if (p_read != cd_end) {
-    cerr << "Warning: Central directory size mismatch!" << endl;
-  }
-
-  std::sort(cd_headers.begin(), cd_headers.end(),
-            [](const CDHeader& a, const CDHeader& b) { return a.local_header_offset < b.local_header_offset; });
 
   uint8_t* fp_w = fp_ - size_leanified;
   uint8_t* fp_w_base = fp_w + base_offset;
@@ -144,28 +175,14 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   uint8_t* p_write = fp_w + zip_offset;
   // Local file header
   for (CDHeader& cd_header : cd_headers) {
-    p_read = fp_ + base_offset + cd_header.local_header_offset;
+    uint8_t* p_read = fp_ + base_offset + cd_header.local_header_offset;
 
-    if (p_read + sizeof(LocalHeader) > p_end || memcmp(p_read, header_magic, sizeof(header_magic))) {
-      cerr << "Invalid local header offset: 0x" << std::hex << cd_header.local_header_offset << std::dec << endl;
-      continue;
-    }
     cd_header.local_header_offset = p_write - fp_w_base;
 
-    LocalHeader* local_header = reinterpret_cast<LocalHeader*>(p_read);
-
-    if (local_header->filename_len != cd_header.filename_len) {
-      cerr << "Warning: Filename length mismatch between local file header and central directory!" << endl;
-    }
-
-    size_t header_size = sizeof(LocalHeader) + local_header->filename_len;
-    if (p_read + header_size > p_end) {
-      cerr << "Reached EOF in local header!" << endl;
-      break;
-    }
+    size_t header_size = sizeof(LocalHeader) + cd_header.filename_len;
     // move header
     memmove(p_write, p_read, header_size);
-    local_header = reinterpret_cast<LocalHeader*>(p_write);
+    LocalHeader* local_header = reinterpret_cast<LocalHeader*>(p_write);
 
     // if Extra field length is not 0, then skip it and set it to 0
     if (local_header->extra_field_len) {
@@ -189,13 +206,13 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     if ((local_header->compressed_size || local_header->compression_method) && depth <= max_depth)
       PrintFileName(filename);
 
+    p_read += header_size;
+    p_write += header_size;
+
     if (p_read + local_header->compressed_size > p_end) {
       cerr << "Compressed size too large: " << local_header->compressed_size << endl;
       break;
     }
-
-    p_read += header_size;
-    p_write += header_size;
 
     // If the method is store, just Leanify the embedded file
     // don't try to change it to deflate, it might break some file.
