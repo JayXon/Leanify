@@ -1,6 +1,7 @@
 #ifndef FORMATS_BMP_H_
 #define FORMATS_BMP_H_
 
+#include "../utils.h"
 #include "format.h"
 
 // The support for this format is not yet implemented see bmp.cpp for details.
@@ -13,7 +14,7 @@ class Bmp : public Format {
 
   static const uint8_t header_magic[2];
 
-  struct BITMAPINFOHEADER {
+  PACK(struct BITMAPINFOHEADER {
     uint32_t biSize;
     int32_t biWidth;
     int32_t biHeight;
@@ -25,7 +26,7 @@ class Bmp : public Format {
     int32_t biYPelsPerMeter;
     uint32_t biClrUsed;
     uint32_t biClrImportant;
-  };
+  });
 };
 
 #endif  // FORMATS_BMP_H_

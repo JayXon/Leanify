@@ -18,6 +18,7 @@ const uint8_t Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
 
 namespace {
 
+PACK(
 struct IconDirEntry {
   uint8_t bWidth;          // Width, in pixels, of the image
   uint8_t bHeight;         // Height, in pixels, of the image
@@ -27,7 +28,7 @@ struct IconDirEntry {
   uint16_t wBitCount;      // Bits per pixel
   uint32_t dwBytesInRes;   // How many bytes in this resource?
   uint32_t dwImageOffset;  // Where in the file is this image?
-};
+});
 
 }  // namespace
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "../utils.h"
 #include "format.h"
 
 // PE format specification
@@ -23,7 +24,7 @@ class Pe : public Format {
  private:
   // modified from winnt.h
 
-  struct ImageFileHeader {
+  PACK(struct ImageFileHeader {
     uint16_t Machine;
     uint16_t NumberOfSections;
     uint32_t TimeDateStamp;
@@ -31,9 +32,9 @@ class Pe : public Format {
     uint32_t NumberOfSymbols;
     uint16_t SizeOfOptionalHeader;
     uint16_t Characteristics;
-  };
+  });
 
-  struct ImageOptionalHeader {
+  PACK(struct ImageOptionalHeader {
     uint16_t Magic;
     uint8_t MajorLinkerVersion;
     uint8_t MinorLinkerVersion;
@@ -64,14 +65,14 @@ class Pe : public Format {
     uint32_t SizeOfHeapCommit;
     uint32_t LoaderFlags;
     uint32_t NumberOfRvaAndSizes;
-  };
+  });
 
-  struct ImageDataDirectory {
+  PACK(struct ImageDataDirectory {
     uint32_t VirtualAddress;
     uint32_t Size;
-  };
+  });
 
-  struct ImageSectionHeader {
+  PACK(struct ImageSectionHeader {
     uint8_t Name[8];
     union {
       uint32_t PhysicalAddress;
@@ -85,18 +86,18 @@ class Pe : public Format {
     uint16_t NumberOfRelocations;
     uint16_t NumberOfLinenumbers;
     uint32_t Characteristics;
-  };
+  });
 
-  struct ImageResourceDirectory {
+  PACK(struct ImageResourceDirectory {
     uint32_t Characteristics;
     uint32_t TimeDateStamp;
     uint16_t MajorVersion;
     uint16_t MinorVersion;
     uint16_t NumberOfNamedEntries;
     uint16_t NumberOfIdEntries;
-  };
+  });
 
-  struct ImageResourceDirectoryEntry {
+  PACK(struct ImageResourceDirectoryEntry {
     union {
       struct {
         uint32_t NameOffset : 31;
@@ -112,7 +113,7 @@ class Pe : public Format {
         uint32_t DataIsDirectory : 1;
       };
     };
-  };
+  });
 
   // decrease RVA inside rsrc section
   void TraverseRSRC(ImageResourceDirectory* res_dir, std::string name = "", const uint32_t move_size = 0);
