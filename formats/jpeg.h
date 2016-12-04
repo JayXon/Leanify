@@ -14,6 +14,8 @@ class Jpeg : public Format {
 
   static const uint8_t header_magic[3];
   static bool keep_exif_;
+  static bool keep_icc_profile_;
+  static bool keep_all_metadata_;
 };
 
 #endif  // FORMATS_JPEG_H_

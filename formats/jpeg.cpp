@@ -7,6 +7,8 @@
 
 const uint8_t Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
 bool Jpeg::keep_exif_ = false;
+bool Jpeg::keep_icc_profile_ = false;
+bool Jpeg::keep_all_metadata_ = false;
 
 namespace {
 
@@ -51,8 +53,18 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   /* Specify data source for decompression */
   jpeg_mem_src(&srcinfo, fp_, size_);
 
-  if (keep_exif_) {
+  if (keep_exif_ || keep_all_metadata_) {
     jpeg_save_markers(&srcinfo, JPEG_APP0 + 1, 0xFFFF);
+  }
+  if (keep_icc_profile_ || keep_all_metadata_) {
+    jpeg_save_markers(&srcinfo, JPEG_APP0 + 2, 0xFFFF);
+  }
+  if (keep_all_metadata_) {
+    // Save the rest APPn markers.
+    for (int i = 3; i < 16; i++)
+      jpeg_save_markers(&srcinfo, JPEG_APP0 + i, 0xFFFF);
+    // Save comments.
+    jpeg_save_markers(&srcinfo, JPEG_COM, 0xFFFF);
   }
 
   (void)jpeg_read_header(&srcinfo, true);
@@ -79,11 +91,9 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   /* Start compressor (note no image data is actually written here) */
   jpeg_write_coefficients(&dstinfo, coef_arrays);
 
-  if (keep_exif_) {
+  if (keep_exif_ || keep_icc_profile_ || keep_all_metadata_) {
     for (auto marker = srcinfo.marker_list; marker; marker = marker->next) {
-      if (marker->marker == JPEG_APP0 + 1) {
-        jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
-      }
+      jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
     }
   }
 

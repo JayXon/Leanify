@@ -16,6 +16,7 @@ using std::endl;
 using std::vector;
 
 const uint8_t Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+bool Png::keep_icc_profile_ = false;
 
 size_t Png::Leanify(size_t size_leanified /*= 0*/) {
   // header
@@ -50,37 +51,44 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     // read chunk type
     chunk_type = *(uint32_t*)(p_read + 4);
 
-    // judge the case of first letter
-    // remove all ancillary chunks except tRNS and APNG chunks and npTc
-    // tRNS has transparency information
-    if (chunk_type & 0x20) {
+    if (chunk_type == 0x54414449) {
+      // save IDAT chunk address
+      idat_addr = p_write;
+    }
+
+    bool should_remove = [&]() {
+      // Check the case of first letter, keep all critical chunks.
+      if ((chunk_type & 0x20) == 0)
+        return false;
+
+      // Remove all ancillary chunks except the following.
       switch (chunk_type) {
         case 0x4C546361:  // acTL     APNG
         case 0x4C546366:  // fcTL     APNG
         case 0x54416466:  // fdAT     APNG    TODO: use Zopfli to recompress fdAT
         case 0x6354706E:  // npTc     Android 9Patch images (*.9.png)
-          break;
+          return false;
 
         case 0x534E5274:  // tRNS     transparent
-          // tRNS must be before IDAT according to PNG spec
-          if (idat_addr == nullptr)
-            break;
-          // Fallthrough to remove it
+                          // tRNS must be before IDAT according to PNG spec
+          return idat_addr != nullptr;
+        case 0x50434369:  // iCCP     ICC profile
+          return !keep_icc_profile_;
         default:
-          if (is_verbose) {
-            // chunk name
-            for (int i = 4; i < 8; i++)
-              cout << static_cast<char>(p_read[i]);
-
-            cout << " chunk removed, " << chunk_length << " bytes." << endl;
-          }
-          // remove this chunk
-          p_read += chunk_length;
-          continue;
+          return true;
       }
-    } else if (chunk_type == 0x54414449) {
-      // save IDAT chunk address
-      idat_addr = p_write;
+    }();
+    if (should_remove) {
+      if (is_verbose) {
+        // chunk name
+        for (int i = 4; i < 8; i++)
+          cout << static_cast<char>(p_read[i]);
+
+        cout << " chunk removed, " << chunk_length << " bytes." << endl;
+      }
+      // remove this chunk
+      p_read += chunk_length;
+      continue;
     }
 
     // move this chunk
@@ -103,6 +111,8 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     zopflipng_options.lossy_transparent = true;
     // see the switch above for information about these chunks
     zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
+    if (keep_icc_profile_)
+      zopflipng_options.keepchunks.push_back("iCCP");
     zopflipng_options.num_iterations = iterations;
     zopflipng_options.num_iterations_large = iterations;
 

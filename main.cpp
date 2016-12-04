@@ -14,6 +14,7 @@
 #include "version.h"
 
 #include "formats/jpeg.h"
+#include "formats/png.h"
 
 using std::cerr;
 using std::cout;
@@ -85,7 +86,11 @@ void PrintInfo() {
           "  -f, --fastmode                Fast mode, no recompression.\n"
           "  -q, --quiet                   No output to stdout.\n"
           "  -v, --verbose                 Verbose output.\n"
-          "  --keep-exif                   Do not remove Exif.\n";
+          "  --keep-exif                   Do not remove Exif.\n"
+          "  --keep-icc-profile            Do not remove ICC profile.\n"
+          "\n"
+          "JPEG specific option:\n"
+          "  --jpeg-keep-all-metadata      Do not remove any metadata or comments in JPEG.\n";
 
   PauseIfNotTerminal();
 }
@@ -169,6 +174,13 @@ int main(int argc, char* argv[]) {
           } else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0) {
             j += 9;
             Jpeg::keep_exif_ = true;
+          } else if (STRCMP(argv[i] + j + 1, "keep-icc-profile") == 0) {
+            j += 16;
+            Jpeg::keep_icc_profile_ = true;
+            Png::keep_icc_profile_ = true;
+          } else if (STRCMP(argv[i] + j + 1, "jpeg-keep-all-metadata") == 0) {
+            j += 22;
+            Jpeg::keep_all_metadata_ = true;
           } else {
 #ifdef _WIN32
             char mbs[64] = { 0 };
