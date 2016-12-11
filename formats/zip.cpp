@@ -127,7 +127,7 @@ bool GetCDHeaders(const uint8_t* fp, size_t size, const EOCD& eocd, size_t zip_o
 size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
   depth++;
 
-  uint8_t* first_local_header = std::search(fp_, fp_ + size_, header_magic, header_magic + sizeof(header_magic));
+  uint8_t* first_local_header = std::search(fp_, fp_ + size_, header_magic, std::end(header_magic));
   // The offset of the first local header, we should keep everything before this offset.
   size_t zip_offset = first_local_header - fp_;
   if (zip_offset == size_) {
@@ -149,7 +149,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
       cerr << "Warning: Found EOCD at 0x" << std::hex << p_eocd - fp_ << std::dec << ", but it's invalid." << endl;
       p_end = p_eocd;
     }
-    p_eocd = std::find_end(p_searchstart, p_end, eocd.magic, eocd.magic + sizeof(eocd.magic));
+    p_eocd = std::find_end(p_searchstart, p_end, eocd.magic, std::end(eocd.magic));
     if (p_eocd == p_end) {
       cerr << "EOCD not found!" << endl;
       return Format::Leanify(size_leanified);
