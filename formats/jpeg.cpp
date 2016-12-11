@@ -1,7 +1,9 @@
 #include "jpeg.h"
 
+#include <algorithm>
 #include <csetjmp>  // for mozjpeg error handling
 #include <cstdio>
+#include <iostream>
 
 #include <mozjpeg/jpeglib.h>
 
@@ -53,9 +55,8 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   /* Specify data source for decompression */
   jpeg_mem_src(&srcinfo, fp_, size_);
 
-  if (keep_exif_ || keep_all_metadata_) {
-    jpeg_save_markers(&srcinfo, JPEG_APP0 + 1, 0xFFFF);
-  }
+  // Always save exif to show warning if orientation might change.
+  jpeg_save_markers(&srcinfo, JPEG_APP0 + 1, 0xFFFF);
   if (keep_icc_profile_ || keep_all_metadata_) {
     jpeg_save_markers(&srcinfo, JPEG_APP0 + 2, 0xFFFF);
   }
@@ -91,10 +92,22 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   /* Start compressor (note no image data is actually written here) */
   jpeg_write_coefficients(&dstinfo, coef_arrays);
 
-  if (keep_exif_ || keep_icc_profile_ || keep_all_metadata_) {
-    for (auto marker = srcinfo.marker_list; marker; marker = marker->next) {
-      jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
+  for (auto marker = srcinfo.marker_list; marker; marker = marker->next) {
+    if (marker->marker == JPEG_APP0 + 1 && !keep_exif_ && !keep_all_metadata_) {
+      // Tag number: 0x0112, data format: unsigned short(3), number of components: 1
+      const uint8_t kExifOrientation[] = { 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00 };
+      const uint8_t kExifOrientationMotorola[] = { 0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01 };
+      uint8_t* start = marker->data;
+      uint8_t* end = start + marker->data_length;
+      if (std::search(start, end, kExifOrientation, std::end(kExifOrientation)) != end ||
+          std::search(start, end, kExifOrientationMotorola, std::end(kExifOrientationMotorola)) != end) {
+        std::cout << "Warning: The Exif being removed contains orientation data, result image might have wrong "
+                     "orientation, use --keep-exif to keep Exif."
+                  << std::endl;
+      }
+      continue;
     }
+    jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
   }
 
   /* Finish compression and release memory */
