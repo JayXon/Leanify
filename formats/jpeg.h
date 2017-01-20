@@ -16,6 +16,7 @@ class Jpeg : public Format {
   static bool keep_exif_;
   static bool keep_icc_profile_;
   static bool keep_all_metadata_;
+  static bool force_arithmetic_coding_;
 };
 
 #endif  // FORMATS_JPEG_H_

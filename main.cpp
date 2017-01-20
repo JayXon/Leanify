@@ -90,7 +90,8 @@ void PrintInfo() {
           "  --keep-icc-profile            Do not remove ICC profile.\n"
           "\n"
           "JPEG specific option:\n"
-          "  --jpeg-keep-all-metadata      Do not remove any metadata or comments in JPEG.\n";
+          "  --jpeg-keep-all-metadata      Do not remove any metadata or comments in JPEG.\n"
+          "  --jpeg-arithmetic-coding      Use arithmetic coding for JPEG.\n";
 
   PauseIfNotTerminal();
 }
@@ -181,6 +182,9 @@ int main(int argc, char* argv[]) {
           } else if (STRCMP(argv[i] + j + 1, "jpeg-keep-all-metadata") == 0) {
             j += 22;
             Jpeg::keep_all_metadata_ = true;
+          } else if (STRCMP(argv[i] + j + 1, "jpeg-arithmetic-coding") == 0) {
+            j += 22;
+            Jpeg::force_arithmetic_coding_ = true;
           } else {
 #ifdef _WIN32
             char mbs[64] = { 0 };

@@ -11,6 +11,7 @@ const uint8_t Jpeg::header_magic[] = { 0xFF, 0xD8, 0xFF };
 bool Jpeg::keep_exif_ = false;
 bool Jpeg::keep_icc_profile_ = false;
 bool Jpeg::keep_all_metadata_ = false;
+bool Jpeg::force_arithmetic_coding_ = false;
 
 namespace {
 
@@ -76,8 +77,8 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   /* Initialize destination compression parameters from source values */
   jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
 
-  // use arithmetic coding if input file is arithmetic coded
-  if (srcinfo.arith_code) {
+  // use arithmetic coding if input file is arithmetic coded or if forced to
+  if (srcinfo.arith_code || force_arithmetic_coding_) {
     dstinfo.arith_code = true;
     dstinfo.optimize_coding = false;
   } else {
