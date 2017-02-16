@@ -73,4 +73,6 @@
 #undef size_t
 
 /* The size of `size_t', as computed by sizeof. */
-#define SIZEOF_SIZE_T (sizeof(size_t))
+#ifdef __SIZEOF_SIZE_T__
+#define SIZEOF_SIZE_T __SIZEOF_SIZE_T__
+#endif
