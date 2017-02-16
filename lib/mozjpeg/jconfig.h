@@ -1,12 +1,18 @@
-#define JPEG_LIB_VERSION  80
+/* Version ID for the JPEG library.
+ * Might be useful for tests like "#if JPEG_LIB_VERSION >= 60".
+ */
+#define JPEG_LIB_VERSION  62	/* Version 6b */
 
 /* libjpeg-turbo version */
 #define LIBJPEG_TURBO_VERSION 0
 
-/* Support in-memory source/destination managers */
-#define MEM_SRCDST_SUPPORTED
+/* libjpeg-turbo version in integer form */
+#define LIBJPEG_TURBO_VERSION_NUMBER 0
 
+/* Support arithmetic encoding */
 #define C_ARITH_CODING_SUPPORTED
+
+/* Support arithmetic decoding */
 #define D_ARITH_CODING_SUPPORTED
 
 /*
@@ -20,31 +26,51 @@
 
 #define BITS_IN_JSAMPLE  8      /* use 8 or 12 */
 
-/* Does your compiler support function prototypes?
- * (If not, you also need to use ansi2knr, see install.txt)
- */
-#define HAVE_PROTOTYPES
- 
-/* Compiler supports 'unsigned char'. */
-#define HAVE_UNSIGNED_CHAR
+/* Define to 1 if you have the <locale.h> header file. */
+#define HAVE_LOCALE_H 1
 
-/* Compiler supports 'unsigned short'. */
-#define HAVE_UNSIGNED_SHORT
+/* Define to 1 if you have the <stddef.h> header file. */
+#define HAVE_STDDEF_H 1
 
-/* Define this if your system has an ANSI-conforming <stddef.h> file.
- */
-#define HAVE_STDDEF_H
+/* Define to 1 if you have the <stdlib.h> header file. */
+#define HAVE_STDLIB_H 1
 
-/* Define this if your system has an ANSI-conforming <stdlib.h> file.
- */
-#define HAVE_STDLIB_H
+/* Define to 1 if the system has the type `unsigned char'. */
+#define HAVE_UNSIGNED_CHAR 1
 
-/* Define "boolean" as unsigned char, not int, on Windows systems.
- */
-#ifdef _WIN32
-#ifndef __RPCNDR_H__        /* don't conflict if rpcndr.h already read */
-typedef unsigned char boolean;
+/* Define to 1 if the system has the type `unsigned short'. */
+#define HAVE_UNSIGNED_SHORT 1
+
+/* Compiler does not support pointers to undefined structures. */
+#undef INCOMPLETE_TYPES_BROKEN
+
+/* Support in-memory source/destination managers */
+#define MEM_SRCDST_SUPPORTED
+
+/* Define if you have BSD-like bzero and bcopy in <strings.h> rather than
+   memset/memcpy in <string.h>. */
+#undef NEED_BSD_STRINGS
+
+/* Define if you need to include <sys/types.h> to get size_t. */
+#undef NEED_SYS_TYPES_H
+
+/* Define if your (broken) compiler shifts signed values as if they were
+   unsigned. */
+#undef RIGHT_SHIFT_IS_UNSIGNED
+
+/* Use accelerated SIMD routines. */
+#undef WITH_SIMD
+
+/* Define to 1 if type `char' is unsigned and you are not using gcc.  */
+#ifndef __CHAR_UNSIGNED__
+# undef __CHAR_UNSIGNED__
 #endif
-#define HAVE_BOOLEAN        /* prevent jmorecfg.h from redefining it */
-#endif
 
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T

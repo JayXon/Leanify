@@ -189,34 +189,7 @@
     <ClCompile Include="lib\mozjpeg\jdcoefct.c">
       <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jdmaster.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jddctmgr.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jidctint.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jidctred.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
     <ClCompile Include="lib\mozjpeg\jsimd_none.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jidctflt.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jdsample.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jdcolor.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jdmainct.c">
-      <Filter>Source Files\lib\mozjpeg</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\mozjpeg\jdpostct.c">
       <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
     <ClCompile Include="lib\mozjpeg\jmemnobs.c">
