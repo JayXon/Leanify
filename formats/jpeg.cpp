@@ -100,11 +100,22 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
       const uint8_t kExifOrientationMotorola[] = { 0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01 };
       uint8_t* start = marker->data;
       uint8_t* end = start + marker->data_length;
-      if (std::search(start, end, kExifOrientation, std::end(kExifOrientation)) != end ||
-          std::search(start, end, kExifOrientationMotorola, std::end(kExifOrientationMotorola)) != end) {
-        std::cout << "Warning: The Exif being removed contains orientation data, result image might have wrong "
-                     "orientation, use --keep-exif to keep Exif."
-                  << std::endl;
+      uint8_t* orientation_tag = std::search(start, end, kExifOrientation, std::end(kExifOrientation));
+      bool big_endian = false;
+      if (orientation_tag == end) {
+        orientation_tag = std::search(start, end, kExifOrientationMotorola, std::end(kExifOrientationMotorola));
+        big_endian = orientation_tag != end;
+      }
+      if (orientation_tag != end) {
+        uint16_t orientation = *reinterpret_cast<uint16_t*>(orientation_tag + sizeof(kExifOrientation));
+        if (big_endian)
+          orientation = ((orientation >> 8) | (orientation << 8)) & 0xFFFF;
+        // Only show warning if it's not the default upper left.
+        if (orientation != 1) {
+          std::cout << "Warning: The Exif being removed contains orientation data, result image might have wrong "
+                       "orientation, use --keep-exif to keep Exif."
+                    << std::endl;
+        }
       }
       continue;
     }
