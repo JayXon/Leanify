@@ -12,6 +12,28 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+namespace {
+
+int CalcChecksum(uint8_t* header) {
+  // The checksum bytes are treated as spaces
+  // ' ' = 32, 32x8 = 256
+  int sum = 256;
+  for (int i = 0; i < 148; i++)
+    sum += header[i];
+
+  for (int i = 156; i < 512; i++)
+    sum += header[i];
+
+  return sum;
+}
+
+}  // namespace
+
+Tar::Tar(void* p, size_t s /*= 0*/) : Format(p, s) {
+  // check file size first
+  is_valid_ = s > 512 && s % 512 == 0 && CalcChecksum(fp_) == strtol(static_cast<char*>(p) + 148, nullptr, 8);
+}
+
 size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
   if (!is_valid_)
     return Format::Leanify(size_leanified);
@@ -88,17 +110,4 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
   memset(p_write, 0, 1024);
   size_ = p_write + 1024 - fp_;
   return size_;
-}
-
-int Tar::CalcChecksum(uint8_t* header) const {
-  // checksum bytes are taken to be spaces
-  // ' ' = 32, 32x8 = 256
-  int s = 256;
-  for (int i = 0; i < 148; i++)
-    s += header[i];
-
-  for (int i = 156; i < 512; i++)
-    s += header[i];
-
-  return s;
 }
