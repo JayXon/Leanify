@@ -27,6 +27,8 @@ void UTF16toMBS(const wchar_t* u, size_t srclen, char* mbs, size_t dstlen);
 
 void PrintFileName(const std::string& name);
 
+std::string ShrinkSpace(const char* value);
+
 template <typename T>
 void VerbosePrint(const T& t) {
   if (!is_verbose)

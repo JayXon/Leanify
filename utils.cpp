@@ -29,3 +29,23 @@ void PrintFileName(const string& name) {
     cout << "-> ";
   cout << name << endl;
 }
+
+// Shrink consecutive space, newline and tab in the given string to one space
+// also removes preceding and trailing spaces
+string ShrinkSpace(const char* str) {
+  string out_str;
+  while (*str) {
+    if (*str == ' ' || *str == '\n' || *str == '\t') {
+      do {
+        str++;
+      } while (*str == ' ' || *str == '\n' || *str == '\t');
+
+      if (*str == 0)
+        break;
+      if (!out_str.empty())
+        out_str += ' ';
+    }
+    out_str += *str++;
+  }
+  return out_str;
+}
