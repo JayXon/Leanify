@@ -1,8 +1,6 @@
 #ifndef FORMATS_TAR_H_
 #define FORMATS_TAR_H_
 
-#include <cstdlib>
-
 #include "format.h"
 
 extern bool is_verbose;

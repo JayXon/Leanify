@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <csetjmp>  // for mozjpeg error handling
-#include <cstdio>
 #include <iostream>
 
 #include <mozjpeg/jpeglib.h>
