@@ -7,11 +7,11 @@ using std::cerr;
 using std::endl;
 
 // traverse directory and call Callback() for each file
-void TraverseDirectory(const wchar_t Dir[], int Callback(const wchar_t file_path[])) {
+void TraverseDirectory(const wchar_t* dir, int callback(const wchar_t* file_path)) {
   WIN32_FIND_DATA FindFileData;
   wchar_t DirSpec[MAX_PATH];
   // DWORD dwError;
-  lstrcpy(DirSpec, Dir);
+  lstrcpy(DirSpec, dir);
   lstrcat(DirSpec, L"\\*");
 
   HANDLE hFind = FindFirstFile(DirSpec, &FindFileData);
@@ -29,23 +29,23 @@ void TraverseDirectory(const wchar_t Dir[], int Callback(const wchar_t file_path
     }
 
     wchar_t DirAdd[MAX_PATH];
-    lstrcpy(DirAdd, Dir);
+    lstrcpy(DirAdd, dir);
     lstrcat(DirAdd, L"\\");
     lstrcat(DirAdd, FindFileData.cFileName);
 
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
       // directory
-      TraverseDirectory(DirAdd, Callback);
+      TraverseDirectory(DirAdd, callback);
     } else {
       // file
-      Callback(DirAdd);
+      callback(DirAdd);
     }
   }
 
   FindClose(hFind);
 }
 
-bool IsDirectory(const wchar_t path[]) {
+bool IsDirectory(const wchar_t* path) {
   DWORD fa = GetFileAttributes(path);
   if (fa == INVALID_FILE_ATTRIBUTES)
     return false;

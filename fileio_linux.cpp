@@ -12,13 +12,13 @@
 using std::cerr;
 using std::endl;
 
-// traverse directory and call Callback() for each file
-void TraverseDirectory(const char Dir[], int Callback(const char file_path[], const struct stat* sb, int typeflag)) {
-  if (ftw(Dir, Callback, 16))
+// traverse directory and call callback() for each file
+void TraverseDirectory(const char* dir, int callback(const char* file_path, const struct stat* sb, int typeflag)) {
+  if (ftw(dir, callback, 16))
     perror("ftw");
 }
 
-bool IsDirectory(const char path[]) {
+bool IsDirectory(const char* path) {
   struct stat sb;
   if (!stat(path, &sb))
     return (sb.st_mode & S_IFDIR) != 0;

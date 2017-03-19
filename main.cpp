@@ -34,18 +34,16 @@ void PrintSize(size_t size) {
 int ProcessFile(const wchar_t* file_path) {
   char mbs[MAX_PATH] = { 0 };
   WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
-  cout << "Processing: " << mbs << endl;
   string filename(mbs);
 #else
-// written like this in order to be callback funtion of ftw()
-int ProcessFile(const char file_path[], const struct stat* sb = nullptr, int typeflag = FTW_F) {
+// written like this in order to be callback function of ftw()
+int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int typeflag = FTW_F) {
   if (typeflag != FTW_F)
     return 0;
-
-  cout << "Processing: " << file_path << endl;
   string filename(file_path);
 #endif  // _WIN32
 
+  cout << "Processing: " << filename << endl;
   File input_file(file_path);
 
   if (input_file.IsOK()) {
@@ -101,7 +99,7 @@ int main() {
   int argc;
   wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
 #else
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
 #endif  // _WIN32
 
   is_fast = false;
