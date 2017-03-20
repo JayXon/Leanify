@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include <miniz/miniz.h>
 #include <zopfli/zlib_container.h>
+#include <zopflipng/lodepng/lodepng.h>
 
 #include "formats/data_uri.h"
 #include "formats/dwf.h"
@@ -142,12 +142,12 @@ size_t LeanifyFile(void* file_pointer, size_t file_size, size_t size_leanified /
   return r;
 }
 
-size_t ZlibRecompress(void* src, size_t src_len, size_t size_leanified /*= 0*/) {
+size_t ZlibRecompress(uint8_t* src, size_t src_len, size_t size_leanified /*= 0*/) {
   if (!is_fast) {
-    size_t s = 0;
-    uint8_t* buffer =
-        static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(src, src_len, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
-    if (!buffer) {
+    size_t uncompressed_size = 0;
+    uint8_t* buffer = nullptr;
+    if (lodepng_zlib_decompress(&buffer, &uncompressed_size, src, src_len, &lodepng_default_decompress_settings) ||
+        !buffer) {
       cerr << "Decompress Zlib data failed." << endl;
     } else {
       ZopfliOptions zopfli_options;
@@ -156,10 +156,10 @@ size_t ZlibRecompress(void* src, size_t src_len, size_t size_leanified /*= 0*/) 
 
       size_t new_size = 0;
       uint8_t* out_buffer = nullptr;
-      ZopfliZlibCompress(&zopfli_options, buffer, s, &out_buffer, &new_size);
-      mz_free(buffer);
+      ZopfliZlibCompress(&zopfli_options, buffer, uncompressed_size, &out_buffer, &new_size);
+      free(buffer);
       if (new_size < src_len) {
-        memcpy(static_cast<uint8_t*>(src) - size_leanified, out_buffer, new_size);
+        memcpy(src - size_leanified, out_buffer, new_size);
         free(out_buffer);
         return new_size;
       }
@@ -167,6 +167,6 @@ size_t ZlibRecompress(void* src, size_t src_len, size_t size_leanified /*= 0*/) 
     }
   }
 
-  memmove(static_cast<uint8_t*>(src) - size_leanified, src, src_len);
+  memmove(src - size_leanified, src, src_len);
   return src_len;
 }

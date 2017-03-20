@@ -4,7 +4,7 @@
 #include <cstring>
 #include <iostream>
 
-#include <miniz/miniz.h>
+#include <zopflipng/lodepng/lodepng.h>
 #include <zopflipng/zopflipng_lib.h>
 
 #include "../leanify.h"
@@ -145,7 +145,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
     uint32_t new_idat_length = ZlibRecompress(idat_addr + 8, idat_length);
     if (idat_length != new_idat_length) {
       *(uint32_t*)idat_addr = BSWAP32(new_idat_length);
-      *(uint32_t*)(idat_addr + new_idat_length + 8) = BSWAP32(mz_crc32(0, idat_addr + 4, new_idat_length + 4));
+      *(uint32_t*)(idat_addr + new_idat_length + 8) = BSWAP32(lodepng_crc32(idat_addr + 4, new_idat_length + 4));
       uint8_t* idat_end = idat_addr + idat_length + 12;
       memmove(idat_addr + new_idat_length + 12, idat_end, fp_ + size_ - idat_end);
       size_ -= idat_length - new_idat_length;

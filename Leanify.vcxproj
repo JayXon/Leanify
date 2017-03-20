@@ -189,7 +189,6 @@
     <ClCompile Include="lib\LZMA\LzmaDec.c" />
     <ClCompile Include="lib\LZMA\LzmaEnc.c" />
     <ClCompile Include="lib\LZMA\Threads.c" />
-    <ClCompile Include="lib\miniz\miniz.c" />
     <ClCompile Include="lib\mozjpeg\jaricom.c" />
     <ClCompile Include="lib\mozjpeg\jcapimin.c" />
     <ClCompile Include="lib\mozjpeg\jcarith.c" />

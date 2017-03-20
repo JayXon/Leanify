@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include <miniz/miniz.h>
+#include <zopflipng/lodepng/lodepng.h>
 
 #include "../leanify.h"
 #include "../utils.h"
@@ -220,7 +220,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
       // method is store
       if (local_header->compressed_size) {
         uint32_t new_size = LeanifyFile(p_read, local_header->compressed_size, p_read - p_write, filename);
-        cd_header.crc32 = local_header->crc32 = mz_crc32(0, p_write, new_size);
+        cd_header.crc32 = local_header->crc32 = lodepng_crc32(p_write, new_size);
         cd_header.compressed_size = local_header->compressed_size = new_size;
         cd_header.uncompressed_size = local_header->uncompressed_size = new_size;
         p_write += local_header->compressed_size;
@@ -244,13 +244,13 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
 
     // decompress
     size_t decompressed_size = 0;
-    uint8_t* decompress_buf = static_cast<uint8_t*>(
-        tinfl_decompress_mem_to_heap(p_read, local_header->compressed_size, &decompressed_size, 0));
-
-    if (!decompress_buf || decompressed_size != local_header->uncompressed_size ||
-        local_header->crc32 != mz_crc32(0, decompress_buf, local_header->uncompressed_size)) {
+    uint8_t* decompress_buf = nullptr;
+    if (lodepng_inflate(&decompress_buf, &decompressed_size, p_read, local_header->compressed_size,
+                        &lodepng_default_decompress_settings) ||
+        !decompress_buf || decompressed_size != local_header->uncompressed_size ||
+        local_header->crc32 != lodepng_crc32(decompress_buf, local_header->uncompressed_size)) {
       cerr << "Decompression failed or CRC32 mismatch, skipping this file." << endl;
-      mz_free(decompress_buf);
+      free(decompress_buf);
       memmove(p_write, p_read, local_header->compressed_size);
       p_write += local_header->compressed_size;
       continue;
@@ -267,12 +267,12 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     // switch to store if deflate makes file larger
     if (new_uncomp_size <= new_comp_size && new_uncomp_size <= local_header->compressed_size) {
       cd_header.compression_method = local_header->compression_method = 0;
-      cd_header.crc32 = local_header->crc32 = mz_crc32(0, decompress_buf, new_uncomp_size);
+      cd_header.crc32 = local_header->crc32 = lodepng_crc32(decompress_buf, new_uncomp_size);
       cd_header.compressed_size = local_header->compressed_size = new_uncomp_size;
       cd_header.uncompressed_size = local_header->uncompressed_size = new_uncomp_size;
       memcpy(p_write, decompress_buf, new_uncomp_size);
     } else if (new_comp_size < local_header->compressed_size) {
-      cd_header.crc32 = local_header->crc32 = mz_crc32(0, decompress_buf, new_uncomp_size);
+      cd_header.crc32 = local_header->crc32 = lodepng_crc32(decompress_buf, new_uncomp_size);
       cd_header.compressed_size = local_header->compressed_size = new_comp_size;
       cd_header.uncompressed_size = local_header->uncompressed_size = new_uncomp_size;
       memcpy(p_write, compress_buf, new_comp_size);
@@ -281,7 +281,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     }
     p_write += local_header->compressed_size;
 
-    mz_free(decompress_buf);
+    free(decompress_buf);
     delete[] compress_buf;
   }
 

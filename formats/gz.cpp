@@ -4,8 +4,8 @@
 #include <cstring>
 #include <iostream>
 
-#include <miniz/miniz.h>
 #include <zopfli/deflate.h>
+#include <zopflipng/lodepng/lodepng.h>
 
 #include "../leanify.h"
 #include "../utils.h"
@@ -82,12 +82,13 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/) {
   uint32_t crc = *(uint32_t*)(fp_ + size_ - 8);
   size_t original_size = fp_ + size_ - 8 - p_read;
 
-  size_t s = 0;
-  uint8_t* buffer = static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(p_read, original_size, &s, 0));
-
-  if (!buffer || s != uncompressed_size || crc != mz_crc32(0, buffer, uncompressed_size)) {
+  size_t actual_uncompressed_size = 0;
+  uint8_t* buffer = nullptr;
+  if (lodepng_inflate(&buffer, &actual_uncompressed_size, p_read, original_size,
+                      &lodepng_default_decompress_settings) ||
+      !buffer || actual_uncompressed_size != uncompressed_size || crc != lodepng_crc32(buffer, uncompressed_size)) {
     cerr << "GZ corrupted!" << endl;
-    mz_free(buffer);
+    free(buffer);
     memmove(p_write, p_read, original_size + 8);
     return size_ - (p_read - p_write);
   }
@@ -105,15 +106,16 @@ size_t Gz::Leanify(size_t size_leanified /*= 0*/) {
   if (outsize < original_size) {
     memcpy(p_write, out, outsize);
     p_write += outsize;
-    *(uint32_t*)p_write = mz_crc32(0, buffer, uncompressed_size);
+    *(uint32_t*)p_write = lodepng_crc32(buffer, uncompressed_size);
     *(uint32_t*)(p_write + 4) = uncompressed_size;
   } else {
     memmove(p_write, p_read, original_size + 8);
     p_write += original_size;
   }
-  mz_free(buffer);
-  delete[] out;
+  free(buffer);
+  free(out);
   depth--;
   fp_ -= size_leanified;
-  return p_write + 8 - fp_;
+  size_ = p_write + 8 - fp_;
+  return size_;
 }

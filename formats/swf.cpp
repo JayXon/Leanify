@@ -9,7 +9,7 @@
 #include <LZMA/Alloc.h>
 #include <LZMA/LzmaDec.h>
 #include <LZMA/LzmaEnc.h>
-#include <miniz/miniz.h>
+#include <zopflipng/lodepng/lodepng.h>
 
 #include "../leanify.h"
 #include "../utils.h"
@@ -86,14 +86,16 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   if (*fp_ == 'C') {
     // deflate
     VerbosePrint("SWF is compressed with deflate.");
-    size_t s = 0;
-    in_buffer =
-        static_cast<uint8_t*>(tinfl_decompress_mem_to_heap(in_buffer, size_ - 8, &s, TINFL_FLAG_PARSE_ZLIB_HEADER));
-    if (!in_buffer || s != in_len) {
+    size_t uncompressed_size = 0;
+    uint8_t* buffer = nullptr;
+    if (lodepng_zlib_decompress(&buffer, &uncompressed_size, in_buffer, size_ - 8,
+                                &lodepng_default_decompress_settings) ||
+        !buffer || uncompressed_size != in_len) {
       cerr << "SWF file corrupted!" << endl;
-      mz_free(in_buffer);
+      free(buffer);
       return Format::Leanify(size_leanified);
     }
+    in_buffer = buffer;
   } else if (*fp_ == 'Z') {
     // LZMA
     VerbosePrint("SWF is compressed with LZMA.");
@@ -218,7 +220,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
 
   // free decompressed data
   if (*fp_ == 'C')
-    mz_free(in_buffer);
+    free(in_buffer);
   else if (*fp_ == 'Z')
     delete[] in_buffer;
 

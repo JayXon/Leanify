@@ -228,9 +228,6 @@
     <ClCompile Include="lib\mozjpeg\jcext.c">
       <Filter>Source Files\lib\mozjpeg</Filter>
     </ClCompile>
-    <ClCompile Include="lib\miniz\miniz.c">
-      <Filter>Source Files\lib</Filter>
-    </ClCompile>
     <ClCompile Include="formats\base64.cpp">
       <Filter>Source Files\formats</Filter>
     </ClCompile>
