@@ -4,7 +4,7 @@ Leanify [![Build Status](https://travis-ci.org/JayXon/Leanify.svg)](https://trav
 Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessary data (debug information, comments, metadata, etc.) and recompress the file to reduce file size. It will not reduce image quality at all.
 
 
-##Features
+## Features
 
 * Support recursive minifying. (e.g. a [PNG] inside an [APK] inside a [ZIP])
 * Support a wide variety of [file formats](#file-formats).
@@ -15,17 +15,17 @@ Leanify is a lightweight lossless file minifier/optimizer. It removes unnecessar
 * Ability to identify file format by its data instead of name.
 
 
-##Disclaimer
+## Disclaimer
 
 I'm not respossible for any consequence of using Leanify.
 
 **PLEASE BACKUP THE FILE BEFORE USING LEANIFY!**
 
 
-##File Formats
+## File Formats
 
 
-####APK file (.apk)
+#### APK file (.apk)
 
 It is based on [ZIP].
   
@@ -35,74 +35,74 @@ To install it, you'll have to sign it again.
 If you don't want to modify any files inside `APK`, use `-d 1` option.
 
 
-####Comic book archive (.cbt, .cbz)
+#### Comic book archive (.cbt, .cbz)
 
 `cbt` is based on [tar]. `cbz` is based on [ZIP].
 
 
-####Microsoft Office document 2007-2013 (.docx, .xlsx, .pptx)
+#### Microsoft Office document 2007-2013 (.docx, .xlsx, .pptx)
 
 It is based on [XML] and [ZIP].
 
 Office document 1997-2003 (.doc, .xls, .ppt) is not supported.
 
 
-####Data URI (.html .htm .js .css)
+#### Data URI (.html .htm .js .css)
 
 Looks for `data:image/*;base64` and leanify base64 encoded embedded image.
 
 
-####Design Web Format (.dwf, dwfx)
+#### Design Web Format (.dwf, dwfx)
 
 It is based on [ZIP].
 
 
-####EPUB file (.epub)
+#### EPUB file (.epub)
 
 It is based on [ZIP].
 
 
-####FictionBook (.fb2, .fb2.zip)
+#### FictionBook (.fb2, .fb2.zip)
 
 It is based on [XML].
 
 Leanify embedded images.
 
 
-####GFT file (.gft)
+#### GFT file (.gft)
 
 It's an image container format found in Tencent QQ.
 
 Leanify the image inside.
 
 
-####gzip file (.gz, .tgz)
+#### gzip file (.gz, .tgz)
 
 Leanify file inside and recompress deflate stream.
   
 Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
 
 
-####Icon file (.ico)
+#### Icon file (.ico)
 
 Convert 256x256 BMP to [PNG].
 
 Leanify [PNG] inside, if any.
 
 
-####Java archive (.jar)
+#### Java archive (.jar)
 
 It is based on [ZIP].
 
 
-####JPEG image (.jpeg, .jpg, .jpe, .jif, .jfif, .jfi, .thm)
+#### JPEG image (.jpeg, .jpg, .jpe, .jif, .jfif, .jfi, .thm)
 
 Remove all application markers (e.g. `Exif` (use `--keep-exif` to keep it), `ICC profile`, `XMP`) and comments.
 
 Optimize with `mozjpeg`.
 
 
-####Lua object file (.lua, .luac)
+#### Lua object file (.lua, .luac)
 
 Remove all debugging information:
 
@@ -113,12 +113,12 @@ Remove all debugging information:
 * Upvalue list
 
 
-####OpenDocument (.odt, .ods, .odp, .odb, .odg, .odf)
+#### OpenDocument (.odt, .ods, .odp, .odb, .odg, .odf)
 
 It is based on [XML] and [ZIP].
 
 
-####PE file (.exe, .dll, .ocx, .scr, .cpl)
+#### PE file (.exe, .dll, .ocx, .scr, .cpl)
 
 Leanify embedded resource.
 
@@ -129,7 +129,7 @@ Remove undocumented `Rich Header`.
 Overlap `PE Header` and `DOS Header`.
 
 
-####PNG image (.png, .apng)
+#### PNG image (.png, .apng)
 
 Remove all ancillary chunks except for:
   
@@ -140,14 +140,14 @@ Remove all ancillary chunks except for:
 Optimize with `ZopfliPNG`.
 
 
-####RDB archive (.rdb)
+#### RDB archive (.rdb)
 
 It is an archive format found in Tencent QQ.
 
 Leanify all files inside.
 
 
-####Flash file (.swf)
+#### Flash file (.swf)
 
 Leanify embedded images.
 
@@ -156,7 +156,7 @@ Recompress it with `LZMA`.
 Remove Metadata Tag.
 
 
-####SVG image (.svg, .svgz)
+#### SVG image (.svg, .svgz)
 
 It is based on [XML].
 
@@ -168,17 +168,17 @@ Remove empty attributes.
 
 Remove empty text element and container element.
 
-####tar archive (.tar)
+#### tar archive (.tar)
 
 Leanify all files inside.
 
 
-####XML document (.xml, .xsl, .xslt)
+#### XML document (.xml, .xsl, .xslt)
 
 Remove all comments, unnecessary spaces, tabs, line breaks.
 
 
-####XPInstall (.xpi)
+#### XPInstall (.xpi)
 
 It is based on [ZIP].
 
@@ -186,12 +186,12 @@ Note that modifying files inside `xpi` will break digital signature.
 To install it, you'll have to sign it again.
 
 
-####XPS document (.xps, .oxps)
+#### XPS document (.xps, .oxps)
 
 It is based on [XML] and [ZIP].
 
 
-####ZIP archive (.zip)
+#### ZIP archive (.zip)
 
 Leanify all files inside and recompress deflate stream using [Zopfli](https://github.com/google/zopfli).
 
@@ -207,7 +207,7 @@ Remove comment in `End of central directory record`.
 
 
 
-##Downloads
+## Downloads
 
 [Stable Releases](https://github.com/JayXon/Leanify/releases/)
 
@@ -217,7 +217,7 @@ Remove comment in `End of central directory record`.
 
 
 
-##Usage
+## Usage
 
 ```
 Usage: leanify [options] paths
@@ -232,9 +232,9 @@ Usage: leanify [options] paths
 ```
 
 
-##Compiling
+## Compiling
 
-####Windows
+#### Windows
 
 * Visual Studio 2015 or up
 
@@ -245,7 +245,7 @@ Usage: leanify [options] paths
   `build_gcc.bat` or `mingw32-make`
 
 
-####Linux, Mac
+#### Linux, Mac
 
   gcc 4.8+ or clang 3.5+ with LTO and gold linker support
 ```
