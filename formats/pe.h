@@ -117,6 +117,7 @@ class Pe : public Format {
 
   // decrease RVA inside rsrc section
   void TraverseRSRC(ImageResourceDirectory* res_dir, std::string name = "", const uint32_t move_size = 0);
+  bool IsRSRCValid(uint32_t rsrc_virtual_address, uint32_t rsrc_virtual_size);
 
   uint8_t* rsrc_;
   uint32_t rsrc_raw_size_;

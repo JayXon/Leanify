@@ -192,10 +192,9 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
               [](const std::pair<uint32_t*, string>& a, const std::pair<uint32_t*, string>& b) {
                 return *a.first < *b.first;
               });
-    uint32_t last_end = rsrc_data_[0].first[0];
 
     // detect non standard resource, maybe produced by some packer
-    if (last_end < rsrc_virtual_address || last_end > rsrc_virtual_address + rsrc_virtual_size) {
+    if (!IsRSRCValid(rsrc_virtual_address, rsrc_virtual_size)) {
       VerbosePrint("Non standard resource detected.");
       if (reloc_raw_size) {
         // move everything before reloc
@@ -231,6 +230,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
       }
 
       depth++;
+	  uint32_t last_end = rsrc_data_[0].first[0];
       // res.first is address of IMAGE_RESOURCE_DATA_ENTRY
       // res.second is the name of the resource
       // p[0] is RVA, p[1] is size
@@ -403,3 +403,18 @@ void Pe::TraverseRSRC(ImageResourceDirectory* res_dir, string name /*= ""*/, con
     }
   }
 }
+
+bool Pe::IsRSRCValid(uint32_t rsrc_virtual_address, uint32_t rsrc_virtual_size) {
+  for (auto it = rsrc_data_.begin(); it != rsrc_data_.end(); ++it) {
+    if (it->first[0] < rsrc_virtual_address || it->first[0] > rsrc_virtual_address + rsrc_virtual_size)
+      return false;
+    if (it->first[0] - rsrc_virtual_address + it->first[1] > rsrc_raw_size_)
+      return false;
+    if (it != rsrc_data_.begin()) {
+      auto prev = std::prev(it);
+      if (prev->first[0] + prev->first[1] > it->first[0])
+        return false;
+    }
+  }
+  return true;
+};
