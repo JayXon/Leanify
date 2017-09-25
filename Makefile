@@ -7,7 +7,7 @@ ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng
 
 CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -fno-exceptions -flto
 CPPFLAGS    += -I./lib
-CXXFLAGS    += $(CFLAGS) --std=c++11 -fno-rtti
+CXXFLAGS    += $(CFLAGS) -std=c++11 -fno-rtti
 LDFLAGS     += -flto
 
 ifeq ($(OS), Windows_NT)
