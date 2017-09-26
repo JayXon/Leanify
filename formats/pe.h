@@ -15,7 +15,7 @@ extern bool is_verbose;
 
 class Pe : public Format {
  public:
-  explicit Pe(void* p, size_t s = 0) : Format(p, s), rsrc_(nullptr), rsrc_raw_size_(0) {}
+  using Format::Format;
 
   size_t Leanify(size_t size_leanified = 0) override;
 
@@ -119,8 +119,8 @@ class Pe : public Format {
   void TraverseRSRC(ImageResourceDirectory* res_dir, std::string name = "", const uint32_t move_size = 0);
   bool IsRSRCValid(uint32_t rsrc_virtual_address, uint32_t rsrc_virtual_size);
 
-  uint8_t* rsrc_;
-  uint32_t rsrc_raw_size_;
+  uint8_t* rsrc_ = nullptr;
+  uint32_t rsrc_raw_size_ = 0;
 
   std::vector<std::pair<uint32_t*, std::string>> rsrc_data_;
 };
