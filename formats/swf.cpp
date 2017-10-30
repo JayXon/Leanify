@@ -220,7 +220,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
 
   // free decompressed data
   if (*fp_ == 'C')
-    free(in_buffer);
+    delete[] in_buffer;
   else if (*fp_ == 'Z')
     delete[] in_buffer;
 
