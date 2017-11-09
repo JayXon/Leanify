@@ -115,6 +115,18 @@ class Pe : public Format {
     };
   });
 
+  PACK(struct ImageResourceDataEntry {
+    uint32_t OffsetToData;
+    uint32_t Size;
+    uint32_t CodePage;
+    uint32_t Reserved;
+  });
+
+  struct RsrcEntry {
+    ImageResourceDataEntry* entry = nullptr;
+    std::string name;
+  };
+
   // decrease RVA inside rsrc section
   void TraverseRSRC(ImageResourceDirectory* res_dir, std::string name = "", const uint32_t move_size = 0);
   bool IsRSRCValid(uint32_t rsrc_virtual_address, uint32_t rsrc_virtual_size);
@@ -122,7 +134,7 @@ class Pe : public Format {
   uint8_t* rsrc_ = nullptr;
   uint32_t rsrc_raw_size_ = 0;
 
-  std::vector<std::pair<uint32_t*, std::string>> rsrc_data_;
+  std::vector<RsrcEntry> rsrc_data_;
 };
 
 #endif  // FORMATS_PE_H_
