@@ -46,6 +46,7 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             - clang-3.6
+            - llvm-3.6-dev    # for LLVMgold.so
       env:
         - COMPILER_VER=-3.6
 
@@ -58,6 +59,7 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
+            - llvm-3.7-dev    # for LLVMgold.so
       env:
         - COMPILER_VER=-3.7
 
@@ -70,6 +72,7 @@ matrix:
             - llvm-toolchain-precise-3.8
           packages:
             - clang-3.8
+            - llvm-3.8-dev    # for LLVMgold.so
             - libc++-dev
       env:
         - COMPILER_VER=-3.8
@@ -84,6 +87,7 @@ matrix:
             - llvm-toolchain-trusty-3.9
           packages:
             - clang-3.9
+            - llvm-3.9-dev    # for LLVMgold.so
             - libc++-dev
       env:
         - COMPILER_VER=-3.9
@@ -98,6 +102,7 @@ matrix:
             - llvm-toolchain-trusty-4.0
           packages:
             - clang-4.0
+            - llvm-4.0-dev    # for LLVMgold.so
       env:
         - COMPILER_VER=-4.0
 
@@ -110,6 +115,7 @@ matrix:
             - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
+            - llvm-5.0-dev    # for LLVMgold.so
       env:
         - COMPILER_VER=-5.0
 
