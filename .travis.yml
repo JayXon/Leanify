@@ -2,6 +2,8 @@ sudo: false
 
 language: cpp
 
+env:
+
 matrix:
   include:
     - os: linux
@@ -129,6 +131,11 @@ matrix:
     - os: osx
       osx_image: xcode9
       compiler: clang
+
+  allow_failures:
+    - env:
+      - COMPILER_VER=-3.8
+      - CXXFLAGS=-stdlib=libc++
 
 install:
   - export CXX="$CXX$COMPILER_VER"
