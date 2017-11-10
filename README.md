@@ -28,7 +28,7 @@ I'm not respossible for any consequence of using Leanify.
 #### APK file (.apk)
 
 It is based on [ZIP].
-  
+
 Note that modifying files inside `APK` will break digital signature.
 To install it, you'll have to sign it again.
 
@@ -79,7 +79,7 @@ Leanify the image inside.
 #### gzip file (.gz, .tgz)
 
 Leanify file inside and recompress deflate stream.
-  
+
 Remove all optional section: `FEXTRA`, `FNAME`, `FCOMMENT`, `FHCRC`.
 
 
@@ -132,7 +132,7 @@ Overlap `PE Header` and `DOS Header`.
 #### PNG image (.png, .apng)
 
 Remove all ancillary chunks except for:
-  
+
 * `tRNS`: transparent information
 * `fdAT`, `fcTL`, `acTL`: These chunks are used by `APNG`
 * `npTc`: Android 9Patch images (*.9.png)
@@ -213,8 +213,6 @@ Remove comment in `End of central directory record`.
 
 [Windows Nightly Build](https://ci.appveyor.com/project/JayXon/leanify)
 
-[Linux Nightly Build](https://drone.io/github.com/JayXon/Leanify/files)
-
 
 
 ## Usage
@@ -236,18 +234,18 @@ Usage: leanify [options] paths
 
 #### Windows
 
-* Visual Studio 2015 or up
+* Visual Studio 2015+
 
   Use Leanify.vcxproj
 
-* gcc 4.8 or up
+* gcc 5+
 
   `build_gcc.bat` or `mingw32-make`
 
 
 #### Linux, Mac
 
-  gcc 4.8+ or clang 3.5+ with LTO and gold linker support
+  gcc 5+ or clang 3.6+
 ```
 make
 ```

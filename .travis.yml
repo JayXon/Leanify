@@ -11,18 +11,9 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.8
-      env: COMPILER_VER=-4.8
-
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
             - g++-5
-      env: COMPILER_VER=-5
+      env:
+        - COMPILER_VER=-5
 
     - os: linux
       compiler: gcc
@@ -32,7 +23,19 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
-      env: COMPILER_VER=-6
+      env:
+        - COMPILER_VER=-6
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - COMPILER_VER=-7
 
     - os: linux
       compiler: clang
@@ -40,11 +43,11 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.5
+            - llvm-toolchain-precise-3.6
           packages:
-            - clang-3.5
-            - llvm-3.5-dev    # for LLVMgold.so
-      env: COMPILER_VER=-3.5
+            - clang-3.6
+      env:
+        - COMPILER_VER=-3.6
 
     - os: linux
       compiler: clang
@@ -55,18 +58,70 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
-            - llvm-3.7-dev    # for LLVMgold.so
-      env: COMPILER_VER=-3.7
+      env:
+        - COMPILER_VER=-3.7
 
-    - os: osx
+    - os: linux
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+          packages:
+            - clang-3.8
+            - libc++-dev
+      env:
+        - COMPILER_VER=-3.8
+        - CXXFLAGS=-stdlib=libc++
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-3.9
+          packages:
+            - clang-3.9
+            - libc++-dev
+      env:
+        - COMPILER_VER=-3.9
+        - CXXFLAGS=-stdlib=libc++
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0
+      env:
+        - COMPILER_VER=-4.0
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+      env:
+        - COMPILER_VER=-5.0
 
     - os: osx
-      osx_image: xcode6.4
       compiler: clang
 
     - os: osx
       osx_image: xcode8
+      compiler: clang
+
+    - os: osx
+      osx_image: xcode9
       compiler: clang
 
 install:
