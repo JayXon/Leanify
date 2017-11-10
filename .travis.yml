@@ -2,8 +2,6 @@ sudo: false
 
 language: cpp
 
-env:
-
 matrix:
   include:
     - os: linux
@@ -133,6 +131,7 @@ matrix:
       compiler: clang
 
   allow_failures:
+    # Clang 3.8 couldn't find LLVMgold.so
     - env:
       - COMPILER_VER=-3.8
       - CXXFLAGS=-stdlib=libc++
