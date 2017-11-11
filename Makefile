@@ -44,7 +44,7 @@ leanify:    $(LEANIFY_SRC) $(LZMA_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OB
 
 $(LZMA_OBJ):    CFLAGS += $(LZMA_CFLAGS)
 
-$(MOZJPEG_OBJ): CFLAGS += -Wno-sign-compare
+$(MOZJPEG_OBJ): CFLAGS := $(filter-out -Wextra,$(CFLAGS))
 
 $(ZOPFLI_OBJ):  CFLAGS += -Wno-unused-function
 
