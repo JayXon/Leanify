@@ -191,6 +191,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       // FileAttributes
       case 69:
         *p &= ~(1 << 4);  // set HasMetadata bit to 0
+        // Fall through.
       default:
         memmove(p - tag_size_leanified, p, tag_length);
     }

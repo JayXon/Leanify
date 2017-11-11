@@ -32,6 +32,7 @@ int Base64Decode(const uint8_t* in, size_t in_len, uint8_t* out, size_t* out_len
         return 2;  // invalid input, return error
       case 65:
         i = in_len;  // pad character, end of data
+        // Fall through.
       case 64:
         continue;  // skip whitespace
       default:
