@@ -5,7 +5,7 @@ PUGIXML_OBJ     := lib/pugixml/pugixml.o
 ZOPFLI_OBJ      := lib/zopfli/hash.o lib/zopfli/squeeze.o lib/zopfli/gzip_container.o lib/zopfli/katajainen.o lib/zopfli/zopfli_lib.o lib/zopfli/cache.o lib/zopfli/zlib_container.o lib/zopfli/util.o lib/zopfli/tree.o lib/zopfli/deflate.o lib/zopfli/blocksplitter.o lib/zopfli/lz77.o
 ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng_util.o lib/zopflipng/zopflipng_lib.o
 
-CFLAGS      += -Wall -O3 -msse2 -mfpmath=sse -fno-exceptions -flto
+CFLAGS      += -Wall -Wextra -Wno-unused-parameter -Werror -O3 -msse2 -mfpmath=sse -fno-exceptions -flto
 CPPFLAGS    += -I./lib
 CXXFLAGS    += $(CFLAGS) -std=c++14 -fno-rtti
 LDFLAGS     += -flto
@@ -43,6 +43,8 @@ leanify:    $(LEANIFY_SRC) $(LZMA_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OB
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
 $(LZMA_OBJ):    CFLAGS += $(LZMA_CFLAGS)
+
+$(MOZJPEG_OBJ): CFLAGS += -Wno-sign-compare
 
 $(ZOPFLI_OBJ):  CFLAGS += -Wno-unused-function
 
