@@ -192,7 +192,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
               [](const RsrcEntry& a, const RsrcEntry& b) { return a.entry->OffsetToData < b.entry->OffsetToData; });
 
     // detect non standard resource, maybe produced by some packer
-    if (!IsRSRCValid(rsrc_virtual_address, rsrc_virtual_size)) {
+    if (rsrc_data_.empty() || !IsRSRCValid(rsrc_virtual_address, rsrc_virtual_size)) {
       VerbosePrint("Non standard resource detected.");
       if (reloc_raw_size) {
         // move everything before reloc
