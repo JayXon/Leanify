@@ -119,6 +119,19 @@ matrix:
       env:
         - COMPILER_VER=-5.0
 
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - clang-6.0
+            - llvm-6.0-dev    # for LLVMgold.so
+      env:
+        - COMPILER_VER=-6.0
+
     - os: osx
       compiler: clang
 
