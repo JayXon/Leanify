@@ -17,6 +17,7 @@ using std::string;
 using std::vector;
 
 const uint8_t Zip::header_magic[] = { 0x50, 0x4B, 0x03, 0x04 };
+bool Zip::force_deflate_ = false;
 
 namespace {
 
@@ -223,6 +224,18 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
         cd_header.crc32 = local_header->crc32 = lodepng_crc32(p_write, new_size);
         cd_header.compressed_size = local_header->compressed_size = new_size;
         cd_header.uncompressed_size = local_header->uncompressed_size = new_size;
+        if (force_deflate_) {
+          uint8_t bp = 0, *compress_buf = nullptr;
+          size_t deflate_size = 0;
+          ZopfliDeflate(&zopfli_options_, 2, 1, p_write, new_size, &bp, &compress_buf, &deflate_size);
+          if (deflate_size < new_size) {
+            // switch to deflate
+            cd_header.compression_method = local_header->compression_method = 8;
+            cd_header.compressed_size = local_header->compressed_size = deflate_size;
+            memcpy(p_write, compress_buf, deflate_size);
+          }
+          delete[] compress_buf;
+        }
         p_write += local_header->compressed_size;
       }
       continue;

@@ -15,6 +15,7 @@
 
 #include "formats/jpeg.h"
 #include "formats/png.h"
+#include "formats/zip.h"
 
 using std::cerr;
 using std::cout;
@@ -77,7 +78,7 @@ void PauseIfNotTerminal() {
 void PrintInfo() {
   cerr << "Leanify\t" << VERSION_STR << endl << endl;
   cerr << "Usage: leanify [options] paths\n"
-          "  -i, --iteration <iteration>   More iterations produce better result, but\n"
+          "  -i, --iteration <iteration>   More iterations may produce better result, but\n"
           "                                  use more time, default is 15.\n"
           "  -d, --max_depth <max depth>   Maximum recursive depth, unlimited by default.\n"
           "                                  Set to 1 will disable recursive minifying.\n"
@@ -89,7 +90,10 @@ void PrintInfo() {
           "\n"
           "JPEG specific option:\n"
           "  --jpeg-keep-all-metadata      Do not remove any metadata or comments in JPEG.\n"
-          "  --jpeg-arithmetic-coding      Use arithmetic coding for JPEG.\n";
+          "  --jpeg-arithmetic-coding      Use arithmetic coding for JPEG.\n"
+          "\n"
+          "ZIP specific option:\n"
+          "  --zip-force-deflate           Try deflate even if not compressed originally.\n";
 
   PauseIfNotTerminal();
 }
@@ -183,6 +187,9 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "jpeg-arithmetic-coding") == 0) {
             j += 22;
             Jpeg::force_arithmetic_coding_ = true;
+          } else if (STRCMP(argv[i] + j + 1, "zip-force-deflate") == 0) {
+            j += 17;
+            Zip::force_deflate_ = true;
           } else {
 #ifdef _WIN32
             char mbs[64] = { 0 };

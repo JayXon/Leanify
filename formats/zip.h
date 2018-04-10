@@ -22,6 +22,7 @@ class Zip : public Format {
   size_t Leanify(size_t size_leanified = 0) override;
 
   static const uint8_t header_magic[4];
+  static bool force_deflate_;
 
  private:
   ZopfliOptions zopfli_options_;
