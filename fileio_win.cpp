@@ -6,18 +6,32 @@
 using std::cerr;
 using std::endl;
 
+namespace {
+
+void PrintErrorMessage(const char* msg) {
+  char* error_msg = nullptr;
+  FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr, GetLastError(), 0,
+                 reinterpret_cast<char*>(&error_msg), 0, nullptr);
+  cerr << msg << endl;
+  if (error_msg) {
+    cerr << error_msg << endl;
+    LocalFree(error_msg);
+  }
+}
+
+}  // namespace
+
 // traverse directory and call Callback() for each file
 void TraverseDirectory(const wchar_t* dir, int callback(const wchar_t* file_path)) {
   WIN32_FIND_DATA FindFileData;
   wchar_t DirSpec[MAX_PATH];
-  // DWORD dwError;
   lstrcpy(DirSpec, dir);
   lstrcat(DirSpec, L"\\*");
 
   HANDLE hFind = FindFirstFile(DirSpec, &FindFileData);
 
   if (hFind == INVALID_HANDLE_VALUE) {
-    FindClose(hFind);
+    PrintErrorMessage("FindFirstFile error!");
     return;
   }
 
@@ -51,21 +65,6 @@ bool IsDirectory(const wchar_t* path) {
     return false;
   return (fa & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
-
-namespace {
-
-void PrintErrorMessage(const char* msg) {
-  char* error_msg = nullptr;
-  FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, nullptr, GetLastError(), 0,
-                 reinterpret_cast<char*>(&error_msg), 0, nullptr);
-  cerr << msg << endl;
-  if (error_msg) {
-    cerr << error_msg << endl;
-    LocalFree(error_msg);
-  }
-}
-
-}  // namespace
 
 File::File(const wchar_t* filepath) {
   fp_ = nullptr;
