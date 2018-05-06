@@ -42,7 +42,7 @@ endif
 leanify:    $(LEANIFY_SRC) $(LZMA_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OBJ) $(ZOPFLIPNG_OBJ)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ $(LDFLAGS) $(LDLIBS) -o $@
 
-$(LZMA_OBJ):    CFLAGS += $(LZMA_CFLAGS)
+$(LZMA_OBJ):    CFLAGS += $(LZMA_CFLAGS) -Wno-empty-body -Wno-misleading-indentation -Wno-unknown-warning-option
 
 $(MOZJPEG_OBJ): CFLAGS := $(filter-out -Wextra,$(CFLAGS))
 
