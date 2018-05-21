@@ -35,20 +35,22 @@ Utilities for using the lz77 symbols of the deflate spec.
 /* _BitScanReverse available beginning with Visual Studio 2005 */
 #elif _MSC_VER >= 1400
 # include <intrin.h>
-# define ZOPFLI_HAS_BITSCANREVERSE
+# define ZOPFLI_HAS_BUILTIN_CLZ
+static int __inline __builtin_clz(unsigned int x) {
+  unsigned long r;
+  _BitScanReverse(&r, x);
+  return 31 ^ r;
+}
 #endif
 
 /* Gets the amount of extra bits for the given dist, cfr. the DEFLATE spec. */
 static int ZopfliGetDistExtraBits(int dist) {
-  if (dist < 5) return 0;
 #ifdef ZOPFLI_HAS_BUILTIN_CLZ
+  if (dist < 5) return 0;
   return (31 ^ __builtin_clz(dist - 1)) - 1; /* log2(dist - 1) - 1 */
-#elif defined ZOPFLI_HAS_BITSCANREVERSE
-  unsigned long l;
-  _BitScanReverse(&l, dist - 1);
-  return l - 1;
 #else
-  if (dist < 9) return 1;
+  if (dist < 5) return 0;
+  else if (dist < 9) return 1;
   else if (dist < 17) return 2;
   else if (dist < 33) return 3;
   else if (dist < 65) return 4;
@@ -71,14 +73,6 @@ static int ZopfliGetDistExtraBitsValue(int dist) {
     return 0;
   } else {
     int l = 31 ^ __builtin_clz(dist - 1); /* log2(dist - 1) */
-    return (dist - (1 + (1 << l))) & ((1 << (l - 1)) - 1);
-  }
-#elif defined ZOPFLI_HAS_BITSCANREVERSE
-  if (dist < 5) {
-    return 0;
-  } else {
-    unsigned long l;
-    _BitScanReverse(&l, dist - 1);
     return (dist - (1 + (1 << l))) & ((1 << (l - 1)) - 1);
   }
 #else
@@ -106,15 +100,6 @@ static int ZopfliGetDistSymbol(int dist) {
     return dist - 1;
   } else {
     int l = (31 ^ __builtin_clz(dist - 1)); /* log2(dist - 1) */
-    int r = ((dist - 1) >> (l - 1)) & 1;
-    return l * 2 + r;
-  }
-#elif defined ZOPFLI_HAS_BITSCANREVERSE
-  if (dist < 5) {
-    return dist - 1;
-  } else {
-    unsigned long l;
-    _BitScanReverse(&l, dist - 1);
     int r = ((dist - 1) >> (l - 1)) & 1;
     return l * 2 + r;
   }
