@@ -26,7 +26,6 @@ bool IsDirectory(const char* path) {
 }
 
 File::File(const char* filepath) {
-  fp_ = nullptr;
   fd_ = open(filepath, O_RDWR);
 
   if (fd_ == -1) {

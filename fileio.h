@@ -24,6 +24,11 @@ class File {
   explicit File(const char* filepath);
 #endif  // _WIN32
 
+  ~File() {
+    if (fp_ != nullptr)
+      UnMapFile(size_);
+  }
+
   void* GetFilePionter() const {
     return fp_;
   }
@@ -40,12 +45,13 @@ class File {
 
  private:
 #ifdef _WIN32
-  HANDLE hFile_, hMap_;
+  HANDLE hFile_ = INVALID_HANDLE_VALUE;
+  HANDLE hMap_ = INVALID_HANDLE_VALUE;
 #else
-  int fd_;
+  int fd_ = -1;
 #endif  // _WIN32
-  void* fp_;
-  size_t size_;
+  void* fp_ = nullptr;
+  size_t size_ = 0;
 };
 
 #ifdef _WIN32

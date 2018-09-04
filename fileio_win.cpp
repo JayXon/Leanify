@@ -67,12 +67,10 @@ bool IsDirectory(const wchar_t* path) {
 }
 
 File::File(const wchar_t* filepath) {
-  fp_ = nullptr;
   hFile_ = CreateFile(filepath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_WRITE_THROUGH, nullptr);
   if (hFile_ == INVALID_HANDLE_VALUE) {
     PrintErrorMessage("Open file error!");
-    size_ = 0;
     return;
   }
   size_ = GetFileSize(hFile_, nullptr);
