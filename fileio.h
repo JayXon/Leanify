@@ -29,6 +29,10 @@ class File {
       UnMapFile(size_);
   }
 
+  // Disallow copy and assign.
+  File(const File&) = delete;
+  File& operator=(const File&) = delete;
+
   void* GetFilePionter() const {
     return fp_;
   }

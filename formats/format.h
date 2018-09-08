@@ -13,6 +13,10 @@ class Format {
 
   virtual ~Format() = default;
 
+  // Disallow copy and assign.
+  Format(const Format&) = delete;
+  Format& operator=(const Format&) = delete;
+
   virtual size_t Leanify(size_t size_leanified = 0) {
     if (size_leanified) {
       memmove(fp_ - size_leanified, fp_, size_);
