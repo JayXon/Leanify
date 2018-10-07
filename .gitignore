@@ -1,5 +1,6 @@
 [Dd]ebug/
 [Rr]elease/
+Clang-Release/
 [Ll]eanify
 *.exe
 *.vcxproj.user
