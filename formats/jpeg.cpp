@@ -19,14 +19,18 @@ jmp_buf setjmp_buffer;
 void mozjpeg_error_handler(j_common_ptr cinfo) {
   (*cinfo->err->output_message)(cinfo);
 
+  if (cinfo->client_data != nullptr)
+    jpeg_destroy(static_cast<j_common_ptr>(cinfo->client_data));
+
   longjmp(setjmp_buffer, 1);
 }
 
-void CompressJpeg(const j_decompress_ptr srcinfo, j_compress_ptr* compress_ptr, jvirt_barray_ptr* coef_arrays,
-                  bool baseline, bool arithmetic, bool keep_exif, uint8_t** outbuffer, unsigned long* outsize) {
-  jpeg_error_mgr jdsterr;
+void CompressJpeg(const j_decompress_ptr srcinfo, jvirt_barray_ptr* coef_arrays, bool baseline, bool arithmetic,
+                  bool keep_exif, uint8_t** outbuffer, unsigned long* outsize) {
   jpeg_compress_struct dstinfo;
-  *compress_ptr = &dstinfo;
+  dstinfo.client_data = &dstinfo;
+
+  jpeg_error_mgr jdsterr;
   dstinfo.err = jpeg_std_error(&jdsterr);
   jdsterr.error_exit = mozjpeg_error_handler;
 
@@ -71,14 +75,13 @@ void CompressJpeg(const j_decompress_ptr srcinfo, j_compress_ptr* compress_ptr, 
 
 size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   jpeg_decompress_struct srcinfo;
-  j_compress_ptr dstinfo = nullptr;
-  jpeg_error_mgr jsrcerr;
+  srcinfo.client_data = nullptr;
 
+  jpeg_error_mgr jsrcerr;
   srcinfo.err = jpeg_std_error(&jsrcerr);
   jsrcerr.error_exit = mozjpeg_error_handler;
+
   if (setjmp(setjmp_buffer)) {
-    if (dstinfo)
-      jpeg_destroy_compress(dstinfo);
     jpeg_destroy_decompress(&srcinfo);
 
     return Format::Leanify(size_leanified);
@@ -142,7 +145,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
 
   // Try progressive unless fast mode.
   if (!is_fast) {
-    CompressJpeg(&srcinfo, &dstinfo, coef_arrays, false, srcinfo.arith_code || force_arithmetic_coding_,
+    CompressJpeg(&srcinfo, coef_arrays, false, srcinfo.arith_code || force_arithmetic_coding_,
                  keep_all_metadata_ || keep_exif_, &outbuffer, &outsize);
   }
 
@@ -151,7 +154,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
     uint8_t* baseline_buffer = nullptr;
     unsigned long baseline_size = 0;
 
-    CompressJpeg(&srcinfo, &dstinfo, coef_arrays, true, srcinfo.arith_code || force_arithmetic_coding_,
+    CompressJpeg(&srcinfo, coef_arrays, true, srcinfo.arith_code || force_arithmetic_coding_,
                  keep_all_metadata_ || keep_exif_, &baseline_buffer, &baseline_size);
     if (baseline_size < outsize) {
       free(outbuffer);
