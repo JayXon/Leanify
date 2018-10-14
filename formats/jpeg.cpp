@@ -22,24 +22,11 @@ void mozjpeg_error_handler(j_common_ptr cinfo) {
   longjmp(setjmp_buffer, 1);
 }
 
-}  // namespace
-
-size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
-  struct jpeg_decompress_struct srcinfo;
-  struct jpeg_compress_struct dstinfo;
-  struct jpeg_error_mgr jsrcerr, jdsterr;
-
-  srcinfo.err = jpeg_std_error(&jsrcerr);
-  jsrcerr.error_exit = mozjpeg_error_handler;
-  if (setjmp(setjmp_buffer)) {
-    jpeg_destroy_compress(&dstinfo);
-    jpeg_destroy_decompress(&srcinfo);
-
-    return Format::Leanify(size_leanified);
-  }
-
-  jpeg_create_decompress(&srcinfo);
-
+void CompressJpeg(const j_decompress_ptr srcinfo, j_compress_ptr* compress_ptr, jvirt_barray_ptr* coef_arrays,
+                  bool baseline, bool arithmetic, bool keep_exif, uint8_t** outbuffer, unsigned long* outsize) {
+  jpeg_error_mgr jdsterr;
+  jpeg_compress_struct dstinfo;
+  *compress_ptr = &dstinfo;
   dstinfo.err = jpeg_std_error(&jdsterr);
   jdsterr.error_exit = mozjpeg_error_handler;
 
@@ -48,9 +35,56 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   if (is_verbose) {
     dstinfo.err->trace_level++;
   }
-  if (is_fast) {
+  if (baseline) {
     jpeg_c_set_int_param(&dstinfo, JINT_COMPRESS_PROFILE, JCP_FASTEST);
   }
+
+  /* Initialize destination compression parameters from source values */
+  jpeg_copy_critical_parameters(srcinfo, &dstinfo);
+
+  // use arithmetic coding if input file is arithmetic coded or if forced to
+  if (arithmetic) {
+    dstinfo.arith_code = true;
+    dstinfo.optimize_coding = false;
+  } else {
+    dstinfo.optimize_coding = true;
+  }
+
+  /* Specify data destination for compression */
+  jpeg_mem_dest(&dstinfo, outbuffer, outsize);
+
+  /* Start compressor (note no image data is actually written here) */
+  jpeg_write_coefficients(&dstinfo, coef_arrays);
+
+  for (auto marker = srcinfo->marker_list; marker; marker = marker->next) {
+    if (keep_exif || marker->marker != JPEG_APP0 + 1) {
+      jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
+    }
+  }
+
+  /* Finish compression and release memory */
+  jpeg_finish_compress(&dstinfo);
+  jpeg_destroy_compress(&dstinfo);
+}
+
+}  // namespace
+
+size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
+  jpeg_decompress_struct srcinfo;
+  j_compress_ptr dstinfo = nullptr;
+  jpeg_error_mgr jsrcerr;
+
+  srcinfo.err = jpeg_std_error(&jsrcerr);
+  jsrcerr.error_exit = mozjpeg_error_handler;
+  if (setjmp(setjmp_buffer)) {
+    if (dstinfo)
+      jpeg_destroy_compress(dstinfo);
+    jpeg_destroy_decompress(&srcinfo);
+
+    return Format::Leanify(size_leanified);
+  }
+
+  jpeg_create_decompress(&srcinfo);
 
   /* Specify data source for decompression */
   jpeg_mem_src(&srcinfo, fp_, size_);
@@ -68,61 +102,65 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
     jpeg_save_markers(&srcinfo, JPEG_COM, 0xFFFF);
   }
 
-  (void)jpeg_read_header(&srcinfo, true);
+  jpeg_read_header(&srcinfo, true);
+
+  if (!keep_exif_ && !keep_all_metadata_) {
+    for (auto marker = srcinfo.marker_list; marker; marker = marker->next) {
+      if (marker->marker == JPEG_APP0 + 1) {
+        // Tag number: 0x0112, data format: unsigned short(3), number of components: 1
+        const uint8_t kExifOrientation[] = { 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00 };
+        const uint8_t kExifOrientationMotorola[] = { 0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01 };
+        uint8_t* start = marker->data;
+        uint8_t* end = start + marker->data_length;
+        uint8_t* orientation_tag = std::search(start, end, kExifOrientation, std::end(kExifOrientation));
+        bool big_endian = false;
+        if (orientation_tag == end) {
+          orientation_tag = std::search(start, end, kExifOrientationMotorola, std::end(kExifOrientationMotorola));
+          big_endian = orientation_tag != end;
+        }
+        if (orientation_tag != end) {
+          uint16_t orientation = *reinterpret_cast<uint16_t*>(orientation_tag + sizeof(kExifOrientation));
+          if (big_endian)
+            orientation = ((orientation >> 8) | (orientation << 8)) & 0xFFFF;
+          // Only show warning if it's not the default upper left.
+          if (orientation != 1) {
+            std::cout << "Warning: The Exif being removed contains orientation data, result image might have wrong "
+                         "orientation, use --keep-exif to keep Exif."
+                      << std::endl;
+          }
+        }
+        break;
+      }
+    }
+  }
 
   /* Read source file as DCT coefficients */
   auto coef_arrays = jpeg_read_coefficients(&srcinfo);
 
-  /* Initialize destination compression parameters from source values */
-  jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
-
-  // use arithmetic coding if input file is arithmetic coded or if forced to
-  if (srcinfo.arith_code || force_arithmetic_coding_) {
-    dstinfo.arith_code = true;
-    dstinfo.optimize_coding = false;
-  } else {
-    dstinfo.optimize_coding = true;
-  }
-
   uint8_t* outbuffer = nullptr;
   unsigned long outsize = 0;
-  /* Specify data destination for compression */
-  jpeg_mem_dest(&dstinfo, &outbuffer, &outsize);
 
-  /* Start compressor (note no image data is actually written here) */
-  jpeg_write_coefficients(&dstinfo, coef_arrays);
-
-  for (auto marker = srcinfo.marker_list; marker; marker = marker->next) {
-    if (marker->marker == JPEG_APP0 + 1 && !keep_exif_ && !keep_all_metadata_) {
-      // Tag number: 0x0112, data format: unsigned short(3), number of components: 1
-      const uint8_t kExifOrientation[] = { 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00 };
-      const uint8_t kExifOrientationMotorola[] = { 0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01 };
-      uint8_t* start = marker->data;
-      uint8_t* end = start + marker->data_length;
-      uint8_t* orientation_tag = std::search(start, end, kExifOrientation, std::end(kExifOrientation));
-      bool big_endian = false;
-      if (orientation_tag == end) {
-        orientation_tag = std::search(start, end, kExifOrientationMotorola, std::end(kExifOrientationMotorola));
-        big_endian = orientation_tag != end;
-      }
-      if (orientation_tag != end) {
-        uint16_t orientation = *reinterpret_cast<uint16_t*>(orientation_tag + sizeof(kExifOrientation));
-        if (big_endian)
-          orientation = ((orientation >> 8) | (orientation << 8)) & 0xFFFF;
-        // Only show warning if it's not the default upper left.
-        if (orientation != 1) {
-          std::cout << "Warning: The Exif being removed contains orientation data, result image might have wrong "
-                       "orientation, use --keep-exif to keep Exif."
-                    << std::endl;
-        }
-      }
-      continue;
-    }
-    jpeg_write_marker(&dstinfo, marker->marker, marker->data, marker->data_length);
+  // Try progressive unless fast mode.
+  if (!is_fast) {
+    CompressJpeg(&srcinfo, &dstinfo, coef_arrays, false, srcinfo.arith_code || force_arithmetic_coding_,
+                 keep_all_metadata_ || keep_exif_, &outbuffer, &outsize);
   }
 
-  /* Finish compression and release memory */
-  jpeg_finish_compress(&dstinfo);
+  // Try baseline if fast mode or small file.
+  if (is_fast || size_ < 32768) {
+    uint8_t* baseline_buffer = nullptr;
+    unsigned long baseline_size = 0;
+
+    CompressJpeg(&srcinfo, &dstinfo, coef_arrays, true, srcinfo.arith_code || force_arithmetic_coding_,
+                 keep_all_metadata_ || keep_exif_, &baseline_buffer, &baseline_size);
+    if (baseline_size < outsize) {
+      free(outbuffer);
+      outbuffer = baseline_buffer;
+      outsize = baseline_size;
+    } else {
+      free(baseline_buffer);
+    }
+  }
 
   (void)jpeg_finish_decompress(&srcinfo);
   jpeg_destroy_decompress(&srcinfo);
@@ -135,8 +173,7 @@ size_t Jpeg::Leanify(size_t size_leanified /*= 0*/) {
   } else {
     memmove(fp_, fp_ + size_leanified, size_);
   }
-
-  jpeg_destroy_compress(&dstinfo);
+  free(outbuffer);
 
   return size_;
 }
