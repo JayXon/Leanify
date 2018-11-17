@@ -7,7 +7,7 @@ extern bool is_verbose;
 
 class Tar : public Format {
  public:
-  explicit Tar(void* p, size_t s = 0);
+  Tar(void* p, size_t s);
 
   size_t Leanify(size_t size_leanified = 0) override;
 

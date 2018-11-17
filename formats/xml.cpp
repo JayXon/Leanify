@@ -14,7 +14,7 @@
 using std::map;
 using std::string;
 
-Xml::Xml(void* p, size_t s /*= 0*/) : Format(p, s) {
+Xml::Xml(void* p, size_t s) : Format(p, s) {
   pugi::xml_parse_result result = doc_.load_buffer(
       fp_, size_, pugi::parse_default | pugi::parse_declaration | pugi::parse_doctype | pugi::parse_ws_pcdata_single);
   is_valid_ = result;
@@ -246,7 +246,8 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
         }
 
         // the second parameter in preserveAspectRatio meet by default
-        if (value.size() > 5 && strcmp(attr.name(), "preserveAspectRatio") == 0 && value.substr(value.size() - 5) == " meet")
+        if (value.size() > 5 && strcmp(attr.name(), "preserveAspectRatio") == 0 &&
+            value.substr(value.size() - 5) == " meet")
           value.resize(value.size() - 5);
 
         // Remove default attribute

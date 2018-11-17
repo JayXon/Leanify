@@ -30,7 +30,7 @@ int CalcChecksum(uint8_t* header) {
 
 }  // namespace
 
-Tar::Tar(void* p, size_t s /*= 0*/) : Format(p, s) {
+Tar::Tar(void* p, size_t s) : Format(p, s) {
   // check file size first
   is_valid_ = s > 512 && s % 512 == 0 && CalcChecksum(fp_) == strtol(static_cast<char*>(p) + 148, nullptr, 8);
 }

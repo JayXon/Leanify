@@ -9,7 +9,7 @@
 class Format {
  public:
   explicit Format(std::vector<uint8_t>& data) : fp_(data.data()), size_(data.size()) {}
-  explicit Format(void* p, size_t s = 0) : fp_(static_cast<uint8_t*>(p)), size_(s) {}
+  Format(void* p, size_t s) : fp_(static_cast<uint8_t*>(p)), size_(s) {}
 
   virtual ~Format() = default;
 
