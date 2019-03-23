@@ -266,8 +266,11 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
       // fill the rest of rsrc with 0
       memset(fp_ - size_leanified + rsrc_new_end - pe_size_leanified, 0, rsrc_size_leanified);
 
+      bool iat_in_rsrc =
+          data_directories[1].VirtualAddress > rsrc_virtual_address &&
+          data_directories[1].VirtualAddress + data_directories[1].Size <= rsrc_virtual_address + rsrc_raw_size_;
       // if rsrc_correct_end_aligned != rsrc_end then there are extra data in rsrc section
-      if (rsrc_new_end_aligned <= rsrc_end && rsrc_correct_end_aligned == rsrc_end) {
+      if (rsrc_new_end_aligned <= rsrc_end && rsrc_correct_end_aligned == rsrc_end && !iat_in_rsrc) {
         if (rsrc_new_end_aligned > rsrc_new_end + rsrc_size_leanified) {
           memmove(fp_ - size_leanified + rsrc_new_end + rsrc_size_leanified - pe_size_leanified,
                   fp_ + rsrc_new_end + rsrc_size_leanified, rsrc_new_end_aligned - rsrc_new_end - rsrc_size_leanified);
@@ -350,7 +353,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
     if (data_directories[i].VirtualAddress > reloc_virtual_address) {
       data_directories[i].VirtualAddress -= reloc_virtual_size;
     }
-    if (data_directories[i].VirtualAddress > rsrc_virtual_address) {
+    if (data_directories[i].VirtualAddress >=
+        rsrc_virtual_address + (((rsrc_virtual_size - 1) | (optional_header->SectionAlignment - 1)) + 1)) {
       data_directories[i].VirtualAddress -= rsrc_decrease_size;
     }
   }
