@@ -149,7 +149,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
     correct_size_of_headers = size_;
 
   // has to be multiple of FileAlignment
-  uint32_t header_size_aligned = ((total_header_size - 1) | (optional_header->FileAlignment - 1)) + 1;
+  uint32_t header_size_aligned = RoundUp(total_header_size, optional_header->FileAlignment);
   size_t pe_size_leanified = 0;
   size_t header_size_leanified = 0;
 
@@ -168,7 +168,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   // multiple of SectionAlignment
-  uint32_t reloc_virtual_size = ((reloc_raw_size - 1) | (optional_header->SectionAlignment - 1)) + 1;
+  uint32_t reloc_virtual_size = RoundUp(reloc_raw_size, optional_header->SectionAlignment);
 
   // set ASLR in DllCharacteristics to false
   // it seems this isn't necessary
@@ -244,7 +244,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
         // only align the resource if it is aligned before
         if ((entry->OffsetToData & 3) == 0) {
           // fill the gap with 0
-          uint32_t gap = (-(int32_t)last_end) & 3;
+          uint32_t gap = RoundUp(last_end, 4) - last_end;
           memset(fp_ - size_leanified + rsrc_raw_offset + last_end - rsrc_virtual_address - pe_size_leanified, 0, gap);
           last_end += gap;
         }
@@ -258,9 +258,9 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
       depth--;
       rsrc_size_leanified = old_end - last_end;
       uint32_t rsrc_new_end = rsrc_raw_offset + last_end - rsrc_virtual_address;
-      uint32_t rsrc_new_end_aligned = ((rsrc_new_end - 1) | (optional_header->FileAlignment - 1)) + 1;
+      uint32_t rsrc_new_end_aligned = RoundUp(rsrc_new_end, optional_header->FileAlignment);
       uint32_t rsrc_correct_end_aligned =
-          ((rsrc_raw_offset + old_end - rsrc_virtual_address - 1) | (optional_header->FileAlignment - 1)) + 1;
+          RoundUp(rsrc_raw_offset + old_end - rsrc_virtual_address, optional_header->FileAlignment);
       uint32_t rsrc_end = rsrc_raw_offset + rsrc_raw_size_;
 
       // fill the rest of rsrc with 0
@@ -312,8 +312,8 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   // decrease SizeOfImage
-  int rsrc_decrease_size = ((data_directories[2].Size - 1) | (optional_header->SectionAlignment - 1)) -
-                           ((rsrc_virtual_size - 1) | (optional_header->SectionAlignment - 1));
+  int rsrc_decrease_size = RoundUp(data_directories[2].Size, optional_header->SectionAlignment) -
+                           RoundUp(rsrc_virtual_size, optional_header->SectionAlignment);
   if (rsrc_decrease_size < 0)
     rsrc_decrease_size = 0;
 
@@ -354,7 +354,7 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
       data_directories[i].VirtualAddress -= reloc_virtual_size;
     }
     if (data_directories[i].VirtualAddress >=
-        rsrc_virtual_address + (((rsrc_virtual_size - 1) | (optional_header->SectionAlignment - 1)) + 1)) {
+        rsrc_virtual_address + RoundUp(rsrc_virtual_size, optional_header->SectionAlignment)) {
       data_directories[i].VirtualAddress -= rsrc_decrease_size;
     }
   }

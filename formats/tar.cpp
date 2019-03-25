@@ -61,7 +61,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
     char type = *(p_write + 156);
     size_t original_size = strtol(reinterpret_cast<char*>(p_write) + 124, nullptr, 8);
     // align to 512
-    size_t size_aligned = (original_size + 0x1FF) & ~0x1FF;
+    size_t size_aligned = RoundUp(original_size, 512);
     if (original_size) {
       if ((type == 0 || type == '0') && depth <= max_depth) {
         // normal file
@@ -78,7 +78,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
           p_write[155] = ' ';
 
           // align to 512
-          size_t new_size_aligned = (new_size + 0x1FF) & ~0x1FF;
+          size_t new_size_aligned = RoundUp(new_size, 512);
 
           // make sure the rest space is all 0
           memset(p_write + new_size + 512, 0, new_size_aligned - new_size);

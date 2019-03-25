@@ -46,4 +46,12 @@ void VerbosePrint(const T& t, const Args&... args) {
   VerbosePrint(args...);
 }
 
+// Divide |x| by |y| and round up to the nearest integer.
+constexpr uint64_t DivRoundUp(uint64_t x, uint64_t y) {
+  return (x + y - 1) / y;
+}
+// Round |x| up to be a multiple of |y|.
+constexpr uint64_t RoundUp(uint64_t x, uint64_t y) {
+  return DivRoundUp(x, y) * y;
+}
 #endif  // UTILS_H_
