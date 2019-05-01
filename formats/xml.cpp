@@ -124,9 +124,13 @@ void TraverseElements(pugi::xml_node node, std::function<void(pugi::xml_node)> c
 }
 
 // Remove single PCData only contains whitespace if xml:space="preserve" is not set.
-void RemovePCDataSingle(pugi::xml_node node, bool xml_space_preserve) {
-  xml_space_preserve |= strcmp(node.attribute("xml:space").value(), "preserve") == 0;
-  if (xml_space_preserve)
+void RemovePCDataSingle(pugi::xml_node node) {
+  if (strcmp(node.attribute("xml:space").value(), "preserve") == 0)
+    return;
+
+  // Workaround for some PowerPoint that don't have xml:space="preserve"
+  if (strcmp(node.name(), "p:sld") == 0 &&
+      strcmp(node.attribute("xmlns:p").value(), "http://schemas.openxmlformats.org/presentationml/2006/main") == 0)
     return;
 
   pugi::xml_node pcdata = node.first_child();
@@ -137,7 +141,7 @@ void RemovePCDataSingle(pugi::xml_node node, bool xml_space_preserve) {
   }
 
   for (pugi::xml_node child : node.children())
-    RemovePCDataSingle(child, xml_space_preserve);
+    RemovePCDataSingle(child);
 }
 
 // Check the parent and ancestor of the given node if the attribute is an override
@@ -179,7 +183,7 @@ struct xml_memory_writer : pugi::xml_writer {
 }  // namespace
 
 size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
-  RemovePCDataSingle(doc_, false);
+  RemovePCDataSingle(doc_);
 
   // if the XML is fb2 file
   if (doc_.child("FictionBook")) {
