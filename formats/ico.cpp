@@ -18,8 +18,7 @@ const uint8_t Ico::header_magic[] = { 0x00, 0x00, 0x01, 0x00 };
 
 namespace {
 
-PACK(
-struct IconDirEntry {
+PACK(struct IconDirEntry {
   uint8_t bWidth;          // Width, in pixels, of the image
   uint8_t bHeight;         // Height, in pixels, of the image
   uint8_t bColorCount;     // Number of colors in image (0 if >=8bpp)
@@ -56,7 +55,7 @@ size_t Ico::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   // is file size enough?
-  if (entries.back().dwImageOffset + entries.back().dwBytesInRes > size_) {
+  if (static_cast<uint64_t>(entries.back().dwImageOffset) + entries.back().dwBytesInRes > size_) {
     return Format::Leanify(size_leanified);
   }
 
