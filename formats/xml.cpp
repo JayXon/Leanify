@@ -13,6 +13,7 @@
 
 using std::map;
 using std::string;
+using std::vector;
 
 Xml::Xml(void* p, size_t s) : Format(p, s) {
   pugi::xml_parse_result result = doc_.load_buffer(
@@ -172,12 +173,12 @@ bool IsDefaultAttribute(const map<string, string>* single_default_attrs, const s
   return it != kCommonDefaultAttributes.end() && it->second == value;
 }
 
-struct xml_memory_writer : pugi::xml_writer {
-  uint8_t* p_write;
+struct xml_vector_writer : pugi::xml_writer {
+  vector<uint8_t> buf;
 
   void write(const void* data, size_t size) override {
-    memcpy(p_write, data, size);
-    p_write += size;
+    auto p = static_cast<const uint8_t*>(data);
+    buf.insert(buf.end(), p, p + size);
   }
 };
 }  // namespace
@@ -211,7 +212,7 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
         }
         size_t base64_len = strlen(base64_data);
         // copy to a new location because base64_data is const
-        std::vector<char> new_base64_data(base64_data, base64_data + base64_len + 1);
+        vector<char> new_base64_data(base64_data, base64_data + base64_len + 1);
 
         size_t new_base64_len = Base64(new_base64_data.data(), base64_len).Leanify();
 
@@ -301,10 +302,14 @@ size_t Xml::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   // print leanified XML to memory
-  xml_memory_writer writer;
-  fp_ -= size_leanified;
-  writer.p_write = fp_;
+  xml_vector_writer writer;
   doc_.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, encoding_);
-  size_ = writer.p_write - fp_;
+  fp_ -= size_leanified;
+  if (writer.buf.size() < size_) {
+    size_ = writer.buf.size();
+    memcpy(fp_, writer.buf.data(), size_);
+  } else {
+    memmove(fp_, fp_ + size_leanified, size_);
+  }
   return size_;
 }
