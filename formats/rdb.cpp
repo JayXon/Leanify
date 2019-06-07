@@ -72,7 +72,7 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/) {
       PrintFileName(mbs);
 
       // Leanify inner file
-      size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified, string(mbs));
+      size_t new_size = LeanifyFile(p_read, (size_t)file_size, rdb_size_leanified + size_leanified, mbs);
       if (new_size != file_size) {
         // update the size in index
         *(uint64_t*)(p_index + 8) = new_size;

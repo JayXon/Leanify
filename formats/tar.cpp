@@ -68,7 +68,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
         char* filename = reinterpret_cast<char*>(p_write);
         PrintFileName(filename);
 
-        size_t new_size = LeanifyFile(p_read, original_size, size_leanified, string(filename));
+        size_t new_size = LeanifyFile(p_read, original_size, size_leanified, filename);
         if (new_size < original_size) {
           // write new size
           sprintf(reinterpret_cast<char*>(p_write) + 124, "%011o", (unsigned int)new_size);
