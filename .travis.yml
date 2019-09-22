@@ -38,6 +38,28 @@ matrix:
         - COMPILER_VER=-7
 
     - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env:
+        - COMPILER_VER=-8
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+      env:
+        - COMPILER_VER=-9
+
+    - os: linux
       compiler: clang
       addons:
         apt:
@@ -125,12 +147,38 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
+            - llvm-toolchain-xenial-6.0
           packages:
             - clang-6.0
             - llvm-6.0-dev    # for LLVMgold.so
       env:
         - COMPILER_VER=-6.0
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
+          packages:
+            - clang-7
+            - llvm-7-dev    # for LLVMgold.so
+      env:
+        - COMPILER_VER=-7
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-8
+          packages:
+            - clang-8
+            - llvm-8-dev    # for LLVMgold.so
+      env:
+        - COMPILER_VER=-8
 
     - os: osx
       compiler: clang
@@ -148,6 +196,9 @@ matrix:
     - env:
       - COMPILER_VER=-3.8
       - CXXFLAGS=-stdlib=libc++
+    # clang-5.0 : Depends: libjsoncpp0 (>= 0.6.0~rc2) but it is not installable
+    - env:
+      - COMPILER_VER=-5.0
 
 install:
   - export CXX="$CXX$COMPILER_VER"
