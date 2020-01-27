@@ -9,6 +9,7 @@
 #include <LZMA/Alloc.h>
 #include <LZMA/LzmaDec.h>
 #include <LZMA/LzmaEnc.h>
+#include <zopfli/zlib_container.h>
 #include <zopflipng/lodepng/lodepng.h>
 
 #include "../leanify.h"
@@ -76,14 +77,15 @@ bool LZMADecompress(const uint8_t* src, size_t src_len, uint8_t* dst, size_t dst
 }  // namespace
 
 size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
-  if (is_fast && *fp_ != 'F')
+  char compression = *fp_;
+  if (is_fast && compression != 'F')
     return Format::Leanify(size_leanified);
 
   uint8_t* in_buffer = fp_ + 8;
   uint32_t in_len = *(uint32_t*)(fp_ + 4) - 8;
 
   // if SWF is compressed, decompress it first
-  if (*fp_ == 'C') {
+  if (compression == 'C') {
     // deflate
     VerbosePrint("SWF is compressed with deflate.");
     size_t uncompressed_size = 0;
@@ -96,7 +98,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       return Format::Leanify(size_leanified);
     }
     in_buffer = buffer;
-  } else if (*fp_ == 'Z') {
+  } else if (compression == 'Z') {
     // LZMA
     VerbosePrint("SWF is compressed with LZMA.");
     // | 4 bytes         | 4 bytes   | 4 bytes       | 5 bytes    | n bytes   | 6 bytes         |
@@ -212,40 +214,69 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     return size_;
   }
 
-  // compress with LZMA
-  vector<uint8_t> lzma_data;
-  if (!LZMACompress(in_buffer, in_len, &lzma_data)) {
-    cerr << "LZMA compression failed." << endl;
-    lzma_data.clear();
-  }
-
-  // free decompressed data
-  if (*fp_ == 'C')
-    free(in_buffer);
-  else if (*fp_ == 'Z')
-    delete[] in_buffer;
+  uint8_t version = fp_[3];
 
   fp_ -= size_leanified;
 
-  if (!lzma_data.empty() && lzma_data.size() + 12 < size_) {
-    size_ = lzma_data.size() + 12;
+  if (version >= 13) {
+    // compress with LZMA
+    vector<uint8_t> lzma_data;
+    if (!LZMACompress(in_buffer, in_len, &lzma_data)) {
+      cerr << "LZMA compression failed." << endl;
+      lzma_data.clear();
+    }
+    if (!lzma_data.empty() && lzma_data.size() + 12 < size_) {
+      size_ = lzma_data.size() + 12;
 
-    // write header
-    memcpy(fp_, header_magic_lzma, sizeof(header_magic_lzma));
+      // write header
+      memcpy(fp_, header_magic_lzma, sizeof(header_magic_lzma));
 
-    // write SWF version, at least 13 to support LZMA
-    fp_[3] = std::max(static_cast<uint8_t>(13), fp_[3 + size_leanified]);
+      // write SWF version
+      fp_[3] = version;
 
-    // decompressed size (including header)
-    *(uint32_t*)(fp_ + 4) = in_len + 8;
+      // decompressed size (including header)
+      *(uint32_t*)(fp_ + 4) = in_len + 8;
 
-    // compressed size: LZMA data + end mark
-    *(uint32_t*)(fp_ + 8) = lzma_data.size() - LZMA_PROPS_SIZE;
+      // compressed size: LZMA data + end mark
+      *(uint32_t*)(fp_ + 8) = lzma_data.size() - LZMA_PROPS_SIZE;
 
-    memcpy(fp_ + 12, lzma_data.data(), lzma_data.size());
+      memcpy(fp_ + 12, lzma_data.data(), lzma_data.size());
+    } else {
+      memmove(fp_, fp_ + size_leanified, size_);
+    }
   } else {
-    memmove(fp_, fp_ + size_leanified, size_);
+    // compress with deflate
+    ZopfliOptions zopfli_options;
+    ZopfliInitOptions(&zopfli_options);
+    zopfli_options.numiterations = iterations;
+
+    size_t new_size = 0;
+    uint8_t* out_buffer = nullptr;
+    ZopfliZlibCompress(&zopfli_options, in_buffer, in_len, &out_buffer, &new_size);
+    if (new_size + 8 < size_) {
+      size_ = new_size + 8;
+
+      // write header
+      memcpy(fp_, header_magic_deflate, sizeof(header_magic_deflate));
+
+      // write SWF version
+      fp_[3] = version;
+
+      // decompressed size (including header)
+      *(uint32_t*)(fp_ + 4) = in_len + 8;
+
+      memcpy(fp_ + 8, out_buffer, new_size);
+    } else {
+      memmove(fp_, fp_ + size_leanified, size_);
+    }
+    free(out_buffer);
   }
+
+  // free decompressed data
+  if (compression == 'C')
+    free(in_buffer);
+  else if (compression == 'Z')
+    delete[] in_buffer;
 
   return size_;
 }

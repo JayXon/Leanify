@@ -4,6 +4,7 @@
 #include "format.h"
 
 extern bool is_fast;
+extern int iterations;
 
 class Swf : public Format {
  public:
