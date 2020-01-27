@@ -200,6 +200,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     p += tag_length;
   } while (p < in_buffer + in_len);
 
+  VerbosePrint("Uncompressed SWF tags leanified: ", tag_size_leanified);
   in_len -= tag_size_leanified;
 
   if (is_fast) {
