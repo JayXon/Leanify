@@ -124,6 +124,7 @@ class Pe : public Format {
 
   struct RsrcEntry {
     ImageResourceDataEntry* entry = nullptr;
+    ImageResourceDirectoryEntry* dir_entry = nullptr;
     std::string name;
   };
 

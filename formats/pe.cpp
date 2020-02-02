@@ -236,8 +236,23 @@ size_t Pe::Leanify(size_t size_leanified /*= 0*/) {
           PrintFileName(res.name);
         }
 
-        res.entry = reinterpret_cast<ImageResourceDataEntry*>(reinterpret_cast<char*>(res.entry) - pe_size_leanified -
-                                                              size_leanified);
+        // The offset of the data entry itself.
+        uint32_t entry_offset = reinterpret_cast<uint8_t*>(res.entry) - rsrc_ + rsrc_virtual_address;
+        // Some PE stores the data entry right before actual data.
+        if (entry_offset >= last_end && entry_offset < res.entry->OffsetToData) {
+          memmove(fp_ - size_leanified + rsrc_raw_offset + last_end - rsrc_virtual_address - pe_size_leanified,
+                  fp_ + rsrc_raw_offset + entry_offset - rsrc_virtual_address, sizeof(ImageResourceDataEntry));
+          uint32_t diff = entry_offset - last_end;
+          res.entry = reinterpret_cast<ImageResourceDataEntry*>(reinterpret_cast<uint8_t*>(res.entry) - diff);
+
+          res.dir_entry = reinterpret_cast<ImageResourceDirectoryEntry*>(reinterpret_cast<uint8_t*>(res.dir_entry) -
+                                                                         pe_size_leanified - size_leanified);
+          res.dir_entry->OffsetToData -= diff;
+          last_end = entry_offset + sizeof(ImageResourceDataEntry);
+        }
+
+        res.entry = reinterpret_cast<ImageResourceDataEntry*>(reinterpret_cast<uint8_t*>(res.entry) -
+                                                              pe_size_leanified - size_leanified);
         ImageResourceDataEntry* entry = res.entry;
 
         // it seems some of the resource has to be aligned to 4 bytes in order to work
@@ -400,7 +415,8 @@ void Pe::TraverseRSRC(ImageResourceDirectory* res_dir, string name /*= ""*/, con
     } else {
       *(uint32_t*)(rsrc_ + entry[i].OffsetToData) -= move_size;
       // remember the address to Leanify resource file later
-      rsrc_data_.push_back({ reinterpret_cast<ImageResourceDataEntry*>(rsrc_ + entry[i].OffsetToData), new_name });
+      rsrc_data_.push_back(
+          { reinterpret_cast<ImageResourceDataEntry*>(rsrc_ + entry[i].OffsetToData), &entry[i], new_name });
     }
   }
 }
