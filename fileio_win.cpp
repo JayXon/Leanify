@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <iostream>
 
+#include <shlwapi.h>
+
 using std::cerr;
 using std::endl;
 
@@ -19,15 +21,24 @@ void PrintErrorMessage(const char* msg) {
   }
 }
 
+bool IsDirectory(const wchar_t* path) {
+  DWORD fa = GetFileAttributes(path);
+  if (fa == INVALID_FILE_ATTRIBUTES)
+    return false;
+  return (fa & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
 }  // namespace
 
-// traverse directory and call Callback() for each file
-void TraverseDirectory(const wchar_t* dir, int callback(const wchar_t* file_path)) {
+// Traverse directory or glob pattern and call Callback() for each file.
+void TraversePath(const wchar_t* dir, int callback(const wchar_t* file_path)) {
+  bool is_dir = IsDirectory(dir);
+
   WIN32_FIND_DATA FindFileData;
   wchar_t DirSpec[MAX_PATH];
   lstrcpy(DirSpec, dir);
-  lstrcat(DirSpec, L"\\*");
-
+  if (is_dir)
+    lstrcat(DirSpec, L"\\*");
   HANDLE hFind = FindFirstFile(DirSpec, &FindFileData);
 
   if (hFind == INVALID_HANDLE_VALUE) {
@@ -35,7 +46,7 @@ void TraverseDirectory(const wchar_t* dir, int callback(const wchar_t* file_path
     return;
   }
 
-  while (FindNextFile(hFind, &FindFileData) != 0) {
+  do {
     if (FindFileData.cFileName[0] == '.') {
       if (FindFileData.cFileName[1] == 0 ||                // "."
           lstrcmp(FindFileData.cFileName + 1, L".") == 0)  // ".."
@@ -44,26 +55,24 @@ void TraverseDirectory(const wchar_t* dir, int callback(const wchar_t* file_path
 
     wchar_t DirAdd[MAX_PATH];
     lstrcpy(DirAdd, dir);
-    lstrcat(DirAdd, L"\\");
+    if (!is_dir) {
+      PathRemoveFileSpec(DirAdd);
+    }
+
+    if (DirAdd[0] != 0)
+      lstrcat(DirAdd, L"\\");
     lstrcat(DirAdd, FindFileData.cFileName);
 
     if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
       // directory
-      TraverseDirectory(DirAdd, callback);
+      TraversePath(DirAdd, callback);
     } else {
       // file
       callback(DirAdd);
     }
-  }
+  } while (FindNextFile(hFind, &FindFileData) != 0);
 
   FindClose(hFind);
-}
-
-bool IsDirectory(const wchar_t* path) {
-  DWORD fa = GetFileAttributes(path);
-  if (fa == INVALID_FILE_ATTRIBUTES)
-    return false;
-  return (fa & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
 File::File(const wchar_t* filepath) {

@@ -10,12 +10,11 @@
 #endif
 
 #include "fileio.h"
-#include "leanify.h"
-#include "version.h"
-
 #include "formats/jpeg.h"
 #include "formats/png.h"
 #include "formats/zip.h"
+#include "leanify.h"
+#include "version.h"
 
 using std::cerr;
 using std::cout;
@@ -222,14 +221,7 @@ int main(int argc, char** argv) {
 
   // support multiple input file
   do {
-    if (IsDirectory(argv[i])) {
-      // directory
-      TraverseDirectory(argv[i], ProcessFile);
-    } else {
-      // file
-      ProcessFile(argv[i]);
-    }
-
+    TraversePath(argv[i], ProcessFile);
   } while (++i < argc);
 
   PauseIfNotTerminal();

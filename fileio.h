@@ -59,11 +59,9 @@ class File {
 };
 
 #ifdef _WIN32
-void TraverseDirectory(const wchar_t* dir, int Callback(const wchar_t* file_path));
-bool IsDirectory(const wchar_t* path);
+void TraversePath(const wchar_t* dir, int Callback(const wchar_t* file_path));
 #else
-void TraverseDirectory(const char* dir, int Callback(const char* file_path, const struct stat* sb, int typeflag));
-bool IsDirectory(const char* path);
+void TraversePath(const char* dir, int Callback(const char* file_path, const struct stat* sb, int typeflag));
 #endif  // _WIN32
 
 #endif  // FILEIO_H_
