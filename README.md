@@ -118,6 +118,11 @@ Remove all debugging information:
 It is based on [XML] and [ZIP].
 
 
+#### OpenRaster (.ora)
+
+It is based on OpenDocument and [PNG].
+
+
 #### PE file (.exe, .dll, .ocx, .scr, .cpl)
 
 Leanify embedded resource.
