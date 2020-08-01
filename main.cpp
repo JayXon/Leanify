@@ -85,14 +85,14 @@ void PrintInfo() {
           "  -q, --quiet                   No output to stdout.\n"
           "  -v, --verbose                 Verbose output.\n"
           "  --keep-exif                   Do not remove Exif.\n"
-          "  --keep-icc-profile            Do not remove ICC profile.\n"
+          "  --keep-icc                    Do not remove ICC profile.\n"
           "\n"
-          "JPEG specific option:\n"
-          "  --jpeg-keep-all-metadata      Do not remove any metadata or comments in JPEG.\n"
-          "  --jpeg-arithmetic-coding      Use arithmetic coding for JPEG.\n"
+          "JPEG options:\n"
+          "  --jpeg-keep-all               Do not remove any metadata or comments in JPEG.\n"
+          "  --jpeg-arithmetic             Use arithmetic coding for JPEG.\n"
           "\n"
-          "ZIP specific option:\n"
-          "  --zip-force-deflate           Try deflate even if not compressed originally.\n";
+          "ZIP options:\n"
+          "  --zip-deflate                 Try deflate even if not compressed originally.\n";
 
   PauseIfNotTerminal();
 }
@@ -176,18 +176,18 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0) {
             j += 9;
             Jpeg::keep_exif_ = true;
-          } else if (STRCMP(argv[i] + j + 1, "keep-icc-profile") == 0) {
-            j += 16;
+          } else if (STRCMP(argv[i] + j + 1, "keep-icc") == 0) {
+            j += 8;
             Jpeg::keep_icc_profile_ = true;
             Png::keep_icc_profile_ = true;
-          } else if (STRCMP(argv[i] + j + 1, "jpeg-keep-all-metadata") == 0) {
-            j += 22;
+          } else if (STRCMP(argv[i] + j + 1, "jpeg-keep-all") == 0) {
+            j += 13;
             Jpeg::keep_all_metadata_ = true;
-          } else if (STRCMP(argv[i] + j + 1, "jpeg-arithmetic-coding") == 0) {
-            j += 22;
+          } else if (STRCMP(argv[i] + j + 1, "jpeg-arithmetic") == 0) {
+            j += 15;
             Jpeg::force_arithmetic_coding_ = true;
-          } else if (STRCMP(argv[i] + j + 1, "zip-force-deflate") == 0) {
-            j += 17;
+          } else if (STRCMP(argv[i] + j + 1, "zip-deflate") == 0) {
+            j += 11;
             Zip::force_deflate_ = true;
           } else {
 #ifdef _WIN32
