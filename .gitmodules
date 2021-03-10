@@ -1,3 +1,0 @@
-[submodule "taskflow"]
-	path = taskflow
-	url = https://github.com/taskflow/taskflow

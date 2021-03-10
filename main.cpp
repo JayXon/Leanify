@@ -16,7 +16,7 @@
 #include "leanify.h"
 #include "version.h"
 
-#include "taskflow/taskflow/taskflow.hpp"
+#include "taskflow/taskflow.hpp"
 
 using std::cerr;
 using std::cout;
