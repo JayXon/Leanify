@@ -16,19 +16,31 @@
 #include "leanify.h"
 #include "version.h"
 
+#include "taskflow/taskflow/taskflow.hpp"
+
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
 
-void PrintSize(size_t size) {
-  if (size < 1024)
-    cout << size << " B";
-  else if (size < 1024 * 1024)
-    cout << size / 1024.0 << " KB";
-  else
-    cout << size / 1024.0 / 1024.0 << " MB";
+template <typename T>
+std::string ToString(const T a_value, const int n = 2) {
+  std::ostringstream out;
+  out.precision(n);
+  out << std::fixed << a_value;
+  return out.str();
 }
+
+
+const std::string BuildSize(size_t size) {
+  if (size < 1024)
+    return std::to_string(size) + " B";
+  else if (size < 1024 * 1024)
+    return ToString(size / 1024.0) + " KB";
+  else
+    return ToString(size / 1024.0 / 1024.0) + " MB";
+}
+
 
 #ifdef _WIN32
 int ProcessFile(const wchar_t* file_path) {
@@ -43,7 +55,8 @@ int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int type
   string filename(file_path);
 #endif  // _WIN32
 
-  cout << "Processing: " << filename << endl;
+  if (!concurrent_processing)
+    cout << "Processing: " << filename << endl;
   File input_file(file_path);
 
   if (input_file.IsOK()) {
@@ -51,19 +64,29 @@ int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int type
 
     size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
 
-    PrintSize(original_size);
-    cout << " -> ";
-    PrintSize(new_size);
-    cout << "\tLeanified: ";
-    PrintSize(original_size - new_size);
+    std::string log;
+    if (concurrent_processing)
+      log = "Processing: " + filename + "\n";
 
-    cout << " (" << 100 - 100.0 * new_size / original_size << "%)" << endl;
+    log += 
+        BuildSize(original_size) + 
+        " -> " + 
+        BuildSize(new_size) +
+        "\tLeanified: " + 
+        BuildSize(original_size - new_size) + 
+        " ("  + 
+        ToString(100 - 100.0 * new_size / original_size) + 
+        "%)";
+
+    cout << log << endl;
 
     input_file.UnMapFile(new_size);
   }
 
   return 0;
 }
+
+
 
 void PauseIfNotTerminal() {
 // pause if Leanify is not started in terminal
@@ -73,6 +96,7 @@ void PauseIfNotTerminal() {
     system("pause");
 #endif  // _WIN32
 }
+
 
 void PrintInfo() {
   cerr << "Leanify\t" << VERSION_STR << endl << endl;
@@ -84,6 +108,7 @@ void PrintInfo() {
           "  -f, --fastmode                Fast mode, no recompression.\n"
           "  -q, --quiet                   No output to stdout.\n"
           "  -v, --verbose                 Verbose output.\n"
+          "  -c, --concurrent              Distribute all tasks to all CPUs.\n"
           "  --keep-exif                   Do not remove Exif.\n"
           "  --keep-icc                    Do not remove ICC profile.\n"
           "\n"
@@ -96,6 +121,28 @@ void PrintInfo() {
 
   PauseIfNotTerminal();
 }
+
+tf::Taskflow taskflow;
+
+#ifdef _WIN32
+int EnqueueProcessFileTask(const wchar_t* file_path) {
+  std::wstring* filePath = new std::wstring(file_path);
+#else
+// written like this in order to be callback function of ftw()
+int EnqueueProcessFileTask(const char* file_path, const struct stat* sb = nullptr, int typeflag = FTW_F) {
+  if (typeflag != FTW_F)
+    return 0;
+  std::string* filePath = new std::string(file_path);
+#endif  // _WIN32
+
+  auto task = [filePath]() { 
+      ProcessFile(filePath->c_str()); 
+      delete filePath;
+  };
+  taskflow.emplace(task);
+  return 0;
+}
+
 
 #ifdef _WIN32
 int main() {
@@ -157,6 +204,9 @@ int main(int argc, char** argv) {
           cout.clear();
           is_verbose = true;
           break;
+        case 'c':
+          concurrent_processing = true;
+          break;
         case '-':
           if (STRCMP(argv[i] + j + 1, "fastmode") == 0) {
             j += 7;
@@ -173,6 +223,9 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "verbose") == 0) {
             j += 6;
             argv[i][j + 1] = 'v';
+          } else if (STRCMP(argv[i] + j + 1, "concurrent") == 0) {
+            j += 9;
+            argv[i][j + 1] = 'c';
           } else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0) {
             j += 9;
             Jpeg::keep_exif_ = true;
@@ -221,9 +274,17 @@ int main(int argc, char** argv) {
 
   // support multiple input file
   do {
-    TraversePath(argv[i], ProcessFile);
+    TraversePath(argv[i], EnqueueProcessFileTask);
   } while (++i < argc);
 
+  size_t concurrent_tasks = std::thread::hardware_concurrency();
+
+  if (!concurrent_processing)
+    concurrent_tasks = 1;
+  
+  tf::Executor executor(concurrent_tasks);
+  executor.run(taskflow).wait(); 
+  
   PauseIfNotTerminal();
 
   return 0;
