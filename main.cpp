@@ -263,6 +263,12 @@ int main(int argc, char** argv) {
     i += num_optargs;
   }
 
+  if (parallel_processing && is_verbose) {
+    cerr << "Verbose logs not supported in parallel mode." << endl;
+    PrintInfo();
+    return 1;
+  }
+
   if (i == argc) {
     cerr << "No file path provided." << endl;
     PrintInfo();
