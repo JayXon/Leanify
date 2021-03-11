@@ -49,7 +49,7 @@ int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int type
   if (input_file.IsOK()) {
     size_t original_size = input_file.GetSize();
 
-    size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
+    size_t new_size = LeanifyFile(input_file.GetFilePointer(), original_size, 0, filename);
 
     PrintSize(original_size);
     cout << " -> ";
