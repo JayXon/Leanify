@@ -22,7 +22,7 @@ int iterations;
 // file inside zip that is inside another zip: depth 3
 int depth;
 int max_depth;
-bool concurrent_processing = false;
+bool parallel_processing = false;
 
 
 #endif  // MAIN_H_

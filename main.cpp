@@ -55,7 +55,7 @@ int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int type
   string filename(file_path);
 #endif  // _WIN32
 
-  if (!concurrent_processing)
+  if (!parallel_processing)
     cout << "Processing: " << filename << endl;
   File input_file(file_path);
 
@@ -65,8 +65,8 @@ int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int type
     size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
 
     std::string log;
-    if (concurrent_processing)
-      log = "Processing: " + filename + "\n";
+    if (parallel_processing)
+      log = "Processed: " + filename + "\n";
 
     log += 
         BuildSize(original_size) + 
@@ -108,7 +108,7 @@ void PrintInfo() {
           "  -f, --fastmode                Fast mode, no recompression.\n"
           "  -q, --quiet                   No output to stdout.\n"
           "  -v, --verbose                 Verbose output.\n"
-          "  -c, --concurrent              Distribute all tasks to all CPUs.\n"
+          "  -p, --parallel                Distribute all tasks to all CPUs.\n"
           "  --keep-exif                   Do not remove Exif.\n"
           "  --keep-icc                    Do not remove ICC profile.\n"
           "\n"
@@ -204,8 +204,8 @@ int main(int argc, char** argv) {
           cout.clear();
           is_verbose = true;
           break;
-        case 'c':
-          concurrent_processing = true;
+        case 'p':
+          parallel_processing = true;
           break;
         case '-':
           if (STRCMP(argv[i] + j + 1, "fastmode") == 0) {
@@ -223,9 +223,9 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "verbose") == 0) {
             j += 6;
             argv[i][j + 1] = 'v';
-          } else if (STRCMP(argv[i] + j + 1, "concurrent") == 0) {
-            j += 9;
-            argv[i][j + 1] = 'c';
+          } else if (STRCMP(argv[i] + j + 1, "parallel") == 0) {
+            j += 7;
+            argv[i][j + 1] = 'p';
           } else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0) {
             j += 9;
             Jpeg::keep_exif_ = true;
@@ -277,12 +277,11 @@ int main(int argc, char** argv) {
     TraversePath(argv[i], EnqueueProcessFileTask);
   } while (++i < argc);
 
-  size_t concurrent_tasks = std::thread::hardware_concurrency();
-
-  if (!concurrent_processing)
-    concurrent_tasks = 1;
+  size_t parallel_tasks = 1;
+  if (parallel_processing)
+    parallel_tasks = std::thread::hardware_concurrency();
   
-  tf::Executor executor(concurrent_tasks);
+  tf::Executor executor(parallel_tasks);
   executor.run(taskflow).wait(); 
   
   PauseIfNotTerminal();
