@@ -48,10 +48,7 @@ int ProcessFile(const wchar_t* file_path) {
   WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
   string filename(mbs);
 #else
-// written like this in order to be callback function of ftw()
-int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int typeflag = FTW_F) {
-  if (typeflag != FTW_F)
-    return 0;
+int ProcessFile(const char* file_path) {
   string filename(file_path);
 #endif  // _WIN32
 
