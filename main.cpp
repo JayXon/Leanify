@@ -9,6 +9,7 @@
 #include <ftw.h>
 #endif
 
+#include <taskflow/taskflow.hpp>
 #include "fileio.h"
 #include "formats/jpeg.h"
 #include "formats/png.h"
@@ -16,7 +17,6 @@
 #include "leanify.h"
 #include "version.h"
 
-#include "lib/taskflow/taskflow.hpp"
 
 using std::cerr;
 using std::cout;
