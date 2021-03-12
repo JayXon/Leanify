@@ -43,18 +43,20 @@ const std::string BuildSize(size_t size) {
 
 
 #ifdef _WIN32
-int ProcessFile(const wchar_t* file_path) {
+int ProcessFile(const std::wstring& file_path) {
   char mbs[MAX_PATH] = { 0 };
-  WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
+  WideCharToMultiByte(CP_ACP, 0, file_path.c_str(), -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
   string filename(mbs);
 #else
-int ProcessFile(const char* file_path) {
-  string filename(file_path);
+int ProcessFile(const std::string& file_path) {
+  const std::string& filename = file_path;
 #endif  // _WIN32
+  
 
   if (!parallel_processing)
     cout << "Processing: " << filename << endl;
-  File input_file(file_path);
+
+  File input_file(file_path.c_str());
 
   if (input_file.IsOK()) {
     size_t original_size = input_file.GetSize();
@@ -133,7 +135,7 @@ int EnqueueProcessFileTask(const char* file_path, const struct stat* sb = nullpt
 #endif  // _WIN32
 
   auto task = [filePath]() { 
-      ProcessFile(filePath->c_str()); 
+      ProcessFile(*filePath); 
       delete filePath;
   };
   taskflow.emplace(task);
