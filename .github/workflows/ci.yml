@@ -16,6 +16,12 @@ jobs:
         compiler:
           - { cc: gcc, cxx: g++ }
           - { cc: clang, cxx: clang++ }
+
+        exclude:
+          # gcc 5 doesn't support C++17
+          - os: ubuntu-16.04
+            compiler: { cc: gcc, cxx: g++ }
+
       fail-fast: false
 
     env:
