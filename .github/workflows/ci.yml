@@ -25,5 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: compiler version
+        run: ${{ matrix.compiler.cc }} --version
+
       - name: make
         run: make
