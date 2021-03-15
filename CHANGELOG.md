@@ -1,3 +1,7 @@
+# 0.4.4 (2021-03-10)
+
++ Added concurrent mode to utilize power of all CPUs
+
 # 0.4.3 (2015-11-25)
 
 + Added support for Data URI #14.

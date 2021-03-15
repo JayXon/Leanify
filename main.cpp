@@ -9,6 +9,8 @@
 #include <ftw.h>
 #endif
 
+#include <taskflow/taskflow.hpp>
+
 #include "fileio.h"
 #include "formats/jpeg.h"
 #include "formats/png.h"
@@ -16,54 +18,75 @@
 #include "leanify.h"
 #include "version.h"
 
+
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
 
-void PrintSize(size_t size) {
-  if (size < 1024)
-    cout << size << " B";
-  else if (size < 1024 * 1024)
-    cout << size / 1024.0 << " KB";
-  else
-    cout << size / 1024.0 / 1024.0 << " MB";
+template <typename T>
+std::string ToString(const T a_value, const int n = 2) {
+  std::ostringstream out;
+  out.precision(n);
+  out << std::fixed << a_value;
+  return out.str();
 }
 
+
+const std::string BuildSize(size_t size) {
+  if (size < 1024)
+    return std::to_string(size) + " B";
+  else if (size < 1024 * 1024)
+    return ToString(size / 1024.0) + " KB";
+  else
+    return ToString(size / 1024.0 / 1024.0) + " MB";
+}
+
+
 #ifdef _WIN32
-int ProcessFile(const wchar_t* file_path) {
+int ProcessFile(const std::wstring& file_path) {
   char mbs[MAX_PATH] = { 0 };
-  WideCharToMultiByte(CP_ACP, 0, file_path, -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
+  WideCharToMultiByte(CP_ACP, 0, file_path.c_str(), -1, mbs, sizeof(mbs) - 1, nullptr, nullptr);
   string filename(mbs);
 #else
-// written like this in order to be callback function of ftw()
-int ProcessFile(const char* file_path, const struct stat* sb = nullptr, int typeflag = FTW_F) {
-  if (typeflag != FTW_F)
-    return 0;
-  string filename(file_path);
+int ProcessFile(const std::string& file_path) {
+  const std::string& filename = file_path;
 #endif  // _WIN32
+  
 
-  cout << "Processing: " << filename << endl;
-  File input_file(file_path);
+  if (!parallel_processing)
+    cout << "Processing: " << filename << endl;
+
+  File input_file(file_path.c_str());
 
   if (input_file.IsOK()) {
     size_t original_size = input_file.GetSize();
 
     size_t new_size = LeanifyFile(input_file.GetFilePointer(), original_size, 0, filename);
 
-    PrintSize(original_size);
-    cout << " -> ";
-    PrintSize(new_size);
-    cout << "\tLeanified: ";
-    PrintSize(original_size - new_size);
+    std::string log;
+    if (parallel_processing)
+      log = "Processed: " + filename + "\n";
 
-    cout << " (" << 100 - 100.0 * new_size / original_size << "%)" << endl;
+    log += 
+        BuildSize(original_size) + 
+        " -> " + 
+        BuildSize(new_size) +
+        "\tLeanified: " + 
+        BuildSize(original_size - new_size) + 
+        " ("  + 
+        ToString(100 - 100.0 * new_size / original_size) + 
+        "%)";
+
+    cout << log << endl;
 
     input_file.UnMapFile(new_size);
   }
 
   return 0;
 }
+
+
 
 void PauseIfNotTerminal() {
 // pause if Leanify is not started in terminal
@@ -73,6 +96,7 @@ void PauseIfNotTerminal() {
     system("pause");
 #endif  // _WIN32
 }
+
 
 void PrintInfo() {
   cerr << "Leanify\t" << VERSION_STR << endl << endl;
@@ -84,6 +108,7 @@ void PrintInfo() {
           "  -f, --fastmode                Fast mode, no recompression.\n"
           "  -q, --quiet                   No output to stdout.\n"
           "  -v, --verbose                 Verbose output.\n"
+          "  -p, --parallel                Distribute all tasks to all CPUs.\n"
           "  --keep-exif                   Do not remove Exif.\n"
           "  --keep-icc                    Do not remove ICC profile.\n"
           "\n"
@@ -96,6 +121,28 @@ void PrintInfo() {
 
   PauseIfNotTerminal();
 }
+
+tf::Taskflow taskflow;
+
+#ifdef _WIN32
+int EnqueueProcessFileTask(const wchar_t* file_path) {
+  std::wstring* filePath = new std::wstring(file_path);
+#else
+// written like this in order to be callback function of ftw()
+int EnqueueProcessFileTask(const char* file_path, const struct stat* sb = nullptr, int typeflag = FTW_F) {
+  if (typeflag != FTW_F)
+    return 0;
+  std::string* filePath = new std::string(file_path);
+#endif  // _WIN32
+
+  auto task = [filePath]() { 
+      ProcessFile(*filePath); 
+      delete filePath;
+  };
+  taskflow.emplace(task);
+  return 0;
+}
+
 
 #ifdef _WIN32
 int main() {
@@ -157,6 +204,9 @@ int main(int argc, char** argv) {
           cout.clear();
           is_verbose = true;
           break;
+        case 'p':
+          parallel_processing = true;
+          break;
         case '-':
           if (STRCMP(argv[i] + j + 1, "fastmode") == 0) {
             j += 7;
@@ -173,6 +223,9 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "verbose") == 0) {
             j += 6;
             argv[i][j + 1] = 'v';
+          } else if (STRCMP(argv[i] + j + 1, "parallel") == 0) {
+            j += 7;
+            argv[i][j + 1] = 'p';
           } else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0) {
             j += 9;
             Jpeg::keep_exif_ = true;
@@ -210,6 +263,12 @@ int main(int argc, char** argv) {
     i += num_optargs;
   }
 
+  if (parallel_processing && is_verbose) {
+    cerr << "Verbose logs not supported in parallel mode." << endl;
+    PrintInfo();
+    return 1;
+  }
+
   if (i == argc) {
     cerr << "No file path provided." << endl;
     PrintInfo();
@@ -221,9 +280,16 @@ int main(int argc, char** argv) {
 
   // support multiple input file
   do {
-    TraversePath(argv[i], ProcessFile);
+    TraversePath(argv[i], EnqueueProcessFileTask);
   } while (++i < argc);
 
+  size_t parallel_tasks = 1;
+  if (parallel_processing)
+    parallel_tasks = std::thread::hardware_concurrency();
+  
+  tf::Executor executor(parallel_tasks);
+  executor.run(taskflow).wait(); 
+  
   PauseIfNotTerminal();
 
   return 0;

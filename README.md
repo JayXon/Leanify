@@ -231,6 +231,7 @@ Usage: leanify [options] paths
   -f, --fastmode                Fast mode, no recompression.
   -q, --quiet                   No output to stdout.
   -v, --verbose                 Verbose output.
+  -p, --parallel                Distribute all tasks to all CPUs.
   --keep-exif                   Do not remove Exif.
 ```
 
