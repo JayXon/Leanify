@@ -12,6 +12,7 @@
 #include <taskflow/taskflow.hpp>
 
 #include "fileio.h"
+#include "library.h"
 #include "formats/jpeg.h"
 #include "formats/png.h"
 #include "formats/zip.h"
@@ -62,7 +63,22 @@ int ProcessFile(const std::string& file_path) {
   if (input_file.IsOK()) {
     size_t original_size = input_file.GetSize();
 
-    size_t new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
+    size_t new_size(0);
+    string libraryTag = ToString(iterations);
+
+    bool reusedFromLibrary = false;
+
+    auto libraryEntry = Library::GetEntry(input_file.GetFilePionter(), original_size, libraryTag.c_str());
+    if (!libraryEntry || !libraryEntry->isExists()) {
+      new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
+      if (libraryEntry)
+        libraryEntry->Save(input_file.GetFilePionter(), new_size);
+      delete libraryEntry;
+    } else if (libraryEntry->isExists()) {
+      new_size = libraryEntry->Load(input_file.GetFilePionter(), original_size);
+      delete libraryEntry;
+      reusedFromLibrary = true;
+    }
 
     std::string log;
     if (parallel_processing)
@@ -72,7 +88,7 @@ int ProcessFile(const std::string& file_path) {
         BuildSize(original_size) + 
         " -> " + 
         BuildSize(new_size) +
-        "\tLeanified: " + 
+        ((!reusedFromLibrary) ? "\tLeanified: " : "\tReused: ") + 
         BuildSize(original_size - new_size) + 
         " ("  + 
         ToString(100 - 100.0 * new_size / original_size) + 
@@ -109,6 +125,8 @@ void PrintInfo() {
           "  -q, --quiet                   No output to stdout.\n"
           "  -v, --verbose                 Verbose output.\n"
           "  -p, --parallel                Distribute all tasks to all CPUs.\n"
+          "  -l, --library <path>          Use library to store and reuse alreary compressed files."
+          "                                  Set * will automatically use temporary folder."
           "  --keep-exif                   Do not remove Exif.\n"
           "  --keep-icc                    Do not remove ICC profile.\n"
           "\n"
@@ -147,7 +165,8 @@ int EnqueueProcessFileTask(const char* file_path, const struct stat* sb = nullpt
 #ifdef _WIN32
 int main() {
   int argc;
-  wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+  wchar_t* command_line = GetCommandLineW();
+  wchar_t** argv = CommandLineToArgvW(command_line, &argc);
 #else
 int main(int argc, char** argv) {
 #endif  // _WIN32
@@ -157,7 +176,11 @@ int main(int argc, char** argv) {
   iterations = 15;
   depth = 1;
   max_depth = INT_MAX;
-
+#ifdef _WIN32
+  std::wstring library_path;
+#else
+  std::string library_path;
+#endif  // _WIN32
 #ifdef _WIN32
   is_pause = !getenv("PROMPT");
 #endif  // _WIN32
@@ -196,6 +219,12 @@ int main(int argc, char** argv) {
             }
           }
           break;
+        case 'l':
+          if (i < argc - 1) {
+            auto value = argv[i + ++num_optargs];
+            library_path = value;
+          }
+          break;
         case 'q':
           cout.setstate(std::ios::failbit);
           is_verbose = false;
@@ -226,6 +255,9 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "parallel") == 0) {
             j += 7;
             argv[i][j + 1] = 'p';
+          } else if (STRCMP(argv[i] + j + 1, "library") == 0) {
+            j += 6;
+            argv[i][j + 1] = 'l';
           } else if (STRCMP(argv[i] + j + 1, "keep-exif") == 0) {
             j += 9;
             Jpeg::keep_exif_ = true;
@@ -277,6 +309,19 @@ int main(int argc, char** argv) {
 
   cout << std::fixed;
   cout.precision(2);
+
+  if (library_path.size() > 0) {
+    try {
+      Library::Initialize(library_path);
+      cout << "Library storage: " << Library::GetStorageName() << endl << endl;
+    }
+    catch(std::exception e) {
+      cerr << "Error: " << e.what() << endl << endl;
+      PrintInfo();
+      return 1;
+    }
+  }
+    
 
   // support multiple input file
   do {

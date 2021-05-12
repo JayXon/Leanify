@@ -319,6 +319,7 @@
     <ClCompile Include="formats\lua.cpp" />
     <ClCompile Include="formats\mime.cpp" />
     <ClCompile Include="formats\vcf.cpp" />
+    <ClCompile Include="library.cpp" />
     <ClCompile Include="lib\LZMA\Alloc.c" />
     <ClCompile Include="lib\LZMA\LzFind.c" />
     <ClCompile Include="lib\LZMA\LzFindMt.c" />
@@ -400,6 +401,7 @@
     <ClInclude Include="formats\xml.h" />
     <ClInclude Include="formats\zip.h" />
     <ClInclude Include="leanify.h" />
+    <ClInclude Include="library.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="utils.h" />
