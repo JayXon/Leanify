@@ -315,7 +315,7 @@ int main(int argc, char** argv) {
       Library::Initialize(library_path);
       cout << "Library storage: " << Library::GetStorageName() << endl << endl;
     }
-    catch(std::exception e) {
+    catch(std::runtime_error e) {
       cerr << "Error: " << e.what() << endl << endl;
       PrintInfo();
       return 1;

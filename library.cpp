@@ -67,6 +67,13 @@ int dirExists(const char* path) {
     return 0;
 }
 
+template<class I, class E, class S>
+struct codecvt : std::codecvt<I, E, S>
+{
+    ~codecvt()
+    { }
+};
+
 class DirectoryStorage : public Storage {
  private:
   std::string _pathToDirectory;
@@ -85,14 +92,14 @@ class DirectoryStorage : public Storage {
 	DirectoryStorage(const std::string pathToDirectory)
 		 : _pathToDirectory(pathToDirectory) {
     if (_pathToDirectory == "*") {
-      using Codecvt = std::codecvt<std::filesystem::path::value_type, char, std::mbstate_t>;
+      using Codecvt = codecvt<std::filesystem::path::value_type, char, std::mbstate_t>;
       std::wstring_convert<Codecvt, std::filesystem::path::value_type> converter;
       _pathToDirectory = converter.to_bytes(std::filesystem::temp_directory_path());
       _pathToDirectory += "leanify_library";
     }
     std::filesystem::create_directories(_pathToDirectory);
     if (!dirExists(_pathToDirectory.c_str()))
-      throw std::exception("Library directory not exists.");
+      throw std::runtime_error("Library directory not exists.");
   }
 
   LibraryEntry* GetEntry(void* data, size_t dataSize, const char* tag) {
