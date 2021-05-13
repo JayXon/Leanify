@@ -12,6 +12,7 @@ LDFLAGS     += -flto -lpthread
 
 ifeq ($(OS), Windows_NT)
     SYSTEM  := Windows
+    LDLIBS  += -lshlwapi
 else
     SYSTEM  := $(shell uname -s)
 endif

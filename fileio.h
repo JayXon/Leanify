@@ -33,7 +33,7 @@ class File {
   File(const File&) = delete;
   File& operator=(const File&) = delete;
 
-  void* GetFilePionter() const {
+  void* GetFilePointer() const {
     return fp_;
   }
 

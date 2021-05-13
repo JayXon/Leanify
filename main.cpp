@@ -67,15 +67,15 @@ int ProcessFile(const std::string& file_path) {
     string libraryTag = ToString(iterations);
 
     bool reusedFromLibrary = false;
-
-    auto libraryEntry = Library::GetEntry(input_file.GetFilePionter(), original_size, libraryTag.c_str());
+    auto filePointer = input_file.GetFilePointer();
+    auto libraryEntry = Library::GetEntry(filePointer, original_size, libraryTag.c_str());
     if (!libraryEntry || !libraryEntry->isExists()) {
-      new_size = LeanifyFile(input_file.GetFilePionter(), original_size, 0, filename);
+      new_size = LeanifyFile(filePointer, original_size, 0, filename);
       if (libraryEntry)
-        libraryEntry->Save(input_file.GetFilePionter(), new_size);
+        libraryEntry->Save(filePointer, new_size);
       delete libraryEntry;
     } else if (libraryEntry->isExists()) {
-      new_size = libraryEntry->Load(input_file.GetFilePionter(), original_size);
+      new_size = libraryEntry->Load(filePointer, original_size);
       delete libraryEntry;
       reusedFromLibrary = true;
     }
