@@ -8,7 +8,7 @@ ZOPFLIPNG_OBJ   := lib/zopflipng/lodepng/lodepng.o lib/zopflipng/lodepng/lodepng
 CFLAGS      += -Wall -Wextra -Wno-unused-parameter -Werror -O3 -msse2 -mfpmath=sse -flto
 CPPFLAGS    += -I./lib
 CXXFLAGS    += $(CFLAGS) -std=c++17 -fno-rtti
-LDFLAGS     += -flto -lpthread -lstdc++fs
+LDFLAGS     += -flto -lpthread
 
 ifeq ($(OS), Windows_NT)
     SYSTEM  := Windows
@@ -20,6 +20,11 @@ endif
 # Gold linker only supports Linux
 ifeq ($(SYSTEM), Linux)
     LDFLAGS += -fuse-ld=gold
+endif
+
+# -lstdc++fs supported only on Linux
+ifeq ($(SYSTEM), Linux)
+    LDFLAGS += -lstdc++fs
 endif
 
 ifeq ($(SYSTEM), Darwin)
