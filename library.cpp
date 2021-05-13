@@ -8,10 +8,6 @@
 #include <locale>
 #include <string>
 
-// Using this library may require additional compiler/linker options.
-// GNU implementation prior to 9.1 requires linking with -lstdc++fs and LLVM implementation
-// prior to LLVM 9.0 requires linking with -lc++fs.
-#include <filesystem>
 #include <fstream>
 
 #ifdef _WIN32
@@ -19,6 +15,7 @@
 #endif
 
 #include <SHA1/sha1.hpp>
+#include "filesystem.h"
 
 constexpr auto PATH_SEPARATOR = '/';
 
@@ -55,10 +52,10 @@ class FileEntry : public LibraryEntry {
   }
 };
 
-int dirExists(const char* path) {
+int is_directory_exists(const std::string& path) {
   struct stat info;
 
-  if (stat(path, &info) != 0)
+  if (stat(path.c_str(), &info) != 0)
     return 0;
   else if (info.st_mode & S_IFDIR)
     return 1;
@@ -98,7 +95,7 @@ class DirectoryStorage : public Storage {
       _pathToDirectory += "leanify_library";
     }
     std::filesystem::create_directories(_pathToDirectory);
-    if (!dirExists(_pathToDirectory.c_str()))
+    if (!is_directory_exists(_pathToDirectory.c_str()))
       throw std::runtime_error("Library directory not exists: " + _pathToDirectory);
   }
 

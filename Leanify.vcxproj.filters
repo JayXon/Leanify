@@ -332,6 +332,9 @@
     <ClInclude Include="library.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="filesystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Leanify.rc">
