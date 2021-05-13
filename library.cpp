@@ -1,14 +1,15 @@
-#include "SHA1/sha1.hpp"
 #include "library.h"
-#include <string>
-#include <locale>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
-// Using this library may require additional compiler/linker options. 
-// GNU implementation prior to 9.1 requires linking with -lstdc++fs and LLVM implementation 
+#include <locale>
+#include <string>
+
+// Using this library may require additional compiler/linker options.
+// GNU implementation prior to 9.1 requires linking with -lstdc++fs and LLVM implementation
 // prior to LLVM 9.0 requires linking with -lc++fs.
 #include <filesystem>
 #include <fstream>
@@ -17,8 +18,9 @@
 #include <Windows.h>
 #endif
 
+#include <SHA1/sha1.hpp>
 
-#define PATH_SEPARATOR '/'
+constexpr auto PATH_SEPARATOR = '/';
 
 class Storage {
  public:
@@ -28,32 +30,29 @@ class Storage {
 
 static Storage* LibraryStorage = NULL;
 
-
-
-
-
 class FileEntry : public LibraryEntry {
  private:
   std::string _path;
-  public:
-    FileEntry(const std::string& path) : _path(path) {}
 
-  public:
-      virtual bool isExists() {
-        return std::filesystem::exists(_path);
-      }
-      virtual void Save(void* data, size_t dataSize) { 
-        std::ofstream fout(_path, std::ios_base::binary);
-        fout.write((const char*)data, dataSize);
-        fout.close();
-      }
-      virtual size_t Load(void* data, size_t dataSize) {
-        auto size = std::filesystem::file_size(_path);
-        std::ifstream fin(_path, std::ios_base::binary);
-        fin.read((char*)data, size);
-        fin.close();
-        return size;
-      }
+ public:
+  FileEntry(const std::string& path) : _path(path) {}
+
+ public:
+  virtual bool isExists() {
+    return std::filesystem::exists(_path);
+  }
+  virtual void Save(void* data, size_t dataSize) {
+    std::ofstream fout(_path, std::ios_base::binary);
+    fout.write((const char*)data, dataSize);
+    fout.close();
+  }
+  virtual size_t Load(void* data, size_t dataSize) {
+    auto size = std::filesystem::file_size(_path);
+    std::ifstream fin(_path, std::ios_base::binary);
+    fin.read((char*)data, size);
+    fin.close();
+    return size;
+  }
 };
 
 int dirExists(const char* path) {
@@ -67,16 +66,21 @@ int dirExists(const char* path) {
     return 0;
 }
 
-template<class I, class E, class S>
-struct codecvt : std::codecvt<I, E, S>
-{
-    ~codecvt()
-    { }
+template <class I, class E, class S>
+struct codecvt : std::codecvt<I, E, S> {
+  ~codecvt() {}
 };
+
+std::string pathToString(const std::filesystem::path& path) {
+  typedef codecvt<std::filesystem::path::value_type, char, std::mbstate_t> Codecvt;
+  std::wstring_convert<Codecvt, std::filesystem::path::value_type> converter;
+  return converter.to_bytes(std::filesystem::temp_directory_path());
+}
 
 class DirectoryStorage : public Storage {
  private:
   std::string _pathToDirectory;
+
  protected:
   LibraryEntry* CreateEntry(const std::string hash) {
     auto firstTwo = std::string(hash, 0, 2);
@@ -87,19 +91,15 @@ class DirectoryStorage : public Storage {
     return new FileEntry(fullPath);
   }
 
-
  public:
-	DirectoryStorage(const std::string pathToDirectory)
-		 : _pathToDirectory(pathToDirectory) {
+  DirectoryStorage(const std::string pathToDirectory) : _pathToDirectory(pathToDirectory) {
     if (_pathToDirectory == "*") {
-      using Codecvt = codecvt<std::filesystem::path::value_type, char, std::mbstate_t>;
-      std::wstring_convert<Codecvt, std::filesystem::path::value_type> converter;
-      _pathToDirectory = converter.to_bytes(std::filesystem::temp_directory_path());
+      _pathToDirectory = pathToString(std::filesystem::temp_directory_path());
       _pathToDirectory += "leanify_library";
     }
     std::filesystem::create_directories(_pathToDirectory);
     if (!dirExists(_pathToDirectory.c_str()))
-      throw std::runtime_error("Library directory not exists.");
+      throw std::runtime_error("Library directory not exists: " + _pathToDirectory);
   }
 
   LibraryEntry* GetEntry(void* data, size_t dataSize, const char* tag) {
@@ -114,7 +114,6 @@ class DirectoryStorage : public Storage {
   }
 };
 
-
 #ifdef _WIN32
 void Library::Initialize(const std::wstring& library) {
   char mbs[MAX_PATH] = { 0 };
@@ -123,10 +122,11 @@ void Library::Initialize(const std::wstring& library) {
 }
 #else
 void Library::Initialize(const std::string& library) {
+  LibraryStorage = new DirectoryStorage(library);
 }
 #endif
 LibraryEntry* Library::GetEntry(void* data, size_t dataSize, const char* tag) {
-  return LibraryStorage ? LibraryStorage->GetEntry(data, dataSize, tag): NULL;
+  return LibraryStorage ? LibraryStorage->GetEntry(data, dataSize, tag) : NULL;
 }
 
 const std::string& Library::GetStorageName() {
