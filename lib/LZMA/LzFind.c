@@ -507,14 +507,14 @@ void MatchFinder_Init(CMatchFinder *p)
 
 
 #ifdef MY_CPU_X86_OR_AMD64
-  #if defined(__clang__) && (__clang_major__ >= 8) \
+  #if defined(__clang__) && (__clang_major__ >= 8) && !defined(_WIN32) \
     || defined(__GNUC__) && (__GNUC__ >= 8) \
     || defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 1900)
       #define USE_SATUR_SUB_128
       #define USE_AVX2
       #define ATTRIB_SSE41 __attribute__((__target__("sse4.1")))
       #define ATTRIB_AVX2 __attribute__((__target__("avx2")))
-  #elif defined(_MSC_VER)
+  #elif defined(_MSC_VER) && !defined(__clang__)
     #if (_MSC_VER >= 1600)
       #define USE_SATUR_SUB_128
       #if (_MSC_VER >= 1900)
