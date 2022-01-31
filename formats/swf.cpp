@@ -41,7 +41,7 @@ size_t GetRECTSize(uint8_t* rect) {
 
 bool LZMACompress(const uint8_t* src, size_t src_len, vector<uint8_t>* out) {
   // Reserve enough space.
-  out->resize(src_len + src_len / 8);
+  out->resize(src_len + src_len / 8 + LZMA_PROPS_SIZE);
 
   CLzmaEncProps props;
   LzmaEncProps_Init(&props);
