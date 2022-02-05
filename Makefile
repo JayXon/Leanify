@@ -17,11 +17,6 @@ else
     SYSTEM  := $(shell uname -s)
 endif
 
-# Gold linker only supports Linux
-ifeq ($(SYSTEM), Linux)
-    LDFLAGS += -fuse-ld=gold
-endif
-
 ifeq ($(SYSTEM), Darwin)
     LDLIBS  += -liconv
 else
