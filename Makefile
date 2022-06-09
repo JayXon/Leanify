@@ -37,6 +37,8 @@ leanify:    $(LEANIFY_OBJ) $(LZMA_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OB
 
 $(LEANIFY_OBJ): CFLAGS += -Wextra -Wno-unused-parameter
 
+$(LZMA_OBJ):    CFLAGS += -Wno-unknown-warning-option -Wno-dangling-pointer
+
 $(ZOPFLI_OBJ):  CFLAGS += -Wno-unused-function
 
 asan: CFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
