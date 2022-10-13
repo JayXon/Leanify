@@ -41,7 +41,7 @@ size_t GetRECTSize(uint8_t* rect) {
 
 bool LZMACompress(const uint8_t* src, size_t src_len, vector<uint8_t>* out) {
   // Reserve enough space.
-  out->resize(src_len + src_len / 8);
+  out->resize(src_len + src_len / 8 + LZMA_PROPS_SIZE);
 
   CLzmaEncProps props;
   LzmaEncProps_Init(&props);
@@ -81,8 +81,18 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   if (is_fast && compression != 'F')
     return Format::Leanify(size_leanified);
 
+  if (size_ < 8) {
+    cerr << "SWF file too small!" << endl;
+    return Format::Leanify(size_leanified);
+  }
+
   uint8_t* in_buffer = fp_ + 8;
-  uint32_t in_len = *(uint32_t*)(fp_ + 4) - 8;
+  uint32_t in_len = *(uint32_t*)(fp_ + 4);
+  if (in_len < 9) {
+    cerr << "invalid file size in header: " << in_len << endl;
+    return Format::Leanify(size_leanified);
+  }
+  in_len -= 8;
 
   // if SWF is compressed, decompress it first
   if (compression == 'C') {
@@ -101,6 +111,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
   } else if (compression == 'Z') {
     // LZMA
     VerbosePrint("SWF is compressed with LZMA.");
+    if (size_ < 4 + 12 + LZMA_PROPS_SIZE) {
+      cerr << "SWF file too small!" << endl;
+      return Format::Leanify(size_leanified);
+    }
     // | 4 bytes         | 4 bytes   | 4 bytes       | 5 bytes    | n bytes   | 6 bytes         |
     // | 'ZWS' + version | scriptLen | compressedLen | LZMA props | LZMA data | LZMA end marker |
     uint8_t* dst_buffer = new uint8_t[in_len];
@@ -114,17 +128,23 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     in_buffer = dst_buffer;
   } else {
     VerbosePrint("SWF is not compressed.");
+    if (in_len + 8 > size_) {
+      cerr << "SWF file too small!" << endl;
+      return Format::Leanify(size_leanified);
+    }
   }
 
   // parsing SWF tags
   uint8_t* p = in_buffer + GetRECTSize(in_buffer);  // skip FrameSize which is a RECT
   p += 4;                                           // skip FrameRate(2 Byte) + FrameCount(2 Byte) = 4 Byte
   size_t tag_size_leanified = 0;
-  do {
+  while (p + 2 <= in_buffer + in_len) {
     uint16_t tag_type = *(uint16_t*)p >> 6;
     uint32_t tag_length = *p & 0x3F;
     size_t tag_header_length = 2;
     if (tag_length == 0x3F) {
+      if (p + 6 > in_buffer + in_len)
+        break;
       tag_length = *(uint32_t*)(p + 2);
       tag_header_length += 4;
     }
@@ -132,13 +152,26 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
     memmove(p - tag_size_leanified, p, tag_header_length);
     p += tag_header_length;
 
+    if (tag_length > in_len || p - in_buffer + tag_length > in_len) {
+      VerbosePrint("SWF tag too long: ", tag_length);
+      break;
+    }
+
     switch (tag_type) {
       // DefineBitsLossless
       case 20:
       // DefineBitsLossless2
       case 36: {
-        size_t header_size = 7 + (p[3] == 3);
         VerbosePrint("DefineBitsLossless tag found.");
+        if (3 > tag_length) {
+          VerbosePrint("SWF tag too short: ", tag_length);
+          break;
+        }
+        size_t header_size = 7 + (p[3] == 3);
+        if (header_size > tag_length) {
+          VerbosePrint("SWF tag too short: ", tag_length);
+          break;
+        }
         memmove(p - tag_size_leanified, p, header_size);
 
         // recompress Zlib bitmap data
@@ -151,6 +184,10 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       // DefineBitsJPEG2
       case 21: {
         VerbosePrint("DefineBitsJPEG2 tag found.");
+        if (2 > tag_length) {
+          VerbosePrint("SWF tag too short: ", tag_length);
+          break;
+        }
         // copy id
         *(uint16_t*)(p - tag_size_leanified) = *(uint16_t*)p;
 
@@ -165,13 +202,21 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
       case 35:
       // DefineBitsJPEG4
       case 90: {
+        size_t header_size = tag_type == 90 ? 8 : 6;
+        VerbosePrint("DefineBitsJPEG", header_size / 2, " tag found.");
+        if (header_size > tag_length) {
+          VerbosePrint("SWF tag too short: ", tag_length);
+          break;
+        }
         // copy id
         *(uint16_t*)(p - tag_size_leanified) = *(uint16_t*)p;
 
         uint32_t img_size = *(uint32_t*)(p + 2);
-        size_t header_size = tag_type == 90 ? 8 : 6;
+        if (img_size > tag_length || header_size + img_size > tag_length) {
+          VerbosePrint("SWF tag too short: ", tag_length);
+          break;
+        }
 
-        VerbosePrint("DefineBitsJPEG", header_size / 2, " tag found.");
         // Leanify embedded image
         size_t new_img_size = LeanifyFile(p + header_size, img_size, tag_size_leanified);
         *(uint32_t*)(p + 2 - tag_size_leanified) = new_img_size;
@@ -198,7 +243,7 @@ size_t Swf::Leanify(size_t size_leanified /*= 0*/) {
         memmove(p - tag_size_leanified, p, tag_length);
     }
     p += tag_length;
-  } while (p < in_buffer + in_len);
+  }
 
   VerbosePrint("Uncompressed SWF tags leanified: ", tag_size_leanified);
   in_len -= tag_size_leanified;

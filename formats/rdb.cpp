@@ -23,21 +23,28 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/) {
   }
 
   depth++;
-  uint8_t* p_read;
+  uint8_t* p_read = fp_;
   size_t rdb_size_leanified = 0;
-
-  // header
-  p_read = fp_;
-  fp_ -= size_leanified;
 
   // total number of files including directory
   uint32_t file_num = *(uint32_t*)(p_read + 0x10);
 
   uint64_t index_offset = *(uint64_t*)(p_read + 0x14);
 
+  if (index_offset > size_) {
+    cerr << "index offset out of range: " << index_offset << endl;
+    return Format::Leanify(size_leanified);
+  }
+
   uint64_t content_offset = index_offset + *(uint64_t*)(p_read + 0x1C);
 
+  if (content_offset < index_offset || content_offset > size_) {
+    cerr << "content offset out of range: " << content_offset << endl;
+    return Format::Leanify(size_leanified);
+  }
+
   // move header and indexes
+  fp_ -= size_leanified;
   memmove(fp_, p_read, (size_t)content_offset);
 
   uint8_t* p_index = fp_ + index_offset;
@@ -50,12 +57,26 @@ size_t Rdb::Leanify(size_t size_leanified /*= 0*/) {
     // note that on Linux wchar_t is 4 bytes instead of 2
     // so I can't use wcslen
     // p_index += (wcslen(file_name) + 1) * 2;
-    while (*(uint16_t*)p_index) {
+    while (p_index + 2 < fp_ + content_offset && *(uint16_t*)p_index) {
       p_index += 2;
     }
     p_index += 2;
 
+    size_t remaining_size = fp_ + size_leanified + size_ - p_read;
+    if (p_index + 8 > fp_ + content_offset) {
+      cerr << "index is overlapping with content" << endl;
+      memmove(p_read - rdb_size_leanified - size_leanified, p_read, remaining_size);
+      p_read += remaining_size;
+      break;
+    }
+
     uint64_t file_size = *(uint64_t*)(p_index + 8);
+    if (file_size > static_cast<uint64_t>(remaining_size)) {
+      cerr << "file size out of range: " << file_size << endl;
+      memmove(p_read - rdb_size_leanified - size_leanified, p_read, remaining_size);
+      p_read += remaining_size;
+      break;
+    }
 
     *(uint64_t*)p_index -= rdb_size_leanified;
 
