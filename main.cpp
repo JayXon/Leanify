@@ -64,7 +64,8 @@ int ProcessFile(const std::string& file_path) {
     size_t original_size = input_file.GetSize();
 
     size_t new_size(0);
-    string libraryTag = ToString(iterations);
+    string libraryTag = ToString(iterations) + (zopflipng_lossy_transparent ? "lossy" : "lossless") +
+                        (is_fast ? "no_zopflipng" : "zopflipng");
 
     bool reusedFromLibrary = false;
     auto filePointer = input_file.GetFilePointer();
