@@ -18,6 +18,9 @@ bool is_pause;
 // iteration of zopfli
 int iterations;
 
+// Allow altering hidden colors of fully transparent pixels, only for zopfli
+bool zopflipng_lossy_transparent;
+
 // a normal file: depth 1
 // file inside zip that is inside another zip: depth 3
 int depth;

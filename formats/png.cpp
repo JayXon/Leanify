@@ -15,6 +15,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 
+extern bool zopflipng_lossy_transparent;
+
 const uint8_t Png::header_magic[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 bool Png::keep_icc_profile_ = false;
 
@@ -108,7 +110,7 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
   {
     ZopfliPNGOptions zopflipng_options;
     zopflipng_options.use_zopfli = !is_fast;
-    zopflipng_options.lossy_transparent = true;
+    zopflipng_options.lossy_transparent = zopflipng_lossy_transparent;
     // see the switch above for information about these chunks
     zopflipng_options.keepchunks = { "acTL", "fcTL", "fdAT", "npTc" };
     if (keep_icc_profile_)
