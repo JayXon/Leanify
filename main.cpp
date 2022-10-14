@@ -117,7 +117,7 @@ void PrintInfo() {
           "  --jpeg-arithmetic             Use arithmetic coding for JPEG.\n"
           "\n"
           "PNG options:\n"
-          "  --png-lossy-transparent       Allow altering hidden colors of fully transparent pixels.\n"
+          "  --png-lossless-transparent    Prohibit altering hidden colors of fully transparent pixels.\n"
           "ZIP options:\n"
           "  --zip-deflate                 Try deflate even if not compressed originally.\n";
 
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
   iterations = 15;
   depth = 1;
   max_depth = INT_MAX;
-  zopfly_lossy_transparent = false;
+  zopfli_lossy_transparent = true;
 
 #ifdef _WIN32
   is_pause = !getenv("PROMPT");
@@ -242,9 +242,9 @@ int main(int argc, char** argv) {
           } else if (STRCMP(argv[i] + j + 1, "jpeg-arithmetic") == 0) {
             j += 15;
             Jpeg::force_arithmetic_coding_ = true;
-          } else if (STRCMP(argv[i] + j + 1, "png-lossy-transparent") == 0) {
-            j += 21;
-            zopfly_lossy_transparent = false;
+          } else if (STRCMP(argv[i] + j + 1, "png-lossless-transparent") == 0) {
+            j += 24;
+            zopfli_lossy_transparent = false;
           } else if (STRCMP(argv[i] + j + 1, "zip-deflate") == 0) {
             j += 11;
             Zip::force_deflate_ = true;
