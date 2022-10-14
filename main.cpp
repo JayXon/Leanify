@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
   iterations = 15;
   depth = 1;
   max_depth = INT_MAX;
-  zopfli_lossy_transparent = true;
+  zopflipng_lossy_transparent = true;
 
 #ifdef _WIN32
   is_pause = !getenv("PROMPT");
@@ -244,7 +244,7 @@ int main(int argc, char** argv) {
             Jpeg::force_arithmetic_coding_ = true;
           } else if (STRCMP(argv[i] + j + 1, "png-lossless-transparent") == 0) {
             j += 24;
-            zopfli_lossy_transparent = false;
+            zopflipng_lossy_transparent = false;
           } else if (STRCMP(argv[i] + j + 1, "zip-deflate") == 0) {
             j += 11;
             Zip::force_deflate_ = true;
