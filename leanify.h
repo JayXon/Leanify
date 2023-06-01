@@ -2,6 +2,7 @@
 #define LEANIFY_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 extern int depth;
