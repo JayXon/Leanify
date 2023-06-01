@@ -71,10 +71,10 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
         size_t new_size = LeanifyFile(p_read, original_size, size_leanified, filename);
         if (new_size < original_size) {
           // write new size
-          sprintf(reinterpret_cast<char*>(p_write) + 124, "%011o", (unsigned int)new_size);
+          snprintf(reinterpret_cast<char*>(p_write) + 124, 11, "%011o", (unsigned int)new_size);
 
           // update checksum
-          sprintf(reinterpret_cast<char*>(p_write) + 148, "%06o", CalcChecksum(p_write));
+          snprintf(reinterpret_cast<char*>(p_write) + 148, 6, "%06o", CalcChecksum(p_write));
           p_write[155] = ' ';
 
           // align to 512
@@ -87,7 +87,7 @@ size_t Tar::Leanify(size_t size_leanified /*= 0*/) {
           size_leanified += size_aligned - new_size_aligned;
         } else {
           // update checksum
-          sprintf(reinterpret_cast<char*>(p_write) + 148, "%06o", CalcChecksum(p_write));
+          snprintf(reinterpret_cast<char*>(p_write) + 148, 6, "%06o", CalcChecksum(p_write));
           p_write[155] = ' ';
 
           // make sure the rest space is all 0
