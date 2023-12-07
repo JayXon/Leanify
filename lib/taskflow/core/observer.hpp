@@ -114,9 +114,9 @@ struct ProfileData {
 /**
 @class: ObserverInterface
 
-@brief The interface class for creating an executor observer.
+@brief class to derive an executor observer 
 
-The tf::ObserverInterface class let users define custom methods to monitor 
+The tf::ObserverInterface class allows users to define custom methods to monitor 
 the behaviors of an executor. This is particularly useful when you want to 
 inspect the performance of an executor and visualize when each thread 
 participates in the execution of a task.
@@ -168,8 +168,6 @@ executor.run(taskflow).wait();
 */
 class ObserverInterface {
 
-  friend class Executor;
-  
   public:
 
   /**
@@ -185,17 +183,17 @@ class ObserverInterface {
   
   /**
   @brief method to call before a worker thread executes a closure 
-  @param w an immutable view of this worker thread 
+  @param wv an immutable view of this worker thread 
   @param task_view a constant wrapper object to the task 
   */
-  virtual void on_entry(WorkerView w, TaskView task_view) = 0;
+  virtual void on_entry(WorkerView wv, TaskView task_view) = 0;
   
   /**
   @brief method to call after a worker thread executed a closure
-  @param w an immutable view of this worker thread
+  @param wv an immutable view of this worker thread
   @param task_view a constant wrapper object to the task
   */
-  virtual void on_exit(WorkerView w, TaskView task_view) = 0;
+  virtual void on_exit(WorkerView wv, TaskView task_view) = 0;
 };
 
 // ----------------------------------------------------------------------------
@@ -205,7 +203,7 @@ class ObserverInterface {
 /**
 @class: ChromeObserver
 
-@brief observer interface based on Chrome tracing format
+@brief class to create an observer based on Chrome tracing format
 
 A tf::ChromeObserver inherits tf::ObserverInterface and defines methods to dump
 the observed thread activities into a format that can be visualized through
@@ -338,6 +336,8 @@ inline void ChromeObserver::clear() {
 // Procedure: dump
 inline void ChromeObserver::dump(std::ostream& os) const {
 
+  using namespace std::chrono;
+
   size_t first;
 
   for(first = 0; first<_timeline.segments.size(); ++first) {
@@ -356,8 +356,7 @@ inline void ChromeObserver::dump(std::ostream& os) const {
 
     for(size_t i=0; i<_timeline.segments[w].size(); i++) {
 
-      os << '{'
-         << "\"cat\":\"ChromeObserver\",";
+      os << '{'<< "\"cat\":\"ChromeObserver\",";
 
       // name field
       os << "\"name\":\"";
@@ -373,10 +372,10 @@ inline void ChromeObserver::dump(std::ostream& os) const {
       os << "\"ph\":\"X\","
          << "\"pid\":1,"
          << "\"tid\":" << w << ','
-         << "\"ts\":" << std::chrono::duration_cast<std::chrono::microseconds>(
+         << "\"ts\":" << duration_cast<microseconds>(
                            _timeline.segments[w][i].beg - _timeline.origin
                          ).count() << ','
-         << "\"dur\":" << std::chrono::duration_cast<std::chrono::microseconds>(
+         << "\"dur\":" << duration_cast<microseconds>(
                            _timeline.segments[w][i].end - _timeline.segments[w][i].beg
                          ).count();
 
@@ -415,7 +414,7 @@ inline size_t ChromeObserver::num_tasks() const {
 /**
 @class TFProfObserver
 
-@brief observer interface based on the built-in taskflow profiler format
+@brief class to create an observer based on the built-in taskflow profiler format
 
 A tf::TFProfObserver inherits tf::ObserverInterface and defines methods to dump
 the observed thread activities into a format that can be visualized through
@@ -438,17 +437,48 @@ executor.run(taskflow).wait();
 observer->dump(std::cout);
 @endcode
 
-We recommend using our @TFProf python script to observe thread activities 
-instead of the raw function call.
-The script will turn on environment variables needed for observing all executors 
-in a taskflow program and dump the result to a valid, clean JSON file
-compatible with the format of @TFProf.
 */
 class TFProfObserver : public ObserverInterface {
 
   friend class Executor;
   friend class TFProfManager;
+
+  /** @private overall task summary */
+  struct TaskSummary {
+    size_t count {0};
+    size_t total_span {0};
+    size_t min_span;
+    size_t max_span;
+    
+    float avg_span() const { return total_span * 1.0f / count; }
+  };
+
+  /** @private worker summary at a level */
+  struct WorkerSummary {
+
+    size_t id;
+    size_t level;
+    size_t count {0};
+    size_t total_span {0};
+    size_t min_span{0};
+    size_t max_span{0};
+
+    std::array<TaskSummary, TASK_TYPES.size()> tsum;
+
+    float avg_span() const { return total_span * 1.0f / count; }
+    //return count < 2 ? 0.0f : total_delay * 1.0f / (count-1); 
+  };
   
+  /** @private */
+  struct Summary {
+    std::array<TaskSummary, TASK_TYPES.size()> tsum;
+    std::vector<WorkerSummary> wsum;
+    
+    void dump_tsum(std::ostream&) const;
+    void dump_wsum(std::ostream&) const;
+    void dump(std::ostream&) const;
+  };
+
   public:
 
     /**
@@ -463,6 +493,16 @@ class TFProfObserver : public ObserverInterface {
     std::string dump() const;
 
     /**
+    @brief shows the summary report through an output stream
+    */
+    void summary(std::ostream& ostream) const;
+
+    /**
+    @brief returns the summary report in a string
+    */
+    std::string summary() const;
+
+    /**
     @brief clears the timeline data
     */
     void clear();
@@ -471,6 +511,11 @@ class TFProfObserver : public ObserverInterface {
     @brief queries the number of tasks observed
     */
     size_t num_tasks() const;
+    
+    /**
+    @brief queries the number of observed workers
+    */
+    size_t num_workers() const;
 
   private:
     
@@ -482,6 +527,155 @@ class TFProfObserver : public ObserverInterface {
     inline void on_entry(WorkerView, TaskView) override final;
     inline void on_exit(WorkerView, TaskView) override final;
 };  
+
+
+// dump the task summary
+inline void TFProfObserver::Summary::dump_tsum(std::ostream& os) const {
+
+  // task summary
+  size_t type_w{10}, count_w{5}, time_w{9}, avg_w{8}, min_w{8}, max_w{8};
+
+  std::for_each(tsum.begin(), tsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    count_w = std::max(count_w, std::to_string(i.count).size());
+  });
+  
+  std::for_each(tsum.begin(), tsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    time_w = std::max(time_w, std::to_string(i.total_span).size());
+  });
+  
+  std::for_each(tsum.begin(), tsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    avg_w = std::max(time_w, std::to_string(i.avg_span()).size());
+  });
+  
+  std::for_each(tsum.begin(), tsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    min_w = std::max(min_w, std::to_string(i.min_span).size());
+  });
+  
+  std::for_each(tsum.begin(), tsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    max_w = std::max(max_w, std::to_string(i.max_span).size());
+  });
+
+  os << std::setw(type_w) << "-Task-" 
+     << std::setw(count_w+2) << "Count"
+     << std::setw(time_w+2) << "Time (us)"
+     << std::setw(avg_w+2) << "Avg (us)"
+     << std::setw(min_w+2) << "Min (us)"
+     << std::setw(max_w+2) << "Max (us)"
+     << '\n';
+
+  for(size_t i=0; i<TASK_TYPES.size(); i++) {
+    if(tsum[i].count == 0) {
+      continue;
+    }
+    os << std::setw(type_w) << to_string(TASK_TYPES[i])
+       << std::setw(count_w+2) << tsum[i].count
+       << std::setw(time_w+2) << tsum[i].total_span
+       << std::setw(avg_w+2) << std::to_string(tsum[i].avg_span())
+       << std::setw(min_w+2) << tsum[i].min_span
+       << std::setw(max_w+2) << tsum[i].max_span
+       << '\n';
+  }
+}
+
+// dump the worker summary
+inline void TFProfObserver::Summary::dump_wsum(std::ostream& os) const {
+  
+  // task summary
+  size_t w_w{10}, t_w{10}, l_w{5}, c_w{5}, d_w{9}, avg_w{8}, min_w{8}, max_w{8};
+
+  std::for_each(wsum.begin(), wsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    l_w = std::max(l_w, std::to_string(i.level).size());
+  });
+  
+  std::for_each(wsum.begin(), wsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    c_w = std::max(c_w, std::to_string(i.count).size());
+  });
+  
+  std::for_each(wsum.begin(), wsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    d_w = std::max(d_w, std::to_string(i.total_span).size());
+  });
+  
+  std::for_each(wsum.begin(), wsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    avg_w = std::max(avg_w, std::to_string(i.avg_span()).size());
+  });
+  
+  std::for_each(wsum.begin(), wsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    min_w = std::max(min_w, std::to_string(i.min_span).size());
+  });
+  
+  std::for_each(wsum.begin(), wsum.end(), [&](const auto& i){
+    if(i.count == 0) return;
+    max_w = std::max(max_w, std::to_string(i.max_span).size());
+  });
+  
+  os << std::setw(w_w) << "-Worker-" 
+     << std::setw(l_w+2) << "Level"
+     << std::setw(t_w) << "Task"
+     << std::setw(c_w+2) << "Count"
+     << std::setw(d_w+2) << "Time (us)"
+     << std::setw(avg_w+2) << "Avg (us)"
+     << std::setw(min_w+2) << "Min (us)"
+     << std::setw(max_w+2) << "Max (us)"
+     << '\n';
+
+  for(const auto& ws : wsum) {
+
+    if(ws.count == 0) {
+      continue;
+    }
+
+    os << std::setw(w_w) << ws.id
+       << std::setw(l_w+2) << ws.level;
+    
+    bool first = true;
+    for(size_t i=0; i<TASK_TYPES.size(); i++) {
+
+      if(ws.tsum[i].count == 0) {
+        continue;
+      }
+
+      os << (first ? std::setw(t_w) : std::setw(w_w + l_w + 2 + t_w));
+      first = false;
+
+      os << to_string(TASK_TYPES[i])
+         << std::setw(c_w+2) << ws.tsum[i].count
+         << std::setw(d_w+2) << ws.tsum[i].total_span
+         << std::setw(avg_w+2) << std::to_string(ws.tsum[i].avg_span())
+         << std::setw(min_w+2) << ws.tsum[i].min_span
+         << std::setw(max_w+2) << ws.tsum[i].max_span
+         << '\n';
+    }
+
+    // per-worker summary
+    os << std::setw(w_w + l_w + t_w + c_w + 4) << ws.count
+       << std::setw(d_w+2) << ws.total_span
+       << std::setw(avg_w+2) << std::to_string(ws.avg_span())
+       << std::setw(min_w+2) << ws.min_span
+       << std::setw(max_w+2) << ws.max_span
+       << '\n';
+    
+    //for(size_t j=0; j<w_w+l_w+t_w+4; j++) os << ' ';
+    //for(size_t j=0; j<c_w+d_w+avg_w+min_w+max_w+8; j++) os << '-';
+    //os <<'\n';
+  }
+}
+
+// dump the summary report through an ostream
+inline void TFProfObserver::Summary::dump(std::ostream& os) const {
+  dump_tsum(os);
+  os << '\n';
+  dump_wsum(os);
+}
 
 // Procedure: set_up
 inline void TFProfObserver::set_up(size_t num_workers) {
@@ -530,6 +724,8 @@ inline void TFProfObserver::clear() {
 // Procedure: dump
 inline void TFProfObserver::dump(std::ostream& os) const {
 
+  using namespace std::chrono;
+
   size_t first;
 
   for(first = 0; first<_timeline.segments.size(); ++first) {
@@ -571,12 +767,10 @@ inline void TFProfObserver::dump(std::ostream& os) const {
         
         // span 
         os << "{\"span\":[" 
-           << std::chrono::duration_cast<std::chrono::microseconds>(
-                s.beg - _timeline.origin
-              ).count() << ","
-           << std::chrono::duration_cast<std::chrono::microseconds>(
-                s.end - _timeline.origin
-              ).count() << "],";
+           << duration_cast<microseconds>(s.beg - _timeline.origin).count() 
+           << ","
+           << duration_cast<microseconds>(s.end - _timeline.origin).count() 
+           << "],";
         
         // name
         os << "\"name\":\""; 
@@ -588,7 +782,7 @@ inline void TFProfObserver::dump(std::ostream& os) const {
         }
         os << "\",";
     
-        // category "type": "Condition Task",
+        // e.g., category "type": "Condition Task"
         os << "\"type\":\"" << to_string(s.type) << "\"";
 
         os << "}";
@@ -607,15 +801,124 @@ inline std::string TFProfObserver::dump() const {
   return oss.str();
 }
 
+// Procedure: summary
+inline void TFProfObserver::summary(std::ostream& os) const {
+
+  using namespace std::chrono;
+  
+  Summary summary;
+  std::optional<observer_stamp_t> view_beg, view_end;
+
+  // find the first non-empty worker
+  size_t first;
+  for(first = 0; first<_timeline.segments.size(); ++first) {
+    if(_timeline.segments[first].size() > 0) { 
+      break; 
+    }
+  }
+  
+  // not timeline data to dump
+  if(first == _timeline.segments.size()) {
+    goto end_of_summary;
+  }
+
+  for(size_t w=first; w<_timeline.segments.size(); w++) {
+    for(size_t l=0; l<_timeline.segments[w].size(); l++) {
+
+      if(_timeline.segments[w][l].empty()) {
+        continue;
+      }
+
+      // worker w at level l
+      WorkerSummary ws;
+      ws.id = w;
+      ws.level = l;
+      ws.count = _timeline.segments[w][l].size();
+      
+      // scan all tasks at level l
+      for(size_t i=0; i<_timeline.segments[w][l].size(); ++i) {
+        
+        // update the entire span
+        auto& s = _timeline.segments[w][l][i];
+        view_beg = view_beg ? std::min(*view_beg, s.beg) : s.beg;
+        view_end = view_end ? std::max(*view_end, s.end) : s.end;
+        
+        // update the task summary
+        size_t t = duration_cast<microseconds>(s.end - s.beg).count();
+
+        auto& x = summary.tsum[static_cast<int>(s.type)];
+        x.count += 1;
+        x.total_span += t;
+        x.min_span = (x.count == 1) ? t : std::min(t, x.min_span);
+        x.max_span = (x.count == 1) ? t : std::max(t, x.max_span);
+
+        // update the worker summary
+        ws.total_span += t;
+        ws.min_span = (i == 0) ? t : std::min(t, ws.min_span);
+        ws.max_span = (i == 0) ? t : std::max(t, ws.max_span);
+
+        auto&y = ws.tsum[static_cast<int>(s.type)];
+        y.count += 1;
+        y.total_span += t;
+        y.min_span = (y.count == 1) ? t : std::min(t, y.min_span);
+        y.max_span = (y.count == 1) ? t : std::max(t, y.max_span);
+        
+        // update the delay
+        //if(i) {
+        //  size_t d = duration_cast<nanoseconds>(
+        //    s.beg - _timeline.segments[w][l][i-1].end
+        //  ).count();
+        //  ws.total_delay += d;
+        //  ws.min_delay = (i == 1) ? d : std::min(ws.min_delay, d);
+        //  ws.max_delay = (i == 1) ? d : std::max(ws.max_delay, d);
+        //}
+      }
+      summary.wsum.push_back(ws);
+    }
+  }
+
+  end_of_summary:
+
+  size_t view = 0;
+  if(view_beg && view_end) {
+    view = duration_cast<microseconds>(*view_end - *view_beg).count();
+  }
+
+  os << "==Observer " << _timeline.uid << ": "
+     << num_workers() << " workers completed "
+     << num_tasks() << " tasks in "
+     << view << " us\n";
+
+  summary.dump(os);
+}
+
+// Procedure: summary
+inline std::string TFProfObserver::summary() const {
+  std::ostringstream oss;
+  summary(oss);
+  return oss.str();
+}
+
 // Function: num_tasks
 inline size_t TFProfObserver::num_tasks() const {
-  return std::accumulate(
-    _timeline.segments.begin(), _timeline.segments.end(), size_t{0}, 
-    [](size_t sum, const auto& exe){ 
-      return sum + exe.size(); 
+  size_t s = 0;
+  for(size_t w=0; w<_timeline.segments.size(); ++w) {
+    for(size_t l=0; l<_timeline.segments[w].size(); ++l) {
+      s += _timeline.segments[w][l].size();
     }
-  );
+  }
+  return s;
 }
+  
+// Function: num_workers
+inline size_t TFProfObserver::num_workers() const {
+  size_t w = 0;
+  for(size_t i=0; i<_timeline.segments.size(); ++i) {
+    w += (!_timeline.segments[i].empty());
+  }
+  return w;
+}
+
 
 // ----------------------------------------------------------------------------
 // TFProfManager
@@ -682,11 +985,11 @@ inline TFProfManager::~TFProfManager() {
       for(size_t i=0; i<_observers.size(); ++i) {
         data.timelines.push_back(std::move(_observers[i]->_timeline));
       }
-      Serializer serializer(ofs); 
+      Serializer<std::ofstream> serializer(ofs); 
       serializer(data);
     }
     // .json
-    else {
+    else { // if(_fpath.rfind(".json") != std::string::npos) {
       ofs << "[\n";
       for(size_t i=0; i<_observers.size(); ++i) {
         if(i) ofs << ',';
@@ -694,6 +997,14 @@ inline TFProfManager::~TFProfManager() {
       }
       ofs << "]\n";
     }
+  }
+  // do a summary report in stderr for each observer
+  else {
+    std::ostringstream oss;
+    for(size_t i=0; i<_observers.size(); ++i) {
+      _observers[i]->summary(oss);
+    }
+    fprintf(stderr, "%s", oss.str().c_str());
   }
 }
     
