@@ -234,7 +234,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
             cd_header.compressed_size = local_header->compressed_size = deflate_size;
             memcpy(p_write, compress_buf, deflate_size);
           }
-          delete[] compress_buf;
+          free(compress_buf);
         }
         p_write += local_header->compressed_size;
       }
@@ -295,7 +295,7 @@ size_t Zip::Leanify(size_t size_leanified /*= 0*/) {
     p_write += local_header->compressed_size;
 
     free(decompress_buf);
-    delete[] compress_buf;
+    free(compress_buf);
   }
 
   // central directory offset
