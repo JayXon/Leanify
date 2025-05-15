@@ -205,6 +205,7 @@ static double GetBestLengths(ZopfliBlockState *s,
   double* literals; /*Cost of a literal*/
   double litlentable[259]; /*Cost of the length bits of a match*/
   double disttable[30]; /*Cost of the distance bits of a match*/
+  double litstack[256];
   if(costcontext){
     literals = costcontext->ll_symbols;
     for (i = 3; i < 259; i++){
@@ -215,7 +216,6 @@ static double GetBestLengths(ZopfliBlockState *s,
     }
   }
   else{
-    double litstack[256];
     literals = litstack;
     for (i = 0; i < 256; i++){
       literals[i] = 8 + (i > 143);
