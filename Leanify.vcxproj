@@ -330,6 +330,7 @@
     <ClCompile Include="formats\xml.cpp" />
     <ClCompile Include="formats\zip.cpp" />
     <ClCompile Include="leanify.cpp" />
+    <ClCompile Include="library.cpp" />
     <ClCompile Include="lib\LZMA\Alloc.c" />
     <ClCompile Include="lib\LZMA\CpuArch.c" />
     <ClCompile Include="lib\LZMA\LzFind.c" />
@@ -385,6 +386,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fileio.h" />
+    <ClInclude Include="filesystem.h" />
     <ClInclude Include="formats\base64.h" />
     <ClInclude Include="formats\bmp.h" />
     <ClInclude Include="formats\data_uri.h" />
@@ -405,6 +407,7 @@
     <ClInclude Include="formats\xml.h" />
     <ClInclude Include="formats\zip.h" />
     <ClInclude Include="leanify.h" />
+    <ClInclude Include="library.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="utils.h" />
