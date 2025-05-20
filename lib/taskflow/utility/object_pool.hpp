@@ -32,7 +32,7 @@ namespace tf {
 // Different from the normal memory allocator, object pool allocates
 // only one object at a time.
 //
-// Internall, we use the following variables to maintain blocks and heaps:
+// Internally, we use the following variables to maintain blocks and heaps:
 // X: size in byte of a item slot
 // M: number of items per block
 // F: emptiness threshold
@@ -356,7 +356,7 @@ template <class P, class Q>
 constexpr P* ObjectPool<T, S>::_parent_class_of(
   Q* ptr, const Q P::*member
 ) {
-  return (P*)( (char*)ptr - _offset_in_class(member));
+  return reinterpret_cast<P*>(reinterpret_cast<char*>(ptr) - _offset_in_class(member));
 }
 
 // Function: _parent_class_of
@@ -365,7 +365,7 @@ template <class P, class Q>
 constexpr P* ObjectPool<T, S>::_parent_class_of(
   const Q* ptr, const Q P::*member
 ) const {
-  return (P*)( (char*)ptr - _offset_in_class(member));
+  return reinterpret_cast<P*>(reinterpret_cast<char*>(ptr) - _offset_in_class(member));
 }
 
 // Function: _block_of
@@ -624,10 +624,6 @@ T* ObjectPool<T, S>::animate(ArgsT&&... args) {
       f = 0;
       //s = static_cast<Block*>(std::malloc(sizeof(Block)));
       s = new Block();
-
-      if(s == nullptr) {
-        throw std::bad_alloc();
-      }
 
       s->heap = &h;
       s->i = 0;

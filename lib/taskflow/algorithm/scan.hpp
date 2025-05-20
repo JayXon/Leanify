@@ -1,58 +1,138 @@
 #pragma once
 
-#include "launch.hpp"
+#include "../taskflow.hpp"
 
 namespace tf {
 
-namespace detail {
+/*
 
-// Function: scan_loop
-template <typename Iterator, typename BufferT, typename B>
-TF_FORCE_INLINE void scan_loop(
-  tf::Runtime& rt,
-  std::atomic<size_t>& counter, 
-  BufferT& buf, 
-  B&& bop, 
-  Iterator d_beg, 
-  size_t W,
-  size_t w, 
-  size_t chunk_size
-){
-  // whoever finishes the last performs global scan
-  if(counter.fetch_add(1, std::memory_order_acq_rel) == W-1) {
-    for(size_t i=1; i<buf.size(); i++) {
-      buf[i].data = bop(buf[i-1].data, buf[i].data);
-    }
-    counter.store(0, std::memory_order_release);
+Block-parallel scan algorithm:
+
+-----------------------------------------------------------------
+|    block 1    |    block 2    |    block 3    |    block 4    |
+-----------------------------------------------------------------
+
+                -----------------------------
+                |  B1  |  B2  |  B3  |  B4  |  // scan block sum to auxilinary array
+                -----------------------------
+                |                           |
+                v                           v
+                -----------------------------
+                |  B1  |  B2  |  B3  |  B4  |  // scan block sums
+                -----------------------------
+                   |
+                   |                           // add scanned block sum i to all 
+                   |                           // values of scanned block i+1
+                   v
+-----------------------------------------------------------------
+|    block 1    |    block 2    |    block 3    |    block 4    |
+-----------------------------------------------------------------
+
+Example OpenMP implementation for inclusive scan:
+
+void inclusive_scan(std::vector<int>& data) {
+
+  int n = data.size();
+  int num_threads;
+
+  #pragma omp parallel
+  {
+    num_threads = omp_get_num_threads();
   }
 
-  // first worker no need to do any work
-  if(w==0) {
-    return;
-  } 
+  std::vector<int> partial_sums(num_threads, 0);
 
-  // need to do public corun because multiple workers can call this
-  rt.executor().corun_until([&counter](){
-    return counter.load(std::memory_order_acquire) == 0;
-  });
-  
-  // block addup
-  for(size_t i=0; i<chunk_size; i++) {
-    *d_beg++ = bop(buf[w-1].data, *d_beg);
+  // Step 1: Up-sweep
+  #pragma omp parallel
+  {
+    int tid = omp_get_thread_num();
+    int chunk_size = (n + num_threads - 1) / num_threads;
+    int start = tid * chunk_size;
+    int end = std::min(start + chunk_size, n);
+
+    // Compute partial sum
+    for (int i = start + 1; i < end; ++i) {
+      data[i] += data[i - 1];
+    }
+    partial_sums[tid] = data[end - 1];
+  }
+
+  // Step 2: Propagate partial sums
+  for (int i = 1; i < num_threads; ++i) {
+    partial_sums[i] += partial_sums[i - 1];
+  }
+
+  // Step 3: Down-sweep
+  #pragma omp parallel
+  {
+    int tid = omp_get_thread_num();
+    int chunk_size = (n + num_threads - 1) / num_threads;
+    int start = tid * chunk_size;
+    int end = std::min(start + chunk_size, n);
+
+    // Adjust with partial sums
+    if (tid > 0) {
+      for (int i = start; i < end; ++i) {
+        data[i] += partial_sums[tid - 1];
+      }
+    }
   }
 }
 
+*/
+
+namespace detail {
+
+template <typename T>
+struct ScanData {
+
+  ScanData(size_t N, size_t c) : buf(N), counter(c) {}
+
+  std::vector<CachelineAligned<T>> buf;
+  std::atomic<size_t> counter;
+};
+
+// down scan task
+template <typename S, typename I, typename B>
+auto make_dscan_task(
+  std::shared_ptr<S> sdata, 
+  I d_beg,
+  B bop,
+  size_t w, 
+  size_t block_size
+) {
+  return [=, sdata=std::move(sdata)]() mutable {
+    for(size_t i=0; i<block_size; i++) {
+      *d_beg++ = bop(sdata->buf[w-1].data, *d_beg);
+    }
+  };
+}
+
+// middle scan task
+template <typename S, typename B>
+auto make_mscan_task(std::shared_ptr<S> sdata, B bop) {
+  return [=, sdata=std::move(sdata)](){
+    for(size_t i=1; i<sdata->buf.size(); i++) {
+      sdata->buf[i].data = bop(sdata->buf[i-1].data, sdata->buf[i].data);
+    }
+  };
+}
+
+}  // end of namespace tf::detail ---------------------------------------------
+
+
 // Function: make_inclusive_scan_task
 template <typename B, typename E, typename D, typename BOP>
-TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bop) {
+auto make_inclusive_scan_task(B first, E last, D d_first, BOP bop) {
+   
+  using namespace std::string_literals;
   
   using B_t = std::decay_t<unwrap_ref_decay_t<B>>;
   using E_t = std::decay_t<unwrap_ref_decay_t<E>>;
   using D_t = std::decay_t<unwrap_ref_decay_t<D>>;
   using value_type = typename std::iterator_traits<B_t>::value_type;
-  using namespace std::string_literals;
   
-  return [=] (Runtime& rt) mutable {
+  return [=] (Subflow& sf) mutable {
 
     // fetch the stateful values
     B_t s_beg = first;
@@ -63,7 +143,7 @@ TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bo
       return;
     }
 
-    size_t W = rt.executor().num_workers();
+    size_t W = sf.executor().num_workers();
     size_t N = std::distance(s_beg, s_end);
 
     // only myself - no need to spawn another graph
@@ -76,79 +156,50 @@ TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bo
       W = N;
     }
     
-    std::vector<CachelineAligned<value_type>> buf(W);
-    std::atomic<size_t> counter(0);
+    auto sdata = std::make_shared< detail::ScanData<value_type> >(W, 0);
 
     size_t Q = N/W;
     size_t R = N%W;
     
-    //auto orig_d_beg = d_beg;
-    //ExecutionPolicy<StaticPartitioner> policy;
+    auto mscan = sf.emplace(make_mscan_task(sdata, bop)).name("mscan");
+    
+    for(size_t w=0; w<W; ++w) {
+      size_t block_size = Q + (w<R);
 
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
-
-      chunk_size = std::min(Q + (w < R), N - curr_b);
-
-      // block scan
-      launch_loop(W, w, rt, [=, &rt, &bop, &buf, &counter] () mutable {
-
-        auto result = d_beg;
-
-        // local scan per worker
-        auto& init = buf[w].data;
+      auto uscan = sf.emplace([=]() mutable {
+        auto& init = sdata->buf[w].data;
         *d_beg++ = init = *s_beg++;
-
-        for(size_t i=1; i<chunk_size; i++){
+        for(size_t i=1; i<block_size; i++){
           *d_beg++ = init = bop(init, *s_beg++); 
         }
+      }).name("uscan-"s + std::to_string(w));
 
-        // block scan
-        detail::scan_loop(rt, counter, buf, bop, result, W, w, chunk_size);
-        
-        //size_t offset = R ? Q + 1 : Q;
-        //size_t rest   = N - offset;
-        //size_t rest_Q = rest / W;
-        //size_t rest_R = rest % W;
-        //
-        //chunk_size = policy.chunk_size() == 0 ? 
-        //             rest_Q + (w < rest_R) : policy.chunk_size();
-        //
-        //size_t curr_b = policy.chunk_size() == 0 ? 
-        //                offset + (w<rest_R ? w*(rest_Q + 1) : rest_R + w*rest_Q) :
-        //                offset + w*policy.chunk_size();
+      uscan.precede(mscan);
 
-        //policy(N, W, curr_b, chunk_size,
-        //  [&, prev_e=size_t{0}](size_t curr_b, size_t curr_e) mutable {
-        //    std::advance(orig_d_beg, curr_b - prev_e);
-        //    for(size_t x = curr_b; x<curr_e; x++) {
-        //      size_t j = x < (Q+1)*R ? x/(Q+1) : (x-(Q+1)*R)/Q + R;
-        //      *orig_d_beg++ = bop(buf[j-1].data, *orig_d_beg);
-        //    }
-        //    prev_e = curr_e;
-        //  }
-        //);
-      });
-      
-      std::advance(s_beg, chunk_size);
-      std::advance(d_beg, chunk_size);
-      curr_b += chunk_size;
+      if(w) {
+        sf.emplace(make_dscan_task(sdata, d_beg, bop, w, block_size))
+          .succeed(mscan)
+          .name("dscan-"s + std::to_string(w));
+      }
+
+      std::advance(s_beg, block_size);
+      std::advance(d_beg, block_size);
     }
-
-    rt.join();
   };
 }
 
 // Function: make_inclusive_scan_task
 template <typename B, typename E, typename D, typename BOP, typename T>
-TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bop, T init) {
+auto make_inclusive_scan_task(B first, E last, D d_first, BOP bop, T init) {
   
+  using namespace std::string_literals;
+
   using B_t = std::decay_t<unwrap_ref_decay_t<B>>;
   using E_t = std::decay_t<unwrap_ref_decay_t<E>>;
   using D_t = std::decay_t<unwrap_ref_decay_t<D>>;
   using value_type = typename std::iterator_traits<B_t>::value_type;
-  using namespace std::string_literals;
   
-  return [=] (Runtime& rt) mutable {
+  return [=] (Subflow& sf) mutable {
 
     // fetch the stateful values
     B_t s_beg = first;
@@ -159,7 +210,7 @@ TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bo
       return;
     }
 
-    size_t W = rt.executor().num_workers();
+    size_t W = sf.executor().num_workers();
     size_t N = std::distance(s_beg, s_end);
 
     // only myself - no need to spawn another graph
@@ -172,42 +223,41 @@ TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bo
       W = N;
     }
     
-    std::vector<CachelineAligned<value_type>> buf(W);
-    std::atomic<size_t> counter(0);
+    auto sdata = std::make_shared< detail::ScanData<value_type> >(W, 0);
     
     // set up the initial value for the first worker
-    buf[0].data = std::move(init);
+    sdata->buf[0].data = std::move(init);
+    
+    auto mscan = sf.emplace(make_mscan_task(sdata, bop)).name("mscan");
 
     size_t Q = N/W;
     size_t R = N%W;
 
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
+    for(size_t w=0; w<W; ++w) {
 
-      chunk_size = std::min(Q + (w < R), N - curr_b);
+      size_t block_size = Q + (w < R);
 
       // block scan
-      launch_loop(W, w, rt, [=, &rt, &bop, &buf, &counter] () mutable {
-
-        auto result = d_beg;
-
-        // local scan per worker
-        auto& init = buf[w].data;
-        *d_beg++ = init = (w == 0) ? bop(init, *s_beg++) : *s_beg++;
-
-        for(size_t i=1; i<chunk_size; i++){
-          *d_beg++ = init = bop(init, *s_beg++); 
+      auto uscan = sf.emplace([=] () mutable {
+        auto& local = sdata->buf[w].data;
+        *d_beg++ = local = (w == 0) ? bop(local, *s_beg++) : *s_beg++;
+        for(size_t i=1; i<block_size; i++){
+          *d_beg++ = local = bop(local, *s_beg++); 
         }
-        
-        // block scan
-        detail::scan_loop(rt, counter, buf, bop, result, W, w, chunk_size);
-      });
+        //detail::scan_loop(rt, *sdata, bop, result, W, w, block_size);
+      }).name("uscan-"s + std::to_string(w));
+      
+      uscan.precede(mscan);
+      
+      if(w) {
+        sf.emplace(make_dscan_task(sdata, d_beg, bop, w, block_size))
+          .succeed(mscan)
+          .name("dscan-"s + std::to_string(w));
+      }
 
-      std::advance(s_beg, chunk_size);
-      std::advance(d_beg, chunk_size);
-      curr_b += chunk_size;
+      std::advance(s_beg, block_size);
+      std::advance(d_beg, block_size);
     }
-
-    rt.join();
   };
 }
 
@@ -217,17 +267,18 @@ TF_FORCE_INLINE auto make_inclusive_scan_task(B first, E last, D d_first, BOP bo
 
 // Function: transform_inclusive_scan
 template <typename B, typename E, typename D, typename BOP, typename UOP>
-TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
+auto make_transform_inclusive_scan_task(
   B first, E last, D d_first, BOP bop, UOP uop
 ) {
   
+  using namespace std::string_literals;
+
   using B_t = std::decay_t<unwrap_ref_decay_t<B>>;
   using E_t = std::decay_t<unwrap_ref_decay_t<E>>;
   using D_t = std::decay_t<unwrap_ref_decay_t<D>>;
   using value_type = typename std::iterator_traits<B_t>::value_type;
-  using namespace std::string_literals;
   
-  return [=] (Runtime& rt) mutable {
+  return [=] (Subflow& sf) mutable {
 
     // fetch the stateful values
     B_t s_beg = first;
@@ -238,7 +289,7 @@ TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
       return;
     }
 
-    size_t W = rt.executor().num_workers();
+    size_t W = sf.executor().num_workers();
     size_t N = std::distance(s_beg, s_end);
 
     // only myself - no need to spawn another graph
@@ -246,60 +297,59 @@ TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
       std::transform_inclusive_scan(s_beg, s_end, d_beg, bop, uop);
       return;
     }
-
+    
     if(N < W) {
       W = N;
-    }
-    
-    std::vector<CachelineAligned<value_type>> buf(W);
-    std::atomic<size_t> counter(0);
+    } 
+
+    auto sdata = std::make_shared< detail::ScanData<value_type> >(W, 0);
 
     size_t Q = N/W;
     size_t R = N%W;
     
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
+    auto mscan = sf.emplace(make_mscan_task(sdata, bop)).name("mscan");
+    
+    for(size_t w=0; w<W; ++w) {
 
-      chunk_size = std::min(Q + (w < R), N - curr_b);
+      size_t block_size = Q + (w < R);
 
-      // block scan
-      launch_loop(W, w, rt, [=, &rt, &bop, &uop, &buf, &counter] () mutable {
-
-        auto result = d_beg;
-
-        // local scan per worker
-        auto& init = buf[w].data;
+      auto uscan = sf.emplace([=] () mutable {
+        auto& init = sdata->buf[w].data;
         *d_beg++ = init = uop(*s_beg++);
-
-        for(size_t i=1; i<chunk_size; i++){
+        for(size_t i=1; i<block_size; i++){
           *d_beg++ = init = bop(init, uop(*s_beg++)); 
         }
-
-        // block scan
-        detail::scan_loop(rt, counter, buf, bop, result, W, w, chunk_size);
-      });
+        //detail::scan_loop(rt, *sdata, bop, result, W, w, block_size);
+      }).name("uscan-"s + std::to_string(w));
       
-      std::advance(s_beg, chunk_size);
-      std::advance(d_beg, chunk_size);
-      curr_b += chunk_size;
-    }
+      uscan.precede(mscan);
 
-    rt.join();
+      if(w) {
+        sf.emplace(make_dscan_task(sdata, d_beg, bop, w, block_size))
+          .succeed(mscan)
+          .name("dscan-"s + std::to_string(w));
+      }
+      
+      std::advance(s_beg, block_size);
+      std::advance(d_beg, block_size);
+    }
   };
 }
 
 // Function: transform_inclusive_scan
 template <typename B, typename E, typename D, typename BOP, typename UOP, typename T>
-TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
+auto make_transform_inclusive_scan_task(
   B first, E last, D d_first, BOP bop, UOP uop, T init
 ) {
   
+  using namespace std::string_literals;
+
   using B_t = std::decay_t<unwrap_ref_decay_t<B>>;
   using E_t = std::decay_t<unwrap_ref_decay_t<E>>;
   using D_t = std::decay_t<unwrap_ref_decay_t<D>>;
   using value_type = typename std::iterator_traits<B_t>::value_type;
-  using namespace std::string_literals;
   
-  return [=] (Runtime& rt) mutable {
+  return [=] (Subflow& sf) mutable {
 
     // fetch the stateful values
     B_t s_beg = first;
@@ -310,7 +360,7 @@ TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
       return;
     }
 
-    size_t W = rt.executor().num_workers();
+    size_t W = sf.executor().num_workers();
     size_t N = std::distance(s_beg, s_end);
 
     // only myself - no need to spawn another graph
@@ -323,43 +373,41 @@ TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
       W = N;
     }
     
-    std::vector<CachelineAligned<value_type>> buf(W);
-    std::atomic<size_t> counter(0);
+    auto sdata = std::make_shared< detail::ScanData<value_type> >(W, 0);
     
     // set up the initial value for the first worker
-    buf[0].data = std::move(init);
+    sdata->buf[0].data = std::move(init);
 
     size_t Q = N/W;
     size_t R = N%W;
+    
+    auto mscan = sf.emplace(make_mscan_task(sdata, bop)).name("mscan");
 
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
+    for(size_t w=0; w<W; ++w) {
 
-      chunk_size = std::min(Q + (w < R), N - curr_b);
+      size_t block_size = Q + (w < R);
 
       // block scan
-      launch_loop(W, w, rt, [=, &rt, &bop, &uop, &buf, &counter] () mutable {
-
-        auto result = d_beg;
-
-        // local scan per worker
-        auto& init = buf[w].data;
-        *d_beg++ = init = (w == 0) ? bop(init, uop(*s_beg++)) : uop(*s_beg++);
-
-        for(size_t i=1; i<chunk_size; i++){
-          *d_beg++ = init = bop(init, uop(*s_beg++)); 
+      auto uscan = sf.emplace([=]() mutable {
+        auto& local = sdata->buf[w].data;
+        *d_beg++ = local = (w == 0) ? bop(local, uop(*s_beg++)) : uop(*s_beg++);
+        for(size_t i=1; i<block_size; i++){
+          *d_beg++ = local = bop(local, uop(*s_beg++)); 
         }
-        
-        // block scan
-        detail::scan_loop(rt, counter, buf, bop, result, W, w, chunk_size);
-      });
+        //detail::scan_loop(rt, *sdata, bop, result, W, w, block_size);
+      }).name("uscan-"s + std::to_string(w));
 
-      std::advance(s_beg, chunk_size);
-      std::advance(d_beg, chunk_size);
-      curr_b += chunk_size;
+      uscan.precede(mscan);
+
+      if(w) {
+        sf.emplace(make_dscan_task(sdata, d_beg, bop, w, block_size))
+          .succeed(mscan)
+          .name("dscan-"s + std::to_string(w));
+      }
+
+      std::advance(s_beg, block_size);
+      std::advance(d_beg, block_size);
     }
-
-    rt.join();
-    
   };
 }
 
@@ -369,17 +417,18 @@ TF_FORCE_INLINE auto make_transform_inclusive_scan_task(
 
 // Function: make_exclusive_scan_task
 template <typename B, typename E, typename D, typename T, typename BOP>
-TF_FORCE_INLINE auto make_exclusive_scan_task(
+auto make_exclusive_scan_task(
   B first, E last, D d_first, T init, BOP bop
 ) {
+
+  using namespace std::string_literals;
   
   using B_t = std::decay_t<unwrap_ref_decay_t<B>>;
   using E_t = std::decay_t<unwrap_ref_decay_t<E>>;
   using D_t = std::decay_t<unwrap_ref_decay_t<D>>;
   using value_type = typename std::iterator_traits<B_t>::value_type;
-  using namespace std::string_literals;
   
-  return [=] (Runtime& rt) mutable {
+  return [=] (Subflow& sf) mutable {
 
     // fetch the stateful values
     B_t s_beg = first;
@@ -390,7 +439,7 @@ TF_FORCE_INLINE auto make_exclusive_scan_task(
       return;
     }
 
-    size_t W = rt.executor().num_workers();
+    size_t W = sf.executor().num_workers();
     size_t N = std::distance(s_beg, s_end);
 
     // only myself - no need to spawn another graph
@@ -403,51 +452,48 @@ TF_FORCE_INLINE auto make_exclusive_scan_task(
       W = N;
     }
     
-    std::vector<CachelineAligned<value_type>> buf(W);
-    std::atomic<size_t> counter(0);
+    auto sdata = std::make_shared< detail::ScanData<value_type> >(W, 0);
 
     size_t Q = N/W;
     size_t R = N%W;
 
+    auto mscan = sf.emplace(make_mscan_task(sdata, bop)).name("mscan");
+
     // fetch the init value
     auto s_beg_temp = s_beg;
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
-      chunk_size = std::min(Q + (w<R), N - curr_b);  
-      buf[w].data = w ? *s_beg_temp : std::move(init);
-      std::advance(s_beg_temp, chunk_size - !w);
-      curr_b += chunk_size;
+    for(size_t w=0; w<W; ++w) {
+      size_t block_size = Q + (w<R);  
+      sdata->buf[w].data = w ? *s_beg_temp : std::move(init);
+      std::advance(s_beg_temp, block_size - !w);
     }
     
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
+    for(size_t w=0; w<W; ++w) {
 
-      chunk_size = std::min(Q + (w < R), N - curr_b);
+      size_t block_size = (Q + (w < R));
 
-      // block scan
-      launch_loop(W, w, rt, [=, &rt, &bop, &buf, &counter] () mutable {
-
-        auto result = d_beg;
-
-        // local scan per worker
-        auto& init = buf[w].data;
-
-        for(size_t i=1; i<chunk_size; i++) {
-          auto v = init;
-          init = bop(init, *s_beg++);
+      auto uscan = sf.emplace([=] () mutable {
+        auto& local = sdata->buf[w].data;
+        for(size_t i=1; i<block_size; i++) {
+          auto v = local;
+          local = bop(local, *s_beg++);
           *d_beg++ = std::move(v);
         }
-        *d_beg++ = init;
-        
-        // block scan
-        detail::scan_loop(rt, counter, buf, bop, result, W, w, chunk_size);
-      });
+        *d_beg++ = local;
+        //detail::scan_loop(rt, *sdata, bop, result, W, w, block_size);
+      }).name("uscan-"s + std::to_string(w));
       
-      std::advance(s_beg, chunk_size);
-      std::advance(d_beg, chunk_size);
-      curr_b += chunk_size;
+      uscan.precede(mscan);
+
+      if(w) {
+        sf.emplace(make_dscan_task(sdata, d_beg, bop, w, block_size))
+          .succeed(mscan)
+          .name("dscan-"s + std::to_string(w));
+      }
+      
+      std::advance(s_beg, block_size);
+      std::advance(d_beg, block_size);
     }
 
-    rt.join();
-    
   };
 }
 
@@ -457,17 +503,18 @@ TF_FORCE_INLINE auto make_exclusive_scan_task(
 
 // Function: 
 template <typename B, typename E, typename D, typename T, typename BOP, typename UOP>
-TF_FORCE_INLINE auto make_transform_exclusive_scan_task(
+auto make_transform_exclusive_scan_task(
   B first, E last, D d_first, T init, BOP bop, UOP uop
 ) {
+
+  using namespace std::string_literals;
   
   using B_t = std::decay_t<unwrap_ref_decay_t<B>>;
   using E_t = std::decay_t<unwrap_ref_decay_t<E>>;
   using D_t = std::decay_t<unwrap_ref_decay_t<D>>;
   using value_type = typename std::iterator_traits<B_t>::value_type;
-  using namespace std::string_literals;
   
-  return [=] (Runtime& rt) mutable {
+  return [=] (Subflow& sf) mutable {
 
     // fetch the stateful values
     B_t s_beg = first;
@@ -478,7 +525,7 @@ TF_FORCE_INLINE auto make_transform_exclusive_scan_task(
       return;
     }
 
-    size_t W = rt.executor().num_workers();
+    size_t W = sf.executor().num_workers();
     size_t N = std::distance(s_beg, s_end);
 
     // only myself - no need to spawn another graph
@@ -491,55 +538,51 @@ TF_FORCE_INLINE auto make_transform_exclusive_scan_task(
       W = N;
     }
     
-    std::vector<CachelineAligned<value_type>> buf(W);
-    std::atomic<size_t> counter(0);
-
+    auto sdata = std::make_shared< detail::ScanData<value_type> >(W, 0);
+    
     size_t Q = N/W;
     size_t R = N%W;
+    
+    auto mscan = sf.emplace(make_mscan_task(sdata, bop)).name("mscan");
 
     // fetch the init value
     auto s_beg_temp = s_beg;
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
-      chunk_size = std::min(Q + (w<R), N - curr_b);  
-      buf[w].data = w ? uop(*s_beg_temp) : std::move(init);
-      std::advance(s_beg_temp, chunk_size - !w);
-      curr_b += chunk_size;
+    for(size_t w=0; w<W; ++w) {
+      size_t block_size = Q + (w < R);
+      sdata->buf[w].data = w ? uop(*s_beg_temp) : std::move(init);
+      std::advance(s_beg_temp, block_size - !w);
     }
     
-    for(size_t w=0, curr_b=0, chunk_size; w<W && curr_b < N; ++w) {
+    for(size_t w=0; w<W; ++w) {
 
-      chunk_size = std::min(Q + (w < R), N - curr_b);
+      size_t block_size = Q + (w < R);
 
       // block scan
-      launch_loop(W, w, rt, [=, &rt, &bop, &uop, &buf, &counter] () mutable {
-
-        auto result = d_beg;
-
-        // local scan per worker
-        auto& init = buf[w].data;
-
-        for(size_t i=1; i<chunk_size; i++) {
-          auto v = init;
-          init = bop(init, uop(*s_beg++));
+      auto uscan = sf.emplace([=]() mutable {
+        auto& local = sdata->buf[w].data;
+        for(size_t i=1; i<block_size; i++) {
+          auto v = local;
+          local = bop(local, uop(*s_beg++));
           *d_beg++ = std::move(v);
         }
-        *d_beg++ = init;
-        
-        // block scan
-        detail::scan_loop(rt, counter, buf, bop, result, W, w, chunk_size);
-      });
+        *d_beg++ = local;
+        //detail::scan_loop(rt, *sdata, bop, result, W, w, block_size);
+      }).name("uscan-"s + std::to_string(w));
       
-      std::advance(s_beg, chunk_size);
-      std::advance(d_beg, chunk_size);
-      curr_b += chunk_size;
-    }
+      uscan.precede(mscan);
 
-    rt.join();
-    
+      if(w) {
+        sf.emplace(make_dscan_task(sdata, d_beg, bop, w, block_size))
+          .succeed(mscan)
+          .name("dscan-"s + std::to_string(w));
+      }
+      
+      std::advance(s_beg, block_size);
+      std::advance(d_beg, block_size);
+    } 
   };
 }
 
-}  // end of namespace tf::detail ---------------------------------------------
 
 // ----------------------------------------------------------------------------
 // Inclusive Scan
@@ -548,17 +591,13 @@ TF_FORCE_INLINE auto make_transform_exclusive_scan_task(
 // Function: inclusive_scan
 template <typename B, typename E, typename D, typename BOP>
 Task FlowBuilder::inclusive_scan(B first, E last, D d_first, BOP bop) {
-  return emplace(detail::make_inclusive_scan_task(
-    first, last, d_first, bop
-  ));
+  return emplace(make_inclusive_scan_task(first, last, d_first, bop));
 }
 
 // Function: inclusive_scan
 template <typename B, typename E, typename D, typename BOP, typename T>
 Task FlowBuilder::inclusive_scan(B first, E last, D d_first, BOP bop, T init) {
-  return emplace(detail::make_inclusive_scan_task(
-    first, last, d_first, bop, init
-  ));
+  return emplace(make_inclusive_scan_task(first, last, d_first, bop, init));
 }
 
 // ----------------------------------------------------------------------------
@@ -570,7 +609,7 @@ template <typename B, typename E, typename D, typename BOP, typename UOP>
 Task FlowBuilder::transform_inclusive_scan(
   B first, E last, D d_first, BOP bop, UOP uop
 ) {
-  return emplace(detail::make_transform_inclusive_scan_task(
+  return emplace(make_transform_inclusive_scan_task(
     first, last, d_first, bop, uop
   ));
 }
@@ -580,7 +619,7 @@ template <typename B, typename E, typename D, typename BOP, typename UOP, typena
 Task FlowBuilder::transform_inclusive_scan(
   B first, E last, D d_first, BOP bop, UOP uop, T init
 ) {
-  return emplace(detail::make_transform_inclusive_scan_task(
+  return emplace(make_transform_inclusive_scan_task(
     first, last, d_first, bop, uop, init
   ));  
 }
@@ -592,9 +631,7 @@ Task FlowBuilder::transform_inclusive_scan(
 // Function: exclusive_scan
 template <typename B, typename E, typename D, typename T, typename BOP>
 Task FlowBuilder::exclusive_scan(B first, E last, D d_first, T init, BOP bop) {
-  return emplace(detail::make_exclusive_scan_task(
-    first, last, d_first, init, bop
-  ));
+  return emplace(make_exclusive_scan_task(first, last, d_first, init, bop));
 }
 
 // ----------------------------------------------------------------------------
@@ -606,9 +643,10 @@ template <typename B, typename E, typename D, typename T, typename BOP, typename
 Task FlowBuilder::transform_exclusive_scan(
   B first, E last, D d_first, T init, BOP bop, UOP uop
 ) {
-  return emplace(detail::make_transform_exclusive_scan_task(
+  return emplace(make_transform_exclusive_scan_task(
     first, last, d_first, init, bop, uop
   )); 
 }
 
 }  // end of namespace tf -----------------------------------------------------
+

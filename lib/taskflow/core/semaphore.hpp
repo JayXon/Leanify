@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vector>
 #include <mutex>
 
 #include "declarations.hpp"
+#include "../utility/small_vector.hpp"
 
 /**
 @file semaphore.hpp
@@ -41,7 +41,7 @@ tf::Taskflow taskflow;
 
 tf::Semaphore semaphore(1); // create a semaphore with initial count 1
 
-std::vector<tf::Task> tasks {
+SmallVector<tf::Task> tasks {
   taskflow.emplace([](){ std::cout << "A" << std::endl; }),
   taskflow.emplace([](){ std::cout << "B" << std::endl; }),
   taskflow.emplace([](){ std::cout << "C" << std::endl; }),
@@ -68,11 +68,20 @@ This arrangement limits the number of concurrently running tasks to only one.
 class Semaphore {
 
   friend class Node;
+  friend class Executor;
 
   public:
 
     /**
-    @brief constructs a semaphore with the given counter
+    @brief constructs a default semaphore
+
+    A default semaphore has the value of zero. Users can call tf::Semaphore::reset
+    to reassign a new value to the semaphore.
+    */
+    Semaphore() = default;
+
+    /**
+    @brief constructs a semaphore with the given value (i.e., counter)
 
     A semaphore creates a constraint that limits the maximum concurrency,
     i.e., the number of workers, in a set of tasks.
@@ -81,34 +90,51 @@ class Semaphore {
     tf::Semaphore semaphore(4);  // concurrency constraint of 4 workers
     @endcode
     */
-    explicit Semaphore(size_t max_workers);
+    explicit Semaphore(size_t max_value);
 
     /**
-    @brief queries the counter value (not thread-safe during the run)
+    @brief queries the current counter value
     */
-    size_t count() const;
+    size_t value() const;
+
+    /**
+    @brief queries the maximum allowable value of this semaphore
+    */
+    size_t max_value() const;
+
+    /**
+    @brief resets the semaphores to a clean state
+    */
+    void reset();
+    
+    /**
+    @brief resets the semaphores to a clean state with the given new maximum value
+    */
+    void reset(size_t new_max_value);
 
   private:
 
-    std::mutex _mtx;
+    mutable std::mutex _mtx;
+    
+    size_t _max_value{0};
+    size_t _cur_value{0};
 
-    size_t _counter;
-
-    std::vector<Node*> _waiters;
+    SmallVector<Node*> _waiters;
 
     bool _try_acquire_or_wait(Node*);
 
-    std::vector<Node*> _release();
+    void _release(SmallVector<Node*>&);
 };
 
-inline Semaphore::Semaphore(size_t max_workers) :
-  _counter(max_workers) {
+inline Semaphore::Semaphore(size_t max_value) :
+  _max_value(max_value),
+  _cur_value(max_value) {
 }
 
 inline bool Semaphore::_try_acquire_or_wait(Node* me) {
   std::lock_guard<std::mutex> lock(_mtx);
-  if(_counter > 0) {
-    --_counter;
+  if(_cur_value > 0) {
+    --_cur_value;
     return true;
   }
   else {
@@ -117,15 +143,45 @@ inline bool Semaphore::_try_acquire_or_wait(Node* me) {
   }
 }
 
-inline std::vector<Node*> Semaphore::_release() {
+inline void Semaphore::_release(SmallVector<Node*>& dst) {
+
   std::lock_guard<std::mutex> lock(_mtx);
-  ++_counter;
-  std::vector<Node*> r{std::move(_waiters)};
-  return r;
+
+  if(_cur_value >= _max_value) {
+    TF_THROW("can't release the semaphore more than its maximum value: ", _max_value);
+  }
+
+  ++_cur_value;
+  
+  if(dst.empty()) {
+    dst.swap(_waiters);
+  }
+  else {
+    dst.reserve(dst.size() + _waiters.size());
+    dst.insert(dst.end(), _waiters.begin(), _waiters.end());
+    _waiters.clear();
+  }
 }
 
-inline size_t Semaphore::count() const {
-  return _counter;
+inline size_t Semaphore::max_value() const {
+  return _max_value; 
+}
+
+inline size_t Semaphore::value() const {
+  std::lock_guard<std::mutex> lock(_mtx);
+  return _cur_value;
+}
+
+inline void Semaphore::reset() {
+  std::lock_guard<std::mutex> lock(_mtx);
+  _cur_value = _max_value;
+  _waiters.clear();
+}
+
+inline void Semaphore::reset(size_t new_max_value) {
+  std::lock_guard<std::mutex> lock(_mtx);
+  _cur_value = (_max_value = new_max_value);
+  _waiters.clear();
 }
 
 }  // end of namespace tf. ---------------------------------------------------

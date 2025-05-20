@@ -5,7 +5,8 @@ namespace tf {
 // ----------------------------------------------------------------------------
 // taskflow
 // ----------------------------------------------------------------------------
-class AsyncTopology;
+
+class Algorithm;
 class Node;
 class Graph;
 class FlowBuilder;
@@ -44,13 +45,14 @@ class cudaFlowLinearOptimizer;
 class cudaFlowSequentialOptimizer;
 class cudaFlowRoundRobinOptimizer;
 
+template <typename C, typename D>
+class cudaGraphExecBase;
+
 // ----------------------------------------------------------------------------
-// syclFlow
+// struct 
 // ----------------------------------------------------------------------------
-class syclNode;
-class syclGraph;
-class syclTask;
-class syclFlow;
+struct TaskParams;
+struct DefaultTaskParams;
 
 
 }  // end of namespace tf -----------------------------------------------------

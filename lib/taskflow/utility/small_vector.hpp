@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "macros.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -11,13 +13,6 @@
 #include <iterator>
 #include <memory>
 
-#if defined(__GNUC__)
-  #define TF_LIKELY(x) (__builtin_expect((x), 1))
-  #define TF_UNLIKELY(x) (__builtin_expect((x), 0))
-#else
-  #define TF_LIKELY(x) (x)
-  #define TF_UNLIKELY(x) (x)
-#endif
 
 /**
 @file small_vector.hpp
@@ -119,9 +114,15 @@ class SmallVectorTemplateCommon : public SmallVectorBase {
   private:
   template <typename, unsigned> friend struct SmallVectorStorage;
 
+  //template <typename X>
+  //struct AlignedUnionType {
+  //  alignas(X) std::byte buff[std::max(sizeof(std::byte), sizeof(X))];
+  //};
+
   template <typename X>
   struct AlignedUnionType {
-    alignas(X) std::byte buff[std::max(sizeof(std::byte), sizeof(X))];
+    static constexpr std::size_t max_size = (sizeof(std::byte) > sizeof(X)) ? sizeof(std::byte) : sizeof(X);
+    alignas(X) std::byte buff[max_size];
   };
 
   // Allocate raw space for N elements of type T.  If T has a ctor or dtor, we

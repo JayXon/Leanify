@@ -22,7 +22,7 @@ dependency between two tasks. A task is one of the following types:
 
   1. static task         : the callable constructible from
                            @c std::function<void()>
-  2. dynamic task        : the callable constructible from
+  2. subflow task        : the callable constructible from
                            @c std::function<void(tf::Subflow&)>
   3. condition task      : the callable constructible from
                            @c std::function<int()>
@@ -69,6 +69,7 @@ class Taskflow : public FlowBuilder {
   friend class Topology;
   friend class Executor;
   friend class FlowBuilder;
+  friend class Subflow;
 
   struct Dumper {
     size_t id;
@@ -247,6 +248,34 @@ class Taskflow : public FlowBuilder {
     void for_each_task(V&& visitor) const;
 
     /**
+    @brief removes dependencies that go from task @c from to task @c to
+
+    @param from from task (dependent)
+    @param to to task (successor)
+
+    <p><!-- Doxygen warning workaround --></p>
+
+    @code{.cpp}
+    tf::Taskflow taskflow;
+    auto a = taskflow.placeholder().name("a");
+    auto b = taskflow.placeholder().name("b");
+    auto c = taskflow.placeholder().name("c");
+    auto d = taskflow.placeholder().name("d");
+
+    a.precede(b, c, d);
+    assert(a.num_successors() == 3);
+    assert(b.num_predecessors() == 1);
+    assert(c.num_predecessors() == 1);
+    assert(d.num_predecessors() == 1);
+  
+    taskflow.remove_dependency(a, b);
+    assert(a.num_successors() == 2);
+    assert(b.num_predecessors() == 0);
+    @endcode
+    */
+    inline void remove_dependency(Task from, Task to);
+
+    /**
     @brief returns a reference to the underlying graph object
 
     A graph object (of type tf::Graph) is the ultimate storage for the
@@ -264,7 +293,6 @@ class Taskflow : public FlowBuilder {
     Graph _graph;
 
     std::queue<std::shared_ptr<Topology>> _topologies;
-
     std::optional<std::list<Taskflow>::iterator> _satellite;
 
     void _dump(std::ostream&, const Graph*) const;
@@ -310,7 +338,7 @@ inline Taskflow& Taskflow::operator = (Taskflow&& rhs) {
 
 // Procedure:
 inline void Taskflow::clear() {
-  _graph._clear();
+  _graph.clear();
 }
 
 // Function: num_tasks
@@ -341,9 +369,18 @@ inline Graph& Taskflow::graph() {
 // Function: for_each_task
 template <typename V>
 void Taskflow::for_each_task(V&& visitor) const {
-  for(size_t i=0; i<_graph._nodes.size(); ++i) {
-    visitor(Task(_graph._nodes[i]));
+  for(auto itr = _graph.begin(); itr != _graph.end(); ++itr) {
+    visitor(Task(itr->get()));
   }
+}
+
+// Procedure: remove_dependency
+inline void Taskflow::remove_dependency(Task from, Task to) {
+  // remove "to" from the succcessor list of "from"
+  from._node->_remove_successors(to._node);
+
+  // remove "from" from the predecessor list of "to"
+  to._node->_remove_predecessors(from._node);
 }
 
 // Procedure: dump
@@ -399,12 +436,13 @@ inline void Taskflow::_dump(
   std::ostream& os, const Node* node, Dumper& dumper
 ) const {
 
+  // label of the node
   os << 'p' << node << "[label=\"";
   if(node->_name.empty()) os << 'p' << node;
   else os << node->_name;
   os << "\" ";
 
-  // shape for node
+  // shape of the node
   switch(node->_handle.index()) {
 
     case Node::CONDITION:
@@ -418,28 +456,28 @@ inline void Taskflow::_dump(
 
   os << "];\n";
 
-  for(size_t s=0; s<node->_successors.size(); ++s) {
+  for(size_t s=0; s<node->_num_successors; ++s) {
     if(node->_is_conditioner()) {
       // case edge is dashed
-      os << 'p' << node << " -> p" << node->_successors[s]
+      os << 'p' << node << " -> p" << node->_edges[s]
          << " [style=dashed label=\"" << s << "\"];\n";
     } else {
-      os << 'p' << node << " -> p" << node->_successors[s] << ";\n";
+      os << 'p' << node << " -> p" << node->_edges[s] << ";\n";
     }
   }
 
   // subflow join node
-  if(node->_parent && node->_parent->_handle.index() == Node::DYNAMIC &&
-     node->_successors.size() == 0
+  if(node->_parent && node->_parent->_handle.index() == Node::SUBFLOW &&
+     node->_num_successors == 0
     ) {
-    os << 'p' << node << " -> p" << node->_parent << ";\n";
+    os << 'p' << node << " -> p" << node->_parent << " [style=dashed color=blue];\n";
   }
 
   // node info
   switch(node->_handle.index()) {
 
-    case Node::DYNAMIC: {
-      auto& sbg = std::get_if<Node::Dynamic>(&node->_handle)->subgraph;
+    case Node::SUBFLOW: {
+      auto& sbg = std::get_if<Node::Subflow>(&node->_handle)->subgraph;
       if(!sbg.empty()) {
         os << "subgraph cluster_p" << node << " {\nlabel=\"Subflow: ";
         if(node->_name.empty()) os << 'p' << node;
@@ -462,7 +500,9 @@ inline void Taskflow::_dump(
   std::ostream& os, const Graph* graph, Dumper& dumper
 ) const {
 
-  for(const auto& n : graph->_nodes) {
+  for(auto itr = graph->begin(); itr != graph->end(); ++itr) {
+
+    Node* n = itr->get();
 
     // regular task
     if(n->_handle.index() != Node::MODULE) {
@@ -484,8 +524,9 @@ inline void Taskflow::_dump(
 
       os << " [m" << dumper.visited[module] << "]\"];\n";
 
-      for(const auto s : n->_successors) {
-        os << 'p' << n << "->" << 'p' << s << ";\n";
+      //for(const auto s : n->_successors) {
+      for(size_t i=0; i<n->_num_successors; ++i) {
+        os << 'p' << n << "->" << 'p' << n->_edges[i] << ";\n";
       }
     }
   }
@@ -502,7 +543,6 @@ inline void Taskflow::_dump(
 
 tf::Future is a derived class from std::future that will eventually hold the
 execution result of a submitted taskflow (tf::Executor::run)
-or an asynchronous task (tf::Executor::async, tf::Executor::silent_async).
 In addition to the base methods inherited from std::future,
 you can call tf::Future::cancel to cancel the execution of the running taskflow
 associated with this future object.
@@ -535,10 +575,6 @@ class Future : public std::future<T>  {
   friend class Executor;
   friend class Subflow;
   friend class Runtime;
-
-  using handle_t = std::variant<
-    std::monostate, std::weak_ptr<Topology>
-  >;
 
   public:
 
@@ -582,37 +618,26 @@ class Future : public std::future<T>  {
     bool cancel();
 
   private:
+    
+    std::weak_ptr<Topology> _topology;
 
-    handle_t _handle;
-
-    template <typename P>
-    Future(std::future<T>&&, P&&);
+    Future(std::future<T>&&, std::weak_ptr<Topology> = std::weak_ptr<Topology>());
 };
 
 template <typename T>
-template <typename P>
-Future<T>::Future(std::future<T>&& fu, P&& p) :
-  std::future<T> {std::move(fu)},
-  _handle        {std::forward<P>(p)} {
+Future<T>::Future(std::future<T>&& f, std::weak_ptr<Topology> p) :
+  std::future<T> {std::move(f)},
+  _topology      {std::move(p)} {
 }
 
 // Function: cancel
 template <typename T>
 bool Future<T>::cancel() {
-  return std::visit([](auto&& arg){
-    using P = std::decay_t<decltype(arg)>;
-    if constexpr(std::is_same_v<P, std::monostate>) {
-      return false;
-    }
-    else {
-      auto ptr = arg.lock();
-      if(ptr) {
-        ptr->_is_cancelled.store(true, std::memory_order_relaxed);
-        return true;
-      }
-      return false;
-    }
-  }, _handle);
+  if(auto ptr = _topology.lock(); ptr) {
+    ptr->_estate.fetch_or(ESTATE::CANCELLED, std::memory_order_relaxed);
+    return true;
+  }
+  return false;
 }
 
 

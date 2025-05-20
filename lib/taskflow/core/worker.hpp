@@ -2,7 +2,9 @@
 
 #include "declarations.hpp"
 #include "tsq.hpp"
-#include "notifier.hpp"
+#include "atomic_notifier.hpp"
+#include "nonblocking_notifier.hpp"
+
 
 /**
 @file worker.hpp
@@ -10,6 +12,28 @@
 */
 
 namespace tf {
+
+// ----------------------------------------------------------------------------
+// Default Notifier
+// ----------------------------------------------------------------------------
+
+
+/**
+@private
+*/
+#ifdef TF_ENABLE_ATOMIC_NOTIFIER
+  using DefaultNotifier = AtomicNotifier;
+#elif TF_ENABLE_NONBLOCKING_NOTIFIER_V1
+  using DefaultNotifier = NonblockingNotifierV1;
+#elif TF_ENABLE_NONBLOCKING_NOTIFIER_V2
+  using DefaultNotifier = NonblockingNotifierV2;
+#else
+  #if __cplusplus >= TF_CPP20
+    using DefaultNotifier = AtomicNotifier;
+  #else
+    using DefaultNotifier = NonblockingNotifierV2;
+  #endif
+#endif
 
 // ----------------------------------------------------------------------------
 // Class Definition: Worker
@@ -28,6 +52,7 @@ using tf::WorkerInterface.
 class Worker {
 
   friend class Executor;
+  friend class Runtime;
   friend class WorkerView;
 
   public:
@@ -42,11 +67,6 @@ class Worker {
     inline size_t id() const { return _id; }
 
     /**
-    @brief acquires a pointer access to the underlying thread
-    */
-    inline std::thread* thread() const { return _thread; }
-
-    /**
     @brief queries the size of the queue (i.e., number of enqueued tasks to
            run) associated with the worker
     */
@@ -56,47 +76,56 @@ class Worker {
     @brief queries the current capacity of the queue
     */
     inline size_t queue_capacity() const { return static_cast<size_t>(_wsq.capacity()); }
+    
+    /**
+    @brief acquires the associated executor
+    */
+    inline Executor* executor() { return _executor; }
+
+    /**
+    @brief acquires the associated thread
+    */
+    std::thread& thread() { return _thread; }
 
   private:
+  
+  #if __cplusplus >= TF_CPP20
+    std::atomic_flag _done = ATOMIC_FLAG_INIT; 
+  #else
+    std::atomic<bool> _done {false};
+  #endif
 
     size_t _id;
     size_t _vtm;
-    Executor* _executor;
-    std::thread* _thread;
-    Notifier::Waiter* _waiter;
-    std::default_random_engine _rdgen { std::random_device{}() };
-    TaskQueue<Node*> _wsq;
-    Node* _cache;
+    Executor* _executor {nullptr};
+    DefaultNotifier::Waiter* _waiter;
+    std::thread _thread;
+    
+    std::default_random_engine _rdgen;
+    //std::uniform_int_distribution<size_t> _udist;
+
+    BoundedTaskQueue<Node*> _wsq;
+
+    //TF_FORCE_INLINE size_t _rdvtm() {
+    //  auto r = _udist(_rdgen);
+    //  return r + (r >= _id);
+    //}
+
 };
 
+
 // ----------------------------------------------------------------------------
-// Class Definition: PerThreadWorker
+// Per-thread
 // ----------------------------------------------------------------------------
+
+namespace pt {
 
 /**
 @private
 */
-//struct PerThreadWorker {
-//
-//  Worker* worker;
-//
-//  PerThreadWorker() : worker {nullptr} {}
-//
-//  PerThreadWorker(const PerThreadWorker&) = delete;
-//  PerThreadWorker(PerThreadWorker&&) = delete;
-//
-//  PerThreadWorker& operator = (const PerThreadWorker&) = delete;
-//  PerThreadWorker& operator = (PerThreadWorker&&) = delete;
-//};
+inline thread_local Worker* this_worker {nullptr};
 
-/**
-@private
-*/
-//inline PerThreadWorker& this_worker() {
-//  thread_local PerThreadWorker worker;
-//  return worker;
-//}
-
+}
 
 // ----------------------------------------------------------------------------
 // Class Definition: WorkerView
@@ -105,7 +134,7 @@ class Worker {
 /**
 @class WorkerView
 
-@brief class to create an immutable view of a worker in an executor
+@brief class to create an immutable view of a worker 
 
 An executor keeps a set of internal worker threads to run tasks.
 A worker view provides users an immutable interface to observe
@@ -166,7 +195,6 @@ inline size_t WorkerView::queue_capacity() const {
   return static_cast<size_t>(_worker._wsq.capacity());
 }
 
-
 // ----------------------------------------------------------------------------
 // Class Definition: WorkerInterface
 // ----------------------------------------------------------------------------
@@ -176,49 +204,55 @@ inline size_t WorkerView::queue_capacity() const {
 
 @brief class to configure worker behavior in an executor
 
-The tf::WorkerInterface class lets users interact with the executor
-to customize the worker behavior,
-such as calling custom methods before and after a worker enters and leaves
-the loop.
-When you create an executor, it spawns a set of workers to run tasks.
-The interaction between the executor and its spawned workers looks like
-the following:
+The tf::WorkerInterface class allows users to customize worker properties when creating an executor. 
+Examples include binding workers to specific CPU cores or 
+invoking custom methods before and after a worker enters or leaves the work-stealing loop.
+When you create an executor, it spawns a set of workers to execute tasks
+with the following logic:
 
+@code{.cpp}
 for(size_t n=0; n<num_workers; n++) {
   create_thread([](Worker& worker)
-  
+
     // pre-processing executor-specific worker information
     // ...
-  
+
     // enter the scheduling loop
     // Here, WorkerInterface::scheduler_prologue is invoked, if any
+    worker_interface->scheduler_prologue(worker);
     
-    while(1) {
-      perform_work_stealing_algorithm();
-      if(stop) {
-        break; 
+    try {
+      while(1) {
+        perform_work_stealing_algorithm();
+        if(stop) {
+          break;
+        }
       }
+    } catch(...) {
+      exception_ptr = std::current_exception();
     }
-  
+
     // leaves the scheduling loop and joins this worker thread
     // Here, WorkerInterface::scheduler_epilogue is invoked, if any
+    worker_interface->scheduler_epilogue(worker, exception_ptr);
   );
 }
+@endcode
 
-@note
-Methods defined in tf::WorkerInterface are not thread-safe and may be
-be invoked by multiple workers concurrently.
+@attention
+tf::WorkerInterface::scheduler_prologue and tf::WorkerInterface::scheduler_eiplogue 
+are invoked by each worker simultaneously.
 
 */
 class WorkerInterface {
 
   public:
-  
+
   /**
   @brief default destructor
   */
   virtual ~WorkerInterface() = default;
-  
+
   /**
   @brief method to call before a worker enters the scheduling loop
   @param worker a reference to the worker
@@ -226,7 +260,7 @@ class WorkerInterface {
   The method is called by the constructor of an executor.
   */
   virtual void scheduler_prologue(Worker& worker) = 0;
-  
+
   /**
   @brief method to call after a worker leaves the scheduling loop
   @param worker a reference to the worker
@@ -247,14 +281,17 @@ class WorkerInterface {
 @param args arguments to forward to the constructor of @c T
 */
 template <typename T, typename... ArgsT>
-std::shared_ptr<T> make_worker_interface(ArgsT&&... args) {
+std::unique_ptr<T> make_worker_interface(ArgsT&&... args) {
   static_assert(
-    std::is_base_of_v<WorkerInterface, T>, 
+    std::is_base_of_v<WorkerInterface, T>,
     "T must be derived from WorkerInterface"
   );
-  return std::make_shared<T>(std::forward<ArgsT>(args)...);
+  return std::make_unique<T>(std::forward<ArgsT>(args)...);
 }
 
-}  // end of namespact tf -----------------------------------------------------
+
+                                                                                 
+                                                                                 
+}  // end of namespact tf ------------------------------------------------------  
 
 

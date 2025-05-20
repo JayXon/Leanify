@@ -1,5 +1,13 @@
 #pragma once
 
+#if __has_include(<version>)
+#include <version>
+#endif
+
+#if __has_include(<latch>)
+#include <latch>
+#endif
+
 #include <type_traits>
 #include <iterator>
 #include <iostream>
@@ -292,6 +300,17 @@ using all_same = all_true<std::is_same_v<T, Ts>...>;
 template <typename T, typename... Ts>
 constexpr bool all_same_v = all_same<T, Ts...>::value;
 
+// ----------------------------------------------------------------------------
+// Iterator
+// ----------------------------------------------------------------------------
+
+template <typename I>
+using deref_t = std::decay_t<decltype(*std::declval<I>())>;
+
+template <typename I>
+constexpr auto is_random_access_iterator = std::is_same_v<
+  typename std::iterator_traits<I>::iterator_category, std::random_access_iterator_tag
+>;
 
 }  // end of namespace tf. ----------------------------------------------------
 
