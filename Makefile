@@ -10,6 +10,10 @@ CPPFLAGS    += -I./lib
 CXXFLAGS    += $(CFLAGS) -std=c++17 -fno-rtti
 LDFLAGS     += -flto -lpthread
 
+PREFIX ?= /usr/local
+BINDIR := $(PREFIX)/bin
+INSTALL ?= install
+
 ifeq ($(OS), Windows_NT)
     SYSTEM  := Windows
     LDLIBS  += -lshlwapi
@@ -30,7 +34,7 @@ else
     LEANIFY_OBJ += fileio_linux.o
 endif
 
-.PHONY:     leanify asan clean
+.PHONY:     leanify asan install uninstall clean
 
 leanify:    $(LEANIFY_OBJ) $(LZMA_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OBJ) $(ZOPFLIPNG_OBJ)
 	$(CXX) $^ $(LDFLAGS) $(LDLIBS) -o $@
@@ -44,6 +48,13 @@ $(ZOPFLI_OBJ):  CFLAGS += -Wno-unused-function
 asan: CFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 asan: LDFLAGS := -fsanitize=address $(filter-out -s,$(LDFLAGS))
 asan: leanify
+
+install: leanify
+	mkdir -p $(DESTDIR)$(BINDIR)
+	$(INSTALL) -m 755 leanify $(DESTDIR)$(BINDIR)/leanify
+
+uninstall:
+	rm -f $(DESTDIR)$(BINDIR)/leanify
 
 clean:
 	rm -f $(LEANIFY_OBJ) $(LZMA_OBJ) $(MOZJPEG_OBJ) $(PUGIXML_OBJ) $(ZOPFLI_OBJ) $(ZOPFLIPNG_OBJ) leanify
