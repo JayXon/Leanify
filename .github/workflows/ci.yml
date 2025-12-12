@@ -11,8 +11,8 @@ jobs:
         os:
           - ubuntu-22.04
           - ubuntu-24.04
-          - macos-13
           - macos-15
+          - macos-26
         compiler:
           - { cc: gcc, cxx: g++ }
           - { cc: clang, cxx: clang++ }
