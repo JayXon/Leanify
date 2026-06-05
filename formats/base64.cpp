@@ -65,7 +65,7 @@ int Base64Decode(const uint8_t* in, size_t in_len, uint8_t* out, size_t* out_len
   return 0;
 }
 
-size_t Base64Encode(const uint8_t* in, size_t in_len, uint8_t* out) {
+size_t Base64Encode(const uint8_t* in, size_t in_len, uint8_t* out, bool skip_padding = false) {
   static const char base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   size_t resultIndex = 0;
 
@@ -90,10 +90,12 @@ size_t Base64Encode(const uint8_t* in, size_t in_len, uint8_t* out) {
     } else {
       if ((x + 1) < in_len) {
         out[resultIndex++] = base64chars[(n >> 6) & 63];
-      } else {
+      } else if (!skip_padding) {
         out[resultIndex++] = '=';
       }
-      out[resultIndex++] = '=';
+      if (!skip_padding) {
+        out[resultIndex++] = '=';
+      }
     }
   }
   return resultIndex;
@@ -103,20 +105,22 @@ size_t Base64Encode(const uint8_t* in, size_t in_len, uint8_t* out) {
 
 size_t Base64::Leanify(size_t size_leanified /*= 0*/) {
   // 4 base64 character contains information of 3 bytes
-  size_t binary_len = size_ * 3 / 4;
+  size_t binary_len = (size_ + 3) / 4 * 3;
   std::vector<uint8_t> binary_data(binary_len);
 
   if (Base64Decode(fp_, size_, binary_data.data(), &binary_len)) {
     std::cerr << "Base64 decode error." << std::endl;
     return Format::Leanify(size_leanified);
   }
+  // If input doesn't have padding, then we will skip it too.
+  bool skip_padding = size_ < (binary_len + 2) / 3 * 4;
 
   // Leanify embedded file
   binary_len = LeanifyFile(binary_data.data(), binary_len);
 
   fp_ -= size_leanified;
   // encode back
-  size_ = Base64Encode(binary_data.data(), binary_len, fp_);
+  size_ = Base64Encode(binary_data.data(), binary_len, fp_, skip_padding);
 
   return size_;
 }

@@ -55,39 +55,52 @@ Format* GetType(void* file_pointer, size_t file_size, const string& filename) {
       }
     }
   }
-  if (memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)) == 0) {
+  if (file_size >= sizeof(Png::header_magic) &&
+      memcmp(file_pointer, Png::header_magic, sizeof(Png::header_magic)) == 0) {
     VerbosePrint("PNG detected.");
     return new Png(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Jpeg::header_magic) &&
+             memcmp(file_pointer, Jpeg::header_magic, sizeof(Jpeg::header_magic)) == 0) {
     VerbosePrint("JPEG detected.");
     return new Jpeg(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Lua::header_magic) &&
+             memcmp(file_pointer, Lua::header_magic, sizeof(Lua::header_magic)) == 0) {
     VerbosePrint("Lua detected.");
     return new Lua(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Zip::header_magic) &&
+             memcmp(file_pointer, Zip::header_magic, sizeof(Zip::header_magic)) == 0) {
     VerbosePrint("ZIP detected.");
     return new Zip(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Pe::header_magic) &&
+             memcmp(file_pointer, Pe::header_magic, sizeof(Pe::header_magic)) == 0) {
     VerbosePrint("PE detected.");
     return new Pe(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Gz::header_magic) &&
+             memcmp(file_pointer, Gz::header_magic, sizeof(Gz::header_magic)) == 0) {
     VerbosePrint("GZ detected.");
     return new Gz(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Ico::header_magic) &&
+             memcmp(file_pointer, Ico::header_magic, sizeof(Ico::header_magic)) == 0) {
     VerbosePrint("ICO detected.");
     return new Ico(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Dwf::header_magic, sizeof(Dwf::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Dwf::header_magic) &&
+             memcmp(file_pointer, Dwf::header_magic, sizeof(Dwf::header_magic)) == 0) {
     VerbosePrint("DWF detected.");
     return new Dwf(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Gft::header_magic) &&
+             memcmp(file_pointer, Gft::header_magic, sizeof(Gft::header_magic)) == 0) {
     VerbosePrint("GFT detected.");
     return new Gft(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)) == 0) {
+  } else if (file_size >= sizeof(Rdb::header_magic) &&
+             memcmp(file_pointer, Rdb::header_magic, sizeof(Rdb::header_magic)) == 0) {
     VerbosePrint("RDB detected.");
     return new Rdb(file_pointer, file_size);
-  } else if (memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) == 0 ||
-             memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) == 0 ||
-             memcmp(file_pointer, Swf::header_magic_lzma, sizeof(Swf::header_magic_lzma)) == 0) {
+  } else if ((file_size >= sizeof(Swf::header_magic) &&
+              memcmp(file_pointer, Swf::header_magic, sizeof(Swf::header_magic)) == 0) ||
+             (file_size >= sizeof(Swf::header_magic_deflate) &&
+              memcmp(file_pointer, Swf::header_magic_deflate, sizeof(Swf::header_magic_deflate)) == 0) ||
+             (file_size >= sizeof(Swf::header_magic_lzma) &&
+              memcmp(file_pointer, Swf::header_magic_lzma, sizeof(Swf::header_magic_lzma)) == 0)) {
     VerbosePrint("SWF detected.");
     return new Swf(file_pointer, file_size);
   } else {

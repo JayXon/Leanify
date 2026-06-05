@@ -36,6 +36,15 @@ size_t Png::Leanify(size_t size_leanified /*= 0*/) {
   uint8_t* idat_addr = nullptr;
 
   do {
+    // detect truncated file
+    if (p_read + sizeof(uint32_t) > fp_ + size_) {
+      memmove(p_write, p_read, fp_ + size_ - p_read);
+      cerr << "PNG file corrupted!" << endl;
+      fp_ -= size_leanified;
+      size_ -= p_read - p_write - size_leanified;
+      return size_;
+    }
+
     // read chunk length
     // use bswap to convert Big-Endian to Little-Endian
     // 12 = length: 4 + type: 4 + crc: 4
